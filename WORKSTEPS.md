@@ -1,201 +1,225 @@
-# WORKSTEPS — Dynamic Food Clearing House Simulator
-> **Scope:** Step 7 (FEFO/Stok) → Step 14 (Monitoring)
+# WORKSTEPS — Dynamic Food Clearing House
+> **Scope:** Step 7 (FEFO/Stok) → Step 14 (Monitoring)  
 > Step 1–6 (produksi) hanya konteks; tidak dikerjakan di proyek ini.
 
 ---
 
-## Step 7 — FEFO & Manajemen Stok Gudang
+> [!IMPORTANT]
+> **🏗️ BASE** = Dikerjakan pertama, target selesai sebelum UTS. Sistem 6-langkah sesuai `Alur_Penggunaan_Sistem.pdf`.  
+> **🚀 UPGRADE** = Dikerjakan setelah Base stabil. Menambah kecerdasan di balik layar tanpa mengubah UI/alur.
 
-**Goal:** Membangun modul yang memprioritaskan batch berdasarkan expiry date (FEFO), menggantikan logika FIFO reaktif yang ada saat ini. Output-nya adalah urutan prioritas pengiriman per batch.
+---
 
-**ML/Teknik:** Supervised — spoilage-risk classification
+## 🏗️ BASE — Step 7 — FEFO & Manajemen Stok Gudang
+
+**Goal:** Membangun modul yang memprioritaskan lot berdasarkan expiry date (FEFO). Output: urutan prioritas dan badge risiko per lot untuk ditampilkan di layar toko.
+
+**ML/Teknik:** Supervised — spoilage-risk classification  
+**Person:** 1 (Kamu)
 
 **Dataset:**
 - 📦 [Grocery Inventory (Kaggle)](https://www.kaggle.com/datasets/willianoliveiragibin/grocery-inventory)
 - 📦 [Perishable Goods Management (Kaggle)](https://www.kaggle.com/datasets/likithagedipudi/perishable-goods-management)
 
 ### Tasks
-- [ ] Download & load dataset Grocery Inventory
-- [ ] Download & load dataset Perishable Goods Management
+- [ ] Download & load dataset Grocery Inventory (setelah Person 0 perbaiki typo `Catagory`)
 - [ ] EDA: distribusi expiry date, stock quantity, sales volume, inventory turnover rate
 - [ ] Feature engineering: `days_to_expiry`, `turnover_ratio`, `batch_age`
-- [ ] Buat label: klasifikasi spoilage-risk (HIGH / MEDIUM / LOW) berdasarkan `days_to_expiry` + `Reorder_Level`
-- [ ] Training model klasifikasi spoilage-risk (Decision Tree / Random Forest)
+- [ ] Buat label: klasifikasi spoilage-risk (`HIGH` / `MEDIUM` / `LOW`) berdasarkan `days_to_expiry` + `Reorder_Level`
+- [ ] Training model klasifikasi spoilage-risk (Random Forest / XGBoost)
 - [ ] Evaluasi model (accuracy, precision, recall, F1)
-- [ ] Implementasi FEFO logic: sort batch berdasarkan `Expiration_Date` ascending
-- [ ] Output: tabel prioritas batch → kolom `batch_id`, `category`, `days_to_expiry`, `risk_label`, `dispatch_priority`
+- [ ] Implementasi FEFO logic: sort lot berdasarkan `Expiration_Date` ascending
+- [ ] Simpan ke `models/spoilage_classifier.pkl` + buat fungsi `predict_spoilage_risk(lot_dict)` → JSON `{"label": "HIGH", "score": 0.87}`
 
 ---
 
-## Step 8 — Perencanaan Pengiriman (Demand Forecasting)
+## 🏗️ BASE — Step 8 — Perencanaan Pengiriman (Demand Forecasting)
 
-**Goal:** Memprediksi permintaan per toko per produk sehingga alokasi stok bisa dilakukan secara proaktif, bukan reaktif terhadap pesanan yang masuk.
+**Goal:** Memprediksi permintaan per produk 3 hari ke depan agar staf toko bisa melihat apakah lot berpotensi tidak habis terjual.
 
-**ML/Teknik:** Supervised — time series demand forecasting
+**ML/Teknik:** Supervised — time series demand forecasting  
+**Person:** 2
 
 **Dataset:**
 - 📊 [M5 / Walmart Store Sales (Kaggle)](https://www.kaggle.com/competitions/store-sales-time-series-forecasting/data)
 - 📊 [Retail Sales Forecast Dataset 2026 (Kaggle)](https://www.kaggle.com/datasets/mmumairkhattak/retail-sales-forecast-dataset-2026)
 
-### Tasks
-- [ ] Download & load dataset M5/Walmart (date, store_nbr, item_id, sales, onpromotion, holiday, oil_price)
-- [ ] Download & load dataset Retail Sales Forecast 2026 sebagai suplemen
+### Tasks — Base
+- [ ] Load `train.csv` dan `transactions.csv` dari folder M5
 - [ ] EDA: pola demand harian, efek promo & hari libur, seasonality
-- [ ] Feature engineering: `lag_7`, `lag_14`, `rolling_mean_7`, `is_promo`, `is_holiday`
-- [ ] Split data: train/test per time window
-- [ ] Training model forecasting (SARIMA / LightGBM / Prophet)
+- [ ] Feature engineering: `lag_7`, `lag_14`, `rolling_mean_7`, `is_promo`
+- [ ] Split data: train/test per time window (jangan acak — gunakan Rolling Window Validation)
+- [ ] Training model forecasting (LightGBM / Prophet)
 - [ ] Evaluasi model (MAE, RMSE, MAPE)
-- [ ] Mapping pola M5 ke konteks Malaysia (kalibrasi skala demand)
-- [ ] Output: `demand_forecast` per `store_id` x `item_id` x `date` untuk 7-14 hari ke depan
+- [ ] Output: prediksi `demand_3day` per `product_id` untuk input dashboard
+
+### Tasks — 🚀 UPGRADE (Tambah setelah Person 0 selesai kalender libur MY)
+- [ ] Tambahkan kolom `is_holiday` dari `holidays_my.csv` ke training data
+- [ ] Re-train model (~2 menit) — model kini peka terhadap lonjakan Hari Raya / Tahun Baru Imlek / Deepavali
+- [ ] Evaluasi ulang MAPE sebelum vs sesudah: ukur peningkatan akurasi
 
 ---
 
-## Step 9 — Mapping Tables & Canonical Schema
+## 🚀 UPGRADE — Step 9 — Mapping Tables & Canonical Schema
 
-**Goal:** Menyatukan semua dataset dari Step 7 & 8 ke dalam satu skema kanonikal sebelum masuk ke engine simulator. Tanpa ini, data dari sumber berbeda tidak bisa diproses bersama.
+**Goal:** Menyatukan 5 dataset dari berbagai sumber ke dalam satu skema kanonikal. Dibutuhkan hanya jika Upgrade Simulator Multi-Sumber (Step 10 Full) dikerjakan.
 
-**ML/Teknik:** Tidak ada — data engineering murni
+**ML/Teknik:** Tidak ada — data engineering murni  
+**Person:** 3
 
 ### Tasks
 - [ ] Definisikan Canonical Schema: field wajib (`batch_id`, `product_id`, `category`, `quantity`, `expiry_date`, `price_myr`, `store_id`, `demand_forecast`, `risk_label`)
 - [ ] Buat mapping table: kategori Grocery Inventory ↔ kategori M5 ↔ kategori Perishable Goods
 - [ ] Buat mapping unit (kg/unit/pack → unit standar)
-- [ ] Normalisasi harga ke MYR menggunakan dataset PriceCatcher DOSM
+- [ ] Normalisasi harga ke MYR menggunakan lookup DOSM PriceCatcher (dari Person 0)
 - [ ] Normalisasi timestamp ke timezone Malaysia (UTC+8)
 - [ ] Buat fungsi `merge_to_canonical(df_inventory, df_forecast, df_price)` → DataFrame kanonikal
 - [ ] Validasi: tidak ada null pada field wajib, tidak ada duplikat `batch_id`
-- [ ] Output: `canonical_batch_table.csv` / DataFrame siap masuk simulator engine
+- [ ] Output: `canonical_batch_table.csv`
 
 ---
 
-## Step 10 — Simulator Engine (Batch Generator)
+## Step 10 — Simulator / Batch Generator
 
-**Goal:** Mensimulasikan aliran batch pangan secara sintetis namun terkalibrasi dari data riil — menggantikan kebutuhan akan mitra nyata untuk MVP.
+**Person:** 3
 
-**ML/Teknik:** Tidak ada — rule-based simulation
+### 🏗️ BASE — Single-Source Batch Generator
+**Goal:** Generator lot sederhana dari satu dataset inventory untuk mendemo sistem 6-langkah.
 
-### Tasks
+- [ ] Bersihkan dan standardisasi `Grocery_Inventory new v1.csv` ke skema dasar: `lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `store_id`
+- [ ] Buat skrip generator lot sederhana yang membaca CSV dan menghasilkan daftar lot aktif
+- [ ] Output: `lots_base.csv` — input langsung ke pipeline Spoilage Classifier dan Rule Engine Base
+
+### 🚀 UPGRADE — Multi-Source Simulator Engine
+**Goal:** Mensimulasikan aliran batch pangan sintetis yang dikalibrasi dari 5 dataset riil.
+
 - [ ] Definisikan parameter simulasi: jumlah toko, jumlah produk, horizon waktu (30/60/90 hari)
-- [ ] Implementasi generator batch sintetis (pakai distribusi dari Canonical Schema)
+- [ ] Implementasi generator batch sintetis (pakai distribusi dari Canonical Schema Step 9)
 - [ ] Kalibrasi waste rate per kategori menggunakan FAO FLW benchmark
 - [ ] Kalibrasi demand per toko menggunakan output Step 8
-- [ ] Kalibrasi harga menggunakan PriceCatcher MYR
-- [ ] Jalankan simulasi end-to-end: hasilkan event stream batch (received, scored, dispatched, wasted)
+- [ ] Kalibrasi harga menggunakan PriceCatcher MYR (dari Person 0)
 - [ ] Output: `simulation_events.csv` — log semua event batch selama horizon simulasi
 
 ---
 
-## Step 11 — Deteksi Surplus & Waste-Risk Scoring
+## 🚀 UPGRADE — Step 11 — Deteksi Surplus & Waste-Risk Scoring
 
-**Goal:** Setiap batch di simulator mendapatkan skor risiko waste otomatis (persentase kemungkinan terbuang dalam Y jam). Ini adalah inti sistem untuk intervensi proaktif.
+**Goal:** Menambahkan model ML khusus yang memprediksi probabilitas lot terbuang berdasarkan kondisi penyimpanan dan tren bisnis. Ini **model terpisah** dari Spoilage Classifier di Step 7 — model Step 7 tidak perlu diulang.
 
-**ML/Teknik:** Supervised — waste-risk scoring (regression + classification)
+**ML/Teknik:** Supervised — waste-risk scoring (regression + classification)  
+**Person:** 5
 
-**Dataset:**
-- 🗑️ [Food Waste Prediction & Demand Forecasting (Kaggle)](https://www.kaggle.com/datasets/kp00011/food-waste-prediction-and-demand-forecasting-dataset)
-- 🗑️ [AI-Powered Food Waste Management (Kaggle)](https://www.kaggle.com/datasets/vinay24baghira/ai-powered-food-waste-management-dataset-v1/data)
-- 💰 [PriceCatcher DOSM Malaysia](https://open.dosm.gov.my/data-catalogue/pricecatcher) — untuk fitur `price_index`
+**Dataset (disediakan Person 0 setelah imputasi):**
+- 🗑️ `food_waste_dataset.csv` (8.000 baris — sudah diimputasi Person 0)
+- 💰 Lookup DOSM PriceCatcher (dari Person 0) — untuk fitur `price_index_myr`
 
 ### Tasks
-- [ ] Download & load dataset Food Waste Prediction (inventory, sales, expiry, temperature, kategori, label risiko)
-- [ ] Download & load dataset AI-Powered Food Waste Management (skenario restoran/supermarket/kafe)
+- [ ] Load `food_waste_dataset.csv` hasil imputasi Person 0
 - [ ] EDA: distribusi label risiko HIGH/MEDIUM/LOW, korelasi fitur dengan waste
-- [ ] Feature engineering: `days_to_expiry`, `demand_gap` (forecast vs stok), `price_index_myr`, `category_waste_rate_fao`, `temperature_ok`
-- [ ] Training model waste-risk (Gradient Boosting / XGBoost untuk regression skor 0-1 + classification HIGH/MED/LOW)
+- [ ] Feature engineering: `days_to_expiry`, `demand_gap`, `price_index_myr`, `storage_temperature`, `business_type`
+- [ ] Training model waste-risk (XGBoost — regression skor 0–1 + classification HIGH/MED/LOW)
 - [ ] Evaluasi model (R² untuk regression, F1 untuk classification)
-- [ ] Integrasi ke simulator: setiap batch di Step 10 mendapat `waste_risk_score` & `waste_risk_label`
-- [ ] Output: field tambahan `waste_risk_score`, `waste_risk_label`, `time_to_waste_hours` pada `simulation_events.csv`
+- [ ] Simpan ke `models/waste_risk_model.pkl`
+- [ ] Output per lot: `waste_risk_score` (0–100%) + `time_to_waste_hours`
 
 ---
 
 ## Step 12 — Rekomendasi Jalur Surplus (Rule Engine)
 
-**Goal:** Berdasarkan skor risiko dari Step 11, sistem merekomendasikan jalur terbaik untuk setiap batch: jual normal → diskon dinamis → penawaran komersial → donasi → recovery. Urutan ini anti-moral-hazard by design.
+**Person:** 4
 
-**ML/Teknik:** Rule engine + dynamic pricing (bukan ML)
+### 🏗️ BASE — Rule Engine 3 Jalur
+**Goal:** Fungsi sederhana yang merekomendasikan 3 aksi: Normal Sale, Markdown (diskon flat), atau Donate. Persis seperti tombol di PDF.
 
-**Referensi:**
-- 📋 [ReFED Measurement Framework](https://refed.org/downloads/2026-refed-measurement-report.pdf) — taksonomi 10 destinasi surplus
-- 💰 PriceCatcher DOSM — threshold harga diskon berbasis harga pasar riil
+- [ ] Tulis fungsi `assign_route(days_to_expiry, quantity, demand_forecast)`:
+  - `days_to_expiry > 3` → `"Normal Sale"`
+  - `1 < days_to_expiry ≤ 3` → `"Markdown"` (diskon flat 20%)
+  - `days_to_expiry ≤ 1` → `"Donate"`
+- [ ] Buat unit test dengan 5 contoh lot dummy
+- [ ] Output: field `recommended_route` + `discount_percent` per lot
 
-### Tasks
+### 🚀 UPGRADE — Rule Engine ReFED (10 Jalur + Anti-Moral-Hazard)
+**Goal:** Perluas fungsi yang sudah ada (bukan tulis ulang) menggunakan taksonomi ReFED dan harga pasar DOSM.
+
 - [ ] Baca & pahami taksonomi destinasi surplus ReFED (10 jalur)
-- [ ] Definisikan rule hierarchy: `normal_sale` → `discount_sale` → `commercial_offer` → `donation` → `animal_feed` → `composting`
-- [ ] Implementasi threshold per jalur berdasarkan `days_to_expiry` + `waste_risk_score`
-- [ ] Implementasi dynamic pricing: hitung `discount_percent` berdasarkan `days_to_expiry` & `price_index_myr`
-- [ ] Implementasi kuota donasi per donor (anti-moral-hazard: donasi tidak boleh jadi default pertama)
-- [ ] Implementasi reputasi donor: track rasio `donated / total_surplus` agar tidak overproduce sengaja
-- [ ] Jalankan rule engine pada semua batch di `simulation_events.csv`
-- [ ] Output: field `recommended_route`, `discount_percent`, `expected_value_myr` pada setiap batch
+- [ ] Perluas `assign_route()` dengan jalur tambahan: `commercial_offer` → `donation` *(berquota)* → `animal_feed` → `composting`
+- [ ] Implementasi dynamic pricing: hitung `discount_percent` berdasarkan `days_to_expiry` & `price_index_myr` dari DOSM
+- [ ] Implementasi kuota donasi per donor (anti-moral-hazard)
+- [ ] Implementasi reputasi donor: track rasio `donated / total_surplus`
+- [ ] Output: field `recommended_route`, `discount_percent`, `expected_value_myr` per lot
 
 ---
 
-## Step 13 — Matching & Dispatch ke Penerima
+## 🚀 UPGRADE — Step 13 — Matching & Dispatch ke Penerima (OSRM)
 
-**Goal:** Untuk batch yang masuk jalur donasi, sistem mencocokkan dengan food bank / pantry / kafe terdekat secara otomatis, dan menjadwalkan pengambilan sebelum batch kadaluarsa.
+**Goal:** Untuk lot yang masuk jalur donasi, sistem mencocokkan secara otomatis ke food bank / pantry terdekat dan menjadwalkan pengambilan.
 
-**ML/Teknik:** Greedy optimization / nearest-neighbor matching (bukan ML)
+> [!NOTE]
+> **Ini jauh lebih simpel dari kedengarannya!** OSRM adalah API publik gratis. Memanggilnya hanya butuh **1 baris `requests.get()`**. Tidak perlu membangun routing engine sendiri.
 
-**Tools:**
-- 🗺️ [Nominatim / OpenStreetMap](https://nominatim.org/release-docs/develop/api/Search/) — geocoding alamat donor & penerima
-- 🚗 [OSRM (Open Source Routing Machine)](https://github.com/Project-OSRM) — hitung jarak & ETA
+**ML/Teknik:** Greedy optimization / nearest-neighbor matching (bukan ML)  
+**Person:** 5
 
 ### Tasks
-- [ ] Buat daftar simulasi penerima (food bank, pantry, kafe) dengan alamat fiktif tapi realistis di Malaysia
+- [ ] Siapkan daftar 10–20 penerima fiktif realistis di Lembah Klang/Malaysia (CSV: `receiver_id`, `name`, `lat`, `lng`, `capacity`, `accepted_categories`)
 - [ ] Geocoding: konversi alamat → koordinat via Nominatim API
-- [ ] Implementasi OSRM API call: hitung jarak & ETA antara donor ↔ penerima
-- [ ] Implementasi greedy matching: pilih penerima dengan skor tertinggi = `min(distance) + max(capacity_remaining) + max(acceptance_rate)`
-- [ ] Implementasi constraint: penerima hanya menerima kategori tertentu (mis. food bank tidak menerima alkohol)
-- [ ] Implementasi dispatch schedule: `pickup_time` = `current_time + eta_hours`, harus < `expiry_time`
-- [ ] Simulasikan acceptance rate penerima (tidak selalu 100% menerima)
-- [ ] Output: tabel `dispatch_log.csv` — kolom `batch_id`, `receiver_id`, `distance_km`, `eta_hours`, `pickup_time`, `status`
+- [ ] Implementasi OSRM API call: `requests.get("http://router.project-osrm.org/route/v1/driving/{lng_a},{lat_a};{lng_b},{lat_b}")` → dapat `distance_km` + `eta_hours`
+- [ ] Implementasi greedy matching: sort penerima berdasarkan jarak terdekat, filter berdasarkan kapasitas & kategori diterima
+- [ ] Implementasi dispatch schedule: `pickup_time = now + eta_hours`, validasi `pickup_time < expiry_time`
+- [ ] Output: `dispatch_log.csv` — kolom `lot_id`, `receiver_id`, `distance_km`, `eta_hours`, `pickup_time`, `status`
 
 ---
 
-## Step 14 — Monitoring & Clustering
+## 🚀 UPGRADE — Step 14 — Monitoring & Clustering Toko
 
-**Goal:** Menganalisis output agregat simulator untuk menemukan pola tersembunyi — toko mana yang paling boros, produk apa yang paling sering surplus, penerima mana yang paling efektif — menggunakan unsupervised learning.
+**Goal:** Menganalisis pola output simulator untuk menemukan toko mana yang paling boros dan produk mana yang paling sering surplus.
 
-**ML/Teknik:** Unsupervised — K-Means / DBSCAN clustering
+> [!NOTE]
+> **K-Means hanya 5 baris Scikit-Learn.** Yang makan waktu adalah interpretasi dan narasi analitiknya — itulah kontribusi utama Person 5 (dibantu Person 1 jika perlu).
 
-**Data:** Output agregat dari Step 7–13 (tidak butuh dataset eksternal)
+**ML/Teknik:** Unsupervised — K-Means / DBSCAN clustering  
+**Person:** 5 (dibantu Person 1)
 
 ### Tasks
-- [ ] Agregasi output simulator: `waste_rate_per_store`, `velocity_per_product`, `acceptance_rate_per_receiver`, `avg_risk_score_per_category`
-- [ ] EDA: visualisasi distribusi metrik per entitas (store, product, receiver)
+- [ ] Agregasi output simulator: `waste_rate_per_store`, `velocity_per_product`, `acceptance_rate_per_receiver`
+- [ ] EDA: visualisasi distribusi metrik per entitas
 - [ ] Feature scaling: normalisasi fitur sebelum clustering
 - [ ] Tentukan jumlah cluster optimal: Elbow Method + Silhouette Score
-- [ ] Jalankan K-Means clustering pada profil toko & produk
+- [ ] Jalankan `KMeans(n_clusters=3).fit(df)` pada profil toko & produk
 - [ ] Jalankan DBSCAN untuk deteksi outlier (toko dengan waste rate anomali tinggi)
-- [ ] Interpretasi cluster: beri label human-readable (mis. "high-waste fast-moving", "low-waste stable")
-- [ ] Buat visualisasi dashboard hasil clustering (scatter plot, heatmap)
+- [ ] Interpretasi cluster: beri label human-readable (`"high-waste fast-moving"`, `"low-waste stable"`, dll.)
+- [ ] Buat visualisasi scatter plot / heatmap
 - [ ] Output: `cluster_report.md` + visualisasi PNG/HTML
 
 ---
 
 ## Deliverables Akhir
 
-| Deliverable | Berasal dari Step |
-|---|---|
-| `canonical_batch_table.csv` | Step 9 |
-| `simulation_events.csv` (dengan risk score & route) | Step 10-12 |
-| `dispatch_log.csv` | Step 13 |
-| `cluster_report.md` + visualisasi | Step 14 |
-| Model file: spoilage classifier | Step 7 |
-| Model file: demand forecaster | Step 8 |
-| Model file: waste-risk scorer | Step 11 |
+| Deliverable | Step | Phase |
+|---|---|---|
+| `lots_base.csv` (lot aktif toko) | Step 10 Base | 🏗️ BASE |
+| `models/spoilage_classifier.pkl` | Step 7 | 🏗️ BASE |
+| `models/demand_forecaster.pkl` | Step 8 | 🏗️ BASE |
+| `canonical_batch_table.csv` | Step 9 | 🚀 UPGRADE |
+| `simulation_events.csv` | Step 10 Full | 🚀 UPGRADE |
+| `models/waste_risk_model.pkl` | Step 11 | 🚀 UPGRADE |
+| `dispatch_log.csv` | Step 13 | 🚀 UPGRADE |
+| `cluster_report.md` + visualisasi | Step 14 | 🚀 UPGRADE |
 
 ---
 
 ## Progress Tracker
 
-| Step | Status |
-|---|---|
-| Step 7 — FEFO & Stok | ⬜ Belum dimulai |
-| Step 8 — Demand Forecasting | ⬜ Belum dimulai |
-| Step 9 — Canonical Schema | ⬜ Belum dimulai |
-| Step 10 — Simulator Engine | ⬜ Belum dimulai |
-| Step 11 — Waste-Risk Scoring | ⬜ Belum dimulai |
-| Step 12 — Rule Engine Jalur | ⬜ Belum dimulai |
-| Step 13 — Matching & Dispatch | ⬜ Belum dimulai |
-| Step 14 — Monitoring & Clustering | ⬜ Belum dimulai |
+| Step | Phase | Status |
+|---|---|---|
+| Step 7 — FEFO & Stok | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 8 — Demand Forecasting | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 8 Upgrade — Kalender MY | 🚀 UPGRADE | ⬜ Menunggu Person 0 |
+| Step 10 Base — Batch Generator | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 12 Base — Rule Engine 3 Jalur | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 9 — Canonical Schema | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step 10 Full — Multi-Source Simulator | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step 11 — Waste-Risk Scoring | 🚀 UPGRADE | ⬜ Menunggu Person 0 (dataset 8K) |
+| Step 12 Full — Rule Engine ReFED | 🚀 UPGRADE | ⬜ Menunggu Person 0 (DOSM) |
+| Step 13 — Matching & Dispatch | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step 14 — Monitoring & Clustering | 🚀 UPGRADE | ⬜ Menunggu output simulator |
