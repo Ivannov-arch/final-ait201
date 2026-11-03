@@ -5,8 +5,8 @@
 ---
 
 > [!IMPORTANT]
-> **🏗️ BASE** = Dikerjakan pertama, target selesai sebelum UTS. Sistem 6-langkah sesuai `Alur_Penggunaan_Sistem.pdf`.  
-> **🚀 UPGRADE** = Dikerjakan setelah Base stabil. Penyempurnaan alur PDF dengan 3 dataset riil & smart dispatch OSRM.  
+> **🏗️ BASE** = Dikerjakan pertama (Fase 1). Sistem 6-langkah sesuai `Alur_Penggunaan_Sistem.pdf`.  
+> **🚀 UPGRADE** = Dikerjakan setelah Base stabil (Fase 2). Penyempurnaan alur PDF dengan 3 dataset riil & smart dispatch OSRM.  
 > **💡 OPSIONAL** = Fitur riset & analitik tambahan (seperti klastering toko K-Means) yang berada di luar alur operasional utama PDF (stretch goals).
 
 ---

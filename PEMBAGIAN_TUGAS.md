@@ -8,16 +8,16 @@
 
 ## 0. Panduan Baca: Dua Fase Pembangunan (Rebalanced)
 
-Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, seimbang, dan berbobot akademis sejak Fase Base (UTS)**, dengan kelanjutan yang mulus ke Fase Upgrade (UAS):
+Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, seimbang, dan berbobot akademis sejak Fase 1 (Base)**, dengan kelanjutan yang mulus ke Fase 2 (Upgrade):
 
 ```
 ╔════════════════════════════════════════════════════════════════════════════╗
-║  🏗️  BASE (Target: Sebelum UTS — Demo Solid, Lengkap, & Berbobot)          ║
+║  🏗️  BASE (Fase 1: Prioritas Utama — Demo Solid, Lengkap, & Berbobot)       ║
 ║  Sistem Toko 6-Langkah Sesuai PDF + Data Riil Malaysia + Visualisasi GIS   ║
 ║  → FEFO, Spoilage ML, Forecast Libur MY, Dynamic Markdown DOSM,            ║
 ║    Waste-Risk ML, OSRM Smart Dispatch, Peta Rute Interaktif (Leaflet JS)   ║
 ╠════════════════════════════════════════════════════════════════════════════╣
-║  🚀  UPGRADE & 💡 OPSIONAL (Target: Menjelang UAS — Skala Multi-Toko & BI) ║
+║  🚀  UPGRADE & 💡 OPSIONAL (Fase 2: Ekspansi Skala — Multi-Toko & BI)      ║
 ║  Ekspansi dari 1 Toko menjadi Jaringan Multi-Cabang & Analitik Makro       ║
 ║  → Simulator Multi-Toko (Event Stream), ReFED 10-Jalur Penuh,              ║
 ║    K-Means Clustering Toko & Deteksi Anomali Pemborosan                    ║
@@ -30,7 +30,7 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 
 ---
 
-### 📋 TABEL 1: Pembagian Tugas 🏗️ BASE (Target Selesai Sebelum UTS)
+### 📋 TABEL 1: Pembagian Tugas 🏗️ BASE (Fase 1: Prioritas Utama)
 > **Fokus:** Merealisasikan alur 6-langkah sesuai `Alur_Penggunaan_Sistem.pdf` menjadi sistem nyata yang berbobot: didukung data pasar riil Malaysia, model ML ganda, dan visualisasi rute interaktif Leaflet JS.
 
 | No | Anggota & Peran | Goal BASE | Deliverable Utama BASE | Deskripsi Pekerjaan BASE | Kompleksitas |
@@ -45,7 +45,7 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 
 ---
 
-### 🚀 TABEL 2: Pembagian Tugas UPGRADE & OPSIONAL (Target Menjelang UAS)
+### 🚀 TABEL 2: Pembagian Tugas UPGRADE & OPSIONAL (Fase 2: Ekspansi Skala)
 > **Fokus:** Mengembangkan sistem dari level toko tunggal menjadi ekosistem simulasi multi-cabang terintegrasi (*Clearing House Scale*) dan analitik komparasi makro.
 
 | No | Anggota & Peran | Kelanjutan dari BASE | Goal UPGRADE (Skala Multi-Toko) | Goal OPSIONAL (Stretch Goals) | Deskripsi Pekerjaan Lanjutan & Dampak Sistem |

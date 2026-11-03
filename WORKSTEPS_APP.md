@@ -9,9 +9,9 @@
 
 | Label | Nama | Target | Deskripsi |
 |---|---|---|---|
-| 🏗️ **BASE** | PDF-Level | Sebelum UTS | Fitur sesuai `Alur_Penggunaan_Sistem.pdf` — sistem toko tunggal, rule engine 3-jalur, tampilan KPI |
-| 🚀 **UPGRADE** | Core Enhancement | Sebelum UAS | Penyempurnaan alur PDF dengan 3 dataset riil, smart dispatch OSRM, & anti-moral-hazard pembeli |
-| 💡 **OPSIONAL** | Stretch Goals | Bonus / Pasca-UAS | Fitur di luar alur operasional utama PDF (tab klaster K-Means, live simulation SSE streaming) |
+| 🏗️ **BASE** | PDF-Level | Fase 1 (Prioritas Utama) | Fitur sesuai `Alur_Penggunaan_Sistem.pdf` — sistem toko tunggal, rule engine 3-jalur, tampilan KPI |
+| 🚀 **UPGRADE** | Core Enhancement | Fase 2 (Ekspansi Skala) | Penyempurnaan alur PDF dengan 3 dataset riil, smart dispatch OSRM, & anti-moral-hazard pembeli |
+| 💡 **OPSIONAL** | Stretch Goals | Fase 3 (Fitur Opsional) | Fitur di luar alur operasional utama PDF (tab klaster K-Means, live simulation SSE streaming) |
 
 > **Komitmen arsitektur:** Semua kode BASE **tidak perlu ditulis ulang** saat Upgrade. Upgrade = tambah saja,
 > tidak ganti. Kolom Upgrade di Supabase wajib ada sejak Day 1 (isi NULL), dan format JSON FastAPI tidak

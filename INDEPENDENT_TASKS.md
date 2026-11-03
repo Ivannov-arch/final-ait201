@@ -10,9 +10,9 @@
 
 | Label | Nama | Target | Deskripsi |
 |---|---|---|---|
-| 🏗️ **BASE** | PDF-Level | Sebelum UTS | Fitur minimum sesuai alur 6-langkah di `Alur_Penggunaan_Sistem.pdf` |
-| 🚀 **UPGRADE** | Core Enhancement | Sebelum UAS | Penyempurnaan alur PDF dengan 3 dataset riil, smart dispatch OSRM, & anti-moral-hazard pembeli |
-| 💡 **OPSIONAL** | Stretch Goals | Bonus / Laporan | Eksplorasi di luar alur operasional utama PDF (K-Means klastering toko, monitoring kompleks) |
+| 🏗️ **BASE** | PDF-Level | Fase 1 (Prioritas Utama) | Fitur minimum sesuai alur 6-langkah di `Alur_Penggunaan_Sistem.pdf` |
+| 🚀 **UPGRADE** | Core Enhancement | Fase 2 (Ekspansi Skala) | Penyempurnaan alur PDF dengan 3 dataset riil, smart dispatch OSRM, & anti-moral-hazard pembeli |
+| 💡 **OPSIONAL** | Stretch Goals | Fase 3 (Fitur Opsional) | Eksplorasi di luar alur operasional utama PDF (K-Means klastering toko, monitoring kompleks) |
 
 > **Catatan penting:** Task UPGRADE dimulai setelah BASE stabil. Sebagian besar Upgrade jauh lebih sederhana
 > dari namanya: OSRM = 1 baris `requests.get(...)`, Malaysia holidays = CSV 20 baris, Food waste 8K = imputasi median.
