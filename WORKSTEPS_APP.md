@@ -1,4 +1,4 @@
-# WORKSTEPS APP — Database, Backend & Frontend
+﻿# WORKSTEPS APP — Database, Backend & Frontend
 > **Scope:** Infrastruktur aplikasi untuk Dynamic Food Clearing House Simulator
 > File ini terpisah dari `WORKSTEPS.md` (ML/data pipeline).
 > Dikerjakan **setelah** Step 7–14 di WORKSTEPS.md sudah menghasilkan output stabil.
@@ -52,7 +52,7 @@ WORKSTEPS.md (ML Pipeline)
 - [ ] Buat tabel `batches` — kolom:
   - BASE: `batch_id`, `product_id`, `category`, `quantity`, `expiry_date`, `price_myr`, `store_id`, `risk_label`, `recommended_route`, `created_at`
   - NULL placeholder (Upgrade): `waste_risk_score NUMERIC`, `receiver_id UUID`, `market_price_myr NUMERIC`
-- [ ] Buat tabel `simulation_events` — kolom: `event_id`, `batch_id`, `event_type` (received/scored/dispatched/wasted), `timestamp`, `metadata` (JSONB)
+- [ ] Buat tabel `simulation_events` — kolom: `event_id`, `batch_id`, `event_type` (`received`/`active_fefo`/`markdown`/`dispatched`/`wasted`), `timestamp`, `metadata` (JSONB)
 - [ ] Buat tabel `dispatch_log` — kolom: `dispatch_id`, `batch_id`, `receiver_id`, `distance_km`, `eta_hours`, `pickup_time`, `status`
 - [ ] Buat tabel `receivers` — kolom: `receiver_id`, `name`, `type` (food_bank/pantry/cafe), `lat`, `lng`, `capacity`, `acceptance_rate`, `accepted_categories` (array)
 - [ ] Buat tabel `cluster_results` — kolom: `entity_type` (store/product/receiver), `entity_id`, `cluster_label`, `waste_rate`, `velocity`, `run_date`
@@ -69,9 +69,9 @@ WORKSTEPS.md (ML Pipeline)
 **ML/Teknik:** Tidak ada — ETL script Python
 
 ### 🏗️ BASE Tasks
-*(Hanya butuh output minimal dari Step 10–11: `canonical_batch_table.csv`)*
+*(Hanya butuh output minimal dari Step 10 Base: `lots_base.csv`)*
 - [ ] Install dependensi: `supabase-py`, `pandas`, `python-dotenv`
-- [ ] Buat script `ingest/upload_batches.py` — baca `canonical_batch_table.csv` → upsert ke tabel `batches`
+- [ ] Buat script `ingest/upload_batches.py` — baca `lots_base.csv` → upsert ke tabel `batches`
 - [ ] Tambahkan idempotency: gunakan `upsert` dengan conflict pada primary key agar aman di-run ulang
 - [ ] Test: jalankan script, verifikasi data muncul di Supabase Table Editor
 
@@ -200,8 +200,8 @@ final-ait201/
 ├── notebooks/               # Step 7-14 Jupyter Notebooks
 ├── models/                  # trained model files (.pkl/.joblib)
 ├── output/                  # CSV output simulator
-│   ├── canonical_batch_table.csv    # BASE output
-│   ├── simulation_events.csv        # UPGRADE output
+│   ├── lots_base.csv               # BASE output (Person 3 Fase 1)
+│   ├── canonical_batch_table.csv    # UPGRADE output (Person 3 Fase 2)
 │   └── dispatch_log.csv             # UPGRADE output
 ├── ingest/                  # Step A2: upload scripts
 │   ├── upload_batches.py    # BASE
@@ -237,11 +237,11 @@ final-ait201/
 | Step A2 — Data Ingestion (events + dispatch) | 🚀 UPGRADE | ⬜ Belum dimulai |
 | Step A2 — Data Ingestion (clusters) | 💡 OPSIONAL | ⬜ Belum dimulai |
 | Step A3 — Backend API (core endpoints) | 🏗️ BASE | ⬜ Belum dimulai |
-| Step A3 — Backend API (OSRM dispatch + waste risk) | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step A3 — Backend API (OSRM dispatch + waste risk) | 🏗️ BASE | ⬜ Belum dimulai |
 | Step A3 — Backend API (cluster analysis) | 💡 OPSIONAL | ⬜ Belum dimulai |
 | Step A4 — Frontend Dashboard (6-langkah PDF) | 🏗️ BASE | ⬜ Belum dimulai |
-| Step A4 — Frontend (Tab Peta Rute OSRM) | 🚀 UPGRADE | ⬜ Belum dimulai |
-| Step A4 — Frontend (Tab Klaster Toko K-Means) | 💡 OPSIONAL | ⬜ Belum dimulai |
+| Step A4 — Frontend Dashboard (6-langkah PDF) | 🏗️ BASE | ⬜ Belum dimulai |
+| Step A4 — Frontend (Tab Peta Rute Leaflet + OSRM) | 🏗️ BASE | ⬜ Belum dimulai |
 | Step A5 — Developer/CMS Page Dasar | 🏗️ BASE | ⬜ Belum dimulai |
 | Step A5 — SSE Live Streaming & Advanced Clusters | 💡 OPSIONAL | ⬜ Belum dimulai |
 

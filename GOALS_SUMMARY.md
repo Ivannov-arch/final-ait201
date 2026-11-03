@@ -1,4 +1,4 @@
-# Summary of Project Goals: Phase, Complexity & Outputs
+﻿# Summary of Project Goals: Phase, Complexity & Outputs
 
 > **Dynamic Food Clearing House**  
 > Pemetaan seluruh goals proyek: fase pembangunan (rebalanced), tingkat kerumitan, keterlibatan AI, tipe output, dan detail deliverable.
@@ -30,7 +30,7 @@
 | 🏗️ BASE | **11** | **Dashboard Toko 6-Langkah + Peta Leaflet JS** | 🖥️ FE | 🔄 **Mixed** — Komponen UI toko PDF + **peta interaktif Leaflet JS (marker toko, food bank, rute OSRM)**. | 🖥️ Web App (Publik) | Web app interaktif 6-langkah: FEFO stok → cek risiko ML → forecast → aksi → **peta rute pengiriman donasi** → KPI |
 | 🏗️ BASE | **12** | **Admin / Developer Page Sederhana** | 🖥️ FE | ⚡ **Ringkas dengan AI** — Auth Supabase + CRUD tabel standar. | 🔐 Web App (Auth) | Panel admin dasar: list lot, list penerima, trigger re-scoring |
 | 🚀 UPGRADE | **3** | **Canonical Schema Multi-Dataset** | 🤖 Data Eng | 🧠 **Manual-Heavy** — Harmonisasi 5+ dataset, normalisasi format dan mapping kategori lintas negara. | 📄 Persiapan Data | `canonical_batch_table.csv` + kamus mapping + fungsi `merge_to_canonical()` |
-| 🚀 UPGRADE | **4 Full** | **Multi-Source Simulator Engine** | 🤖 Data Eng | ⚡ **Ringkas dengan AI** — Generator batch terkalibrasi multi-toko berbasis event loop. | ⚙️ Engine / Script | `simulation_events.csv` dinamis (event: received, sold, markdown, routed, wasted) |
+| 🚀 UPGRADE | **4 Full** | **Multi-Source Simulator Engine** | 🤖 Data Eng | ⚡ **Ringkas dengan AI** — Generator batch terkalibrasi multi-toko berbasis event loop. | ⚙️ Engine / Script | `simulation_events.csv` dinamis (event: `received`, `active_fefo`, `markdown`, `dispatched`, `wasted`) |
 | 🚀 UPGRADE | **6 Full** | **ReFED 10-Destinasi Lengkap** | ⚙️ BE | 🧠 **Manual-Heavy** — Jalur surplus non-manusia: pakan ternak (*animal feed*), kompos, dan lelang B2B wholesale. | ⚙️ Engine / Script | `assign_route()` ReFED penuh 10 cabang destinasi |
 | 🚀 UPGRADE | **7 Multi** | **Multi-Drop Dispatch Optimization** | ⚙️ BE | 🔄 **Mixed** — Optimasi rute 1 armada mengambil surplus dari 2 toko terdekat. | ⚙️ Engine / Script | Rute OSRM multi-titik |
 | 💡 OPSIONAL | **8** | **Monitoring & Clustering Toko (K-Means)** | 🤖 ML | 🔄 **Mixed** — **5 baris `sklearn.cluster.KMeans`**. Analisis pola waste & velocity toko multi-cabang. | 📊 Laporan & Riset | Label klaster toko/produk + scatter plot + `cluster_report.md` |

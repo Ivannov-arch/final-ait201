@@ -1,4 +1,4 @@
-# Daftar Pekerjaan Bebas Bottleneck (Day 1 Independent Tasks)
+﻿# Daftar Pekerjaan Bebas Bottleneck (Day 1 Independent Tasks)
 
 > **Dynamic Food Clearing House Simulator**
 > Dokumen ini memetakan seluruh pekerjaan yang **TIDAK TERGANTUNG pada orang lain/pekerjaan lain**.
@@ -27,10 +27,10 @@
 | **Dataset Engineer** | Person 0 | Perbaikan typo + null (±1 jam) | DOSM lookup, holidays CSV, imputasi 8K | — |
 | **ML Tabular Lead** | Person 1 (Kamu) | **Goal 1:** Spoilage Classifier | Supervisi tim + validasi OSRM dispatch | Bantu **Goal 8** jika dikerjakan |
 | **Forecaster & API** | Person 2 | **Goal 2:** Demand Forecasting baseline + **Goal 10:** FastAPI scaffold | Tambah Malaysia holidays ke model | — |
-| **Data Architect** | Person 3 | Pipeline single-dataset (`Grocery_Inventory`) | **Goal 3:** Canonical Schema + **Goal 4 Full** | — |
-| **Logic & Database** | Person 4 | **Goal 6 Base:** Rule Engine 3-jalur + **Goal 9:** Supabase setup | **Goal 6 Full:** ReFED + Dynamic Pricing DOSM + Anti-Moral-Hazard Pembeli | — |
-| **Risk & Dispatch** | Person 5 | Siapkan daftar receivers CSV + greedy Euclidean placeholder | **Goal 5:** Waste-Risk model + **Goal 7:** OSRM Smart Dispatch | **Goal 8:** K-Means Clustering |
-| **Frontend & Design** | Person 6 | **Goal 11 & 12:** Next.js layout + mock data + Canva theme | Tambah Tab Peta Rute OSRM (Leaflet) | Tambah Tab Klaster Toko |
+| **Data Architect** | Person 3 | **Goal 4 Base:** ETL Pipeline Tunggal → `lots_base.csv` | **Goal 3:** Canonical Schema 5 Dataset + **Goal 4 Full:** Multi-Source Simulator Engine | — |
+| **Logic & Database** | Person 4 | **Goal 6 Base+:** Rule Engine Dynamic Markdown + Anti-Moral-Hazard (DOSM) + **Goal 9:** Supabase setup | **Goal 6 Full:** ReFED 10-Destinasi Lengkap | — |
+| **Risk & Dispatch** | Person 5 | **Goal 5:** Waste-Risk model + **Goal 7:** OSRM Smart Dispatch (receivers CSV + matching + rute riil) | **Goal 7 Multi:** Multi-Drop Dispatch Optimization | **Goal 8:** K-Means Clustering |
+| **Frontend & Design** | Person 6 | **Goal 11 & 12:** Next.js 6-langkah layout + **Peta Rute Leaflet JS** (BASE) + Canva theme | Peta multi-store multi-layer | Tambah Tab Klaster Toko |
 
 ---
 
@@ -93,13 +93,13 @@ Dua pekerjaan ini sama sekali tidak menunggu pipeline selesai:
 
 ### 4. Person 3 — Pipeline & Schema
 
-#### 🏗️ BASE Tasks (single-dataset pipeline)
-Fokus pada satu dataset dulu sebelum canonical schema multi-dataset:
-- [ ] Buka dan eksplorasi `Grocery_Inventory new v1.csv` (setelah Person 0 fix typo).
-- [ ] Buat pipeline Python untuk membersihkan, memvalidasi, dan mengekspor `canonical_batch_table.csv` dari dataset tunggal ini.
-- [ ] Tetapkan standar format tanggal (`YYYY-MM-DD`) dan konversi harga ke MYR dari dataset ini saja.
-- [ ] Pastikan output CSV kompatibel dengan schema Supabase Person 4.
-
+#### 🏗️ BASE Tasks (Goal 4 Base — ETL Pipeline Tunggal)
+Fokus pada satu dataset saja (`Grocery_Inventory`). Goal 3 (Canonical Schema multi-dataset) adalah UPGRADE — jangan dikerjakan dulu:
+- [ ] Buka dan eksplorasi `Grocery_Inventory new v1.csv` (setelah Person 0 fix typo `Catagory`).
+- [ ] Tulis script ETL Python (`etl/process_store_inventory.py`): bersihkan, validasi, dan standardisasi kolom (`lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `unit_price_myr`).
+- [ ] Tetapkan standar format tanggal (`YYYY-MM-DD`) dan satuan unit.
+- [ ] Ekspor `lots_base.csv` — input langsung ke Spoilage Classifier (Person 1), Rule Engine (Person 4), dan Supabase (Person 4).
+- [ ] Buat script validasi integritas: tidak ada tanggal kedaluwarsa negatif, tidak ada kuantitas null.
 #### 🚀 UPGRADE Tasks (Canonical Schema multi-dataset)
 - [ ] Buka sampel 5 baris dari tiap dataset (Inventory, M5, Food Waste, PriceCatcher).
 - [ ] Susun tabel mapping padanan kategori (misal: `Produce` ↔ `FOODS_1` ↔ `Sayur`) — **Goal 3 Canonical Schema**.
@@ -113,10 +113,10 @@ Fokus pada satu dataset dulu sebelum canonical schema multi-dataset:
 Logika bisnis dan struktur database bisa dibangun dengan mock data:
 
 #### 🏗️ BASE Tasks
-- **Bagian Rule Engine 3-Jalur (Goal 6 Base):**
-  - [ ] Tulis logika murni Python `assign_route(days_to_expiry, risk_score, price)` dengan 3 jalur: `normal_sale`, `discount_sale`, `donation`.
+- **Bagian Rule Engine Dynamic Markdown + Anti-Moral-Hazard (Goal 6 Base+):**
+  - [ ] Tulis logika Python `assign_route(days_to_expiry, quantity, forecast_demand, price_myr)` dengan 3 jalur: `normal_sale`, `dynamic_markdown` (diskon bertahap berbasis harga DOSM MYR dari Person 0), `donation`.
+  - [ ] Implementasikan aturan *anti-moral-hazard pembeli*: donasi disalurkan secara tertutup ke food bank terverifikasi (bukan di rak toko), kuota donasi maksimal 30% dari surplus.
   - [ ] Buat unit test sederhana dengan 5 contoh dictionary batch dummy.
-  - [ ] *Belum perlu:* dynamic pricing, kuota anti-moral-hazard, ReFED 10 destinasi (itu Upgrade).
 - **Bagian Cloud Database (Goal 9):**
   - [ ] Buat project baru di [supabase.com](https://supabase.com).
   - [ ] Eksekusi skrip DDL SQL untuk membuat 5 tabel (`batches`, `simulation_events`, `dispatch_log`, `receivers`, `cluster_results`) — **termasuk kolom Upgrade sebagai NULL placeholder**.
@@ -142,7 +142,7 @@ Logika bisnis dan struktur database bisa dibangun dengan mock data:
 - [ ] Tulis fungsi seleksi sederhana (greedy Euclidean): `select_receiver(batch, receivers_df)` — pilih penerima dengan kapasitas cukup + kategori sesuai, tanpa OSRM dulu.
 - [ ] Buat unit test: jalankan fungsi dengan 5 batch dummy, pastikan output `receiver_id` valid.
 
-#### 🚀 UPGRADE Tasks (Selaras Alur PDF)
+#### 🏗️ BASE Tasks — Goal 5 & Goal 7 (Selaras Alur PDF Langkah 5)
 - **Goal 5 — Waste-Risk Model:**
   - [ ] Gunakan `food_waste_dataset.csv` (8.000 baris, setelah Person 0 imputasi).
   - [ ] Latih model klasifikasi/regresi untuk memprediksi probabilitas waste (`waste_risk_score`).
@@ -153,10 +153,10 @@ Logika bisnis dan struktur database bisa dibangun dengan mock data:
   - [ ] Upgrade fungsi `select_receiver()` agar gunakan jarak riil OSRM (km + ETA) bukan Euclidean.
   - [ ] Simpan polyline rute ke `dispatch_log.csv` untuk ditampilkan di Peta Rute frontend.
 
-#### 💡 OPSIONAL Tasks (Stretch Goals - Di Luar Alur PDF)
-- **Goal 8 — K-Means Clustering Toko:**
-  - [ ] Jalankan K-Means (5 baris Scikit-Learn) pada output simulasi untuk klaster toko berdasarkan waste rate & velocity.
-  - [ ] Tulis `cluster_report.md` untuk bahan analisis makalah/laporan akhir.
+#### 🚀 UPGRADE Tasks
+- **Goal 7 Multi — Multi-Drop Dispatch Optimization:**
+  - [ ] Upgrade dispatch agar 1 armada bisa mengambil surplus dari 2 toko terdekat sekaligus (multi-stop OSRM route).
+  - [ ] Update `dispatch_log.csv` dengan kolom `multi_stop` dan urutan pickup.
 
 ---
 
@@ -171,12 +171,12 @@ Frontend modern tidak perlu menunggu backend selesai berkat teknik *mocking*:
 - [ ] Buat tabel Batch List dengan filter dummy (store, category, risk_label, route).
 - [ ] Buat layout halaman Admin `/admin` dengan proteksi form login Supabase Auth.
 - [ ] Buat template slide presentasi di Canva (palet warna, tipografi, layout konsisten).
-
-#### 🚀 UPGRADE Tasks (Selaras Alur PDF)
 - [ ] Install `leaflet` + `react-leaflet`.
-- [ ] Tambah **Tab "Peta Rute"** ke dashboard: plot marker penerima + polyline OSRM dari `dispatch_log` — **visualisasi rute pengiriman donasi riil (Langkah 5 PDF)**.
+- [ ] Tambah **Peta Rute Interaktif Leaflet JS**: plot marker toko + food bank + polyline rute jalan riil OSRM — **visualisasi Langkah 5 PDF**.
 - [ ] Tambah badge warna `waste_risk_score` di tabel Batch List (merah/kuning/hijau).
 
+#### 🚀 UPGRADE Tasks
+- [ ] Tambah layer visualisasi seluruh armada pengiriman **multi-store** di peta Leaflet (filter per `store_id` cabang).
 #### 💡 OPSIONAL Tasks (Stretch Goals)
 - [ ] Tambah **Tab "Klaster Toko"**: scatter plot K-Means dari `cluster_results` (analisis profil toko multi-cabang).
 
@@ -190,16 +190,16 @@ Pekerjaan berikut adalah satu-satunya bagian yang **harus menunggu** modul lain 
 
 | Pekerjaan yang Menunggu | Menunggu Apa? | Kapan Mulai? |
 |---|---|---|
-| **Step A2 BASE:** Upload `batches` ke Supabase | Output `canonical_batch_table.csv` dari Person 3 | Minggu ke-2/3 |
+| **Step A2 BASE:** Upload `batches` ke Supabase | Output `lots_base.csv` dari Person 3 | Minggu ke-2/3 |
+| **Goal 5 (Person 5):** Waste-Risk model | Person 0 selesai imputasi 8K (`food_waste_dataset.csv`) | Setelah Person 0 selesai |
+| **Goal 7 (Person 5):** OSRM Dispatch Engine | `receivers_list.csv` tersedia + Person 5 selesai greedy placeholder | Setelah BASE placeholder selesai |
+| **Peta Rute Leaflet (Person 6):** Visualisasi rute | Person 5 Goal 7 selesai, polyline tersedia | Setelah Goal 7 selesai |
 | **Koneksi frontend ke API asli** | API FastAPI Person 2 membaca Supabase asli | Akhir BASE phase |
-
 ### 🚀 UPGRADE Bottlenecks (Core Enhancement)
 
 | Pekerjaan yang Menunggu | Menunggu Apa? | Kapan Mulai? |
 |---|---|---|
 | **Goal 4 Full (Person 3):** Multi-dataset merge | Person 0 selesai DOSM lookup | Setelah BASE stabil |
-| **Goal 5 (Person 5):** Waste-Risk model | Person 0 selesai imputasi 8K | Setelah BASE stabil |
-| **Tab Peta Rute (Person 6)** | Person 5 Goal 7 OSRM selesai, polyline tersedia | Setelah Upgrade dimulai |
 | **Step A2 UPGRADE:** Upload events & dispatch log | Output simulasi Step 10 & 13 selesai | Setelah Upgrade dimulai |
 
 ### 💡 OPSIONAL Bottlenecks (Stretch Goals)

@@ -1,4 +1,4 @@
-# WORKSTEPS — Dynamic Food Clearing House
+﻿# WORKSTEPS — Dynamic Food Clearing House
 > **Scope:** Step 7 (FEFO/Stok) → Step 14 (Monitoring)  
 > Step 1–6 (produksi) hanya konteks; tidak dikerjakan di proyek ini.
 
@@ -99,11 +99,11 @@
 - [ ] Kalibrasi waste rate per kategori menggunakan FAO FLW benchmark
 - [ ] Kalibrasi demand per toko menggunakan output Step 8
 - [ ] Kalibrasi harga menggunakan PriceCatcher MYR (dari Person 0)
-- [ ] Output: `simulation_events.csv` — log semua event batch selama horizon simulasi
+- [ ] Output: `simulation_events.csv` — log semua event batch selama horizon simulasi (event types: `received`, `active_fefo`, `markdown`, `dispatched`, `wasted`)
 
 ---
 
-## 🚀 UPGRADE — Step 11 — Deteksi Surplus & Waste-Risk Scoring
+## 🏗️ BASE — Step 11 — Deteksi Surplus & Waste-Risk Scoring
 
 **Goal:** Menambahkan model ML khusus yang memprediksi probabilitas lot terbuang berdasarkan kondisi penyimpanan dan tren bisnis. Ini **model terpisah** dari Spoilage Classifier di Step 7 — model Step 7 tidak perlu diulang.
 
@@ -152,7 +152,7 @@
 
 ---
 
-## 🚀 UPGRADE — Step 13 — Matching & Dispatch ke Penerima (OSRM)
+## 🏗️ BASE — Step 13 — Matching & Dispatch ke Penerima (OSRM)
 
 **Goal:** Untuk lot yang masuk jalur donasi, sistem mencocokkan secara otomatis ke food bank / pantry terdekat dan menjadwalkan pengambilan.
 
@@ -204,8 +204,8 @@
 | `models/demand_forecaster.pkl` | Step 8 | 🏗️ BASE |
 | `canonical_batch_table.csv` | Step 9 | 🚀 UPGRADE |
 | `simulation_events.csv` | Step 10 Full | 🚀 UPGRADE |
-| `models/waste_risk_model.pkl` | Step 11 | 🚀 UPGRADE |
-| `dispatch_log.csv` | Step 13 | 🚀 UPGRADE |
+| `models/waste_risk_model.pkl` | Step 11 | 🏗️ BASE |
+| `dispatch_log.csv` | Step 13 | 🏗️ BASE |
 | `cluster_report.md` + visualisasi | Step 14 | 💡 OPSIONAL |
 
 ---
@@ -215,13 +215,14 @@
 | Step | Phase | Status |
 |---|---|---|
 | Step 7 — FEFO & Stok | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 7 — FEFO & Stok | 🏗️ BASE | ⬜ Belum dimulai |
 | Step 8 — Demand Forecasting | 🏗️ BASE | ⬜ Belum dimulai |
-| Step 8 Upgrade — Kalender MY | 🚀 UPGRADE | ⬜ Menunggu Person 0 |
-| Step 10 Base — Batch Generator | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 10 Base — Batch Generator (`lots_base.csv`) | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 11 — Waste-Risk Scoring | 🏗️ BASE | ⬜ Menunggu Person 0 (dataset 8K) |
 | Step 12 Base — Rule Engine 3 Jalur | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 13 — Matching & Dispatch (OSRM) | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 8 Upgrade — Kalender MY | 🚀 UPGRADE | ⬜ Menunggu Person 0 |
 | Step 9 — Canonical Schema | 🚀 UPGRADE | ⬜ Belum dimulai |
 | Step 10 Full — Multi-Source Simulator | 🚀 UPGRADE | ⬜ Belum dimulai |
-| Step 11 — Waste-Risk Scoring | 🚀 UPGRADE | ⬜ Menunggu Person 0 (dataset 8K) |
 | Step 12 Full — Rule Engine ReFED | 🚀 UPGRADE | ⬜ Menunggu Person 0 (DOSM) |
-| Step 13 — Matching & Dispatch (OSRM) | 🚀 UPGRADE | ⬜ Belum dimulai |
 | Step 14 — Monitoring & Clustering | 💡 OPSIONAL | ⬜ Menunggu output simulator (stretch goal) |
