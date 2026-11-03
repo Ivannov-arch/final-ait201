@@ -7,11 +7,11 @@
 
 ## 3 Kategori Klasifikasi Fitur (Rebalanced)
 
-| Label | Kategori | Target Waktu | Deskripsi |
+| Label | Kategori | Fase Eksekusi | Deskripsi |
 |:---:|---|:---:|---|
-| 🏗️ **BASE** | **Core System (Toko Solid + GIS Leaflet)** | Sebelum UTS | Sistem toko 6-langkah sesuai PDF yang berbobot: didukung data harga pasar DOSM Malaysia, kalender libur lokal, model ML ganda (Spoilage + Waste-Risk), dan **peta rute interaktif Leaflet JS berbasis OSRM**. |
-| 🚀 **UPGRADE** | **Multi-Store Clearing House Expansion** | Sebelum UAS | Ekspansi skala dari toko tunggal menjadi ekosistem clearing house multi-cabang (simulator event dinamis, taksonomi ReFED 10-destinasi penuh, dan rute multi-drop). |
-| 💡 **OPSIONAL** | **Stretch Goals (Analitik Makro)** | Bonus / Pasca-UAS | Analisis segmentasi toko K-Means (5 baris Sklearn), deteksi anomali toko boros, dan live streaming log terminal untuk nilai tambah akademis di laporan akhir. |
+| 🏗️ **BASE** | **Core System (Toko Solid + GIS Leaflet)** | Fase 1 (Prioritas Utama) | Sistem toko 6-langkah sesuai PDF yang berbobot: didukung data harga pasar DOSM Malaysia, kalender libur lokal, model ML ganda (Spoilage + Waste-Risk), dan **peta rute interaktif Leaflet JS berbasis OSRM**. |
+| 🚀 **UPGRADE** | **Multi-Store Clearing House Expansion** | Fase 2 (Ekspansi Skala) | Ekspansi skala dari toko tunggal menjadi ekosistem clearing house multi-cabang (simulator event dinamis, taksonomi ReFED 10-destinasi penuh, dan rute multi-drop). |
+| 💡 **OPSIONAL** | **Stretch Goals (Analitik Makro)** | Fase 3 (Fitur Opsional) | Analisis segmentasi toko K-Means (5 baris Sklearn), deteksi anomali toko boros, dan live streaming log terminal untuk nilai tambah akademis di laporan akhir. |
 
 ---
 
@@ -40,7 +40,7 @@
 
 ### Integrasi Data Riil Malaysia di Fase BASE
 
-Keempat data ini **langsung masuk ke Fase BASE** untuk menjamin bobot akademis saat UTS:
+Keempat data ini **langsung masuk ke Fase BASE** untuk menjamin bobot dan kelengkapan sistem sejak awal:
 
 | Data Komponen | Penanggung Jawab | Masuk Ke | Manfaat Langsung pada Alur BASE |
 |---|---|---|---|
