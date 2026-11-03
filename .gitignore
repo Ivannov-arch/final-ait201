@@ -43,8 +43,8 @@ models/*.onnx
 !models/.gitkeep
 
 # Data Files (large files / datasets)
-data/raw/*
-data/processed/*
+#data/raw/*
+#data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 *.parquet
