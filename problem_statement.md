@@ -31,7 +31,7 @@
 | Produksi spekulatif, bukan demand-driven | Overproduction → surplus sejak hulu |
 | Stok dikelola buta terhadap umur simpan | Batch bernilai tinggi terbuang lebih dulu |
 | Reaksi terhadap surplus terlambat | Makanan layak konsumsi berakhir di landfill |
-| Tidak ada insentif untuk mencegah waste | Donasi malah bisa jadi alasan overproduce (moral hazard) |
+| Tidak ada insentif untuk mencegah waste | Donasi terbuka memicu moral hazard pembeli (menahan beli demi menunggu donasi gratis) & kanibalisasi penjualan ritel |
 | Data tersebar, tidak terhubung | Tidak ada visibilitas, tidak ada akuntabilitas |
 
 FAO mencatat food loss terjadi di hampir semua tahap—produksi, post-harvest, penyimpanan, transportasi, pengolahan—dan sebagian besar karena sistem bereaksi setelah masalah terjadi, bukan mencegahnya. [food.ec.europa](https://food.ec.europa.eu/system/files/2019-10/fw_lib_fao-2019_en.pdf)
@@ -53,7 +53,7 @@ Kita tidak membangun aplikasi food rescue. Kita membangun **Dynamic Food Clearin
 1. **Menyerang akar masalah, bukan gejala** — waste tidak dipandang sebagai kecelakaan di akhir rantai, tapi konsekuensi keputusan yang bisa diintervensi lebih awal.
 2. **Data riil tersedia dan saling melengkapi** — PriceCatcher (harga MY), M5 (pola demand), Grocery Inventory (stok/expiry), FAO FLW (benchmark) semuanya terbuka dan bisa disatukan lewat mapping table.
 3. **Feasible sebagai simulator solo** — tidak butuh mitra nyata untuk MVP; entitas donor/penerima bisa disimulasikan dengan kalibrasi dari data riil.
-4. **Anti-moral-hazard by design** — donasi hanya jalur terakhir setelah dynamic pricing dan penawaran komersial, dengan kuota & reputasi donor, sehingga tidak menciptakan insentif overproduce.
+4. **Anti-moral-hazard by design** — mencegah moral hazard pembeli yang sengaja menahan pembelian (*strategic waiting*) demi menunggu makanan gratis; donasi disalurkan tertutup ke institusi sosial terverifikasi (*channel segregation*) hanya setelah melalui diskon komersial (*dynamic pricing*), dengan kuota ketat agar tidak mengkanibalisasi penjualan toko.
 5. **Skalabel ke eksekusi nyata** — arsitektur tidak berubah saat naik dari simulasi ke pilot; cukup ganti entitas simulasi dengan mitra sungguhan.
 
 ## Step Intervensi & ML yang Dipakai

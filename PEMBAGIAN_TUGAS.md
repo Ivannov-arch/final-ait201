@@ -1,175 +1,154 @@
 # PEMBAGIAN TUGAS KELOMPOK — DYNAMIC FOOD CLEARING HOUSE
 
 > **Struktur Tim (Total 7 Anggota):**  
-> • **1 Orang Dedicated:** Dataset Quality & Audit Engineer  
-> • **6 Orang Pelaksana:** Eksekusi Goals 1 s/d 12
+> • **1 Orang Dedicated:** Dataset Quality & Localization Specialist (Person 0)  
+> • **6 Orang Pelaksana Teknis:** Eksekusi ML, Backend, Database, GIS/Routing, & Frontend (Person 1–6)
 
 ---
 
-## 0. Panduan Baca: Dua Fase Pembangunan
+## 0. Panduan Baca: Dua Fase Pembangunan (Rebalanced)
 
-Proyek ini dibangun dalam **dua fase** yang dirancang agar tidak ada kode yang dibuang:
+Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, seimbang, dan berbobot akademis sejak Fase Base (UTS)**, dengan kelanjutan yang mulus ke Fase Upgrade (UAS):
 
 ```
-╔══════════════════════════════════════════════════════════════════╗
-║  🏗️  BASE  (Prioritas Utama — Target selesai sebelum UTS)       ║
-║  Sistem 6-Langkah persis seperti di Alur_Penggunaan_Sistem.pdf  ║
-║  → FEFO, Spoilage Risk, Demand Forecast, Aksi, Dashboard Toko   ║
-╠══════════════════════════════════════════════════════════════════╣
-║  🚀  UPGRADE  (Setelah Base berjalan stabil)                    ║
-║  Tambah kecerdasan di BALIK LAYAR — UI tidak berubah sama sekali║
-║  → Harga DOSM, Kalender MY, OSRM Routing, Clustering Toko       ║
-╚══════════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════════╗
+║  🏗️  BASE (Target: Sebelum UTS — Demo Solid, Lengkap, & Berbobot)          ║
+║  Sistem Toko 6-Langkah Sesuai PDF + Data Riil Malaysia + Visualisasi GIS   ║
+║  → FEFO, Spoilage ML, Forecast Libur MY, Dynamic Markdown DOSM,            ║
+║    Waste-Risk ML, OSRM Smart Dispatch, Peta Rute Interaktif (Leaflet JS)   ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║  🚀  UPGRADE & 💡 OPSIONAL (Target: Menjelang UAS — Skala Multi-Toko & BI) ║
+║  Ekspansi dari 1 Toko menjadi Jaringan Multi-Cabang & Analitik Makro       ║
+║  → Simulator Multi-Toko (Event Stream), ReFED 10-Jalur Penuh,              ║
+║    K-Means Clustering Toko & Deteksi Anomali Pemborosan                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
 ```
 
-> [!IMPORTANT]
-> **Upgrade TIDAK merusak Base.** Tombol, layar, dan alur 6 langkah di PDF tetap sama persis. Yang berubah hanya "mesin" di belakangnya — semakin cerdas, semakin akurat, semakin berbobot di hadapan penguji.
+---
+
+## 1. Matriks Pembagian Tugas (Dua Fase Berkelanjutan)
 
 ---
 
-## 1. Matriks Ringkasan Peran & Tanggung Jawab
+### 📋 TABEL 1: Pembagian Tugas 🏗️ BASE (Target Selesai Sebelum UTS)
+> **Fokus:** Merealisasikan alur 6-langkah sesuai `Alur_Penggunaan_Sistem.pdf` menjadi sistem nyata yang berbobot: didukung data pasar riil Malaysia, model ML ganda, dan visualisasi rute interaktif Leaflet JS.
 
-| No | Anggota / Peran | Goals Base 🏗️ | Goals Upgrade 🚀 | Topik Presentasi |
-|:---:|---|---|---|---|
-| **0** | **Dataset Quality Specialist** | Typo + Null fix (2 tugas kecil) | Lookup DOSM, Kalender MY, Imputasi 8K rows | *Data Quality Engineering: Audit, Perbaikan, dan Harmonisasi Data Multi-Sumber* |
-| **1** | **Tech Lead & ML Tabular (Anda)** | **Goal 1** (Spoilage Classifier) + Supervisi | Bantu cicil **Goal 8** (Clustering) jika Person 5 kelebihan beban | *Klasifikasi Spoilage Risk (FEFO) & Arsitektur Solusi Keseluruhan* |
-| **2** | **Forecaster & API Engineer** | **Goal 2** (Forecast 3 hari) + **Goal 10** (FastAPI) | **Goal 2 Upgrade:** tambah fitur kalender libur MY dari Person 0 | *Time-Series Demand Forecasting & Layanan REST API* |
-| **3** | **Data Architect & Simulator** | Pipeline data tunggal (1 dataset → model) + **Goal 4 Base** | **Goal 3** (Canonical Schema 5 dataset) + **Goal 4 Full** (Multi-source Simulator) | *Skema Data Kanonikal & Engine Simulator Multi-Sumber* |
-| **4** | **Business Logic & Cloud DB** | **Goal 6 Base** (Rule Engine sederhana) + **Goal 9** (Supabase) | **Goal 6 Upgrade** (ReFED + Dynamic Pricing + Anti-Moral-Hazard + Kuota Donasi) | *Logika Bisnis Clearing House & Arsitektur Cloud Database* |
-| **5** | **Risk, Routing & Analytics** | Siapkan daftar receiver + logika greedy dasar | **Goal 5** (Waste-Risk ML) + **Goal 7** (OSRM Dispatch) + **Goal 8** (Clustering) | *Waste-Risk Scoring, Optimasi Dispatch Rute, & Analisis Klaster Toko* |
-| **6** | **Frontend & Visual Lead** | **Goal 11** (Dashboard Toko) + **Goal 12** (Admin) + Canva Polish | Tambah tab Peta Rute Donasi & Grafik Klaster ke dashboard jika Upgrade selesai | *Antarmuka Interaktif Real-Time & Konsistensi Desain Presentasi* |
-
----
-
-## 2. Rincian Detail Tugas Tiap Anggota
+| No | Anggota & Peran | Goal BASE | Deliverable Utama BASE | Deskripsi Pekerjaan BASE | Kompleksitas |
+|:---:|---|:---:|---|---|:---:|
+| **0** | **Dataset Quality & Localization** | Data Prep & Audit | Paket Dataset Bersih & Terlokalisasi Malaysia | Perbaiki typo `Catagory` & null Cabbage; susun kalender libur nasional Malaysia (`holidays_my.csv`); unduh lookup DOSM PriceCatcher (`item.parquet`); serta imputasi 5 kolom null di `food_waste_dataset.csv` 8K. | 🔄 Sedang (Data Cleaning & Mapping) |
+| **1** | **Tech Lead & ML Tabular (Anda)** | **Goal 1** | Model `spoilage_classifier.pkl` + FEFO Sorter | Feature engineering `days_to_expiry` & `turnover_ratio`, klasifikasi risiko kadaluarsa LOW/MODERATE/HIGH (Langkah 1 & 2 PDF) + supervisi arsitektur & integrasi sistem tim. | ⚡ Ringkas dengan AI |
+| **2** | **Forecaster & API Engineer** | **Goal 2 & 10** | Model `demand_forecast.pkl` + REST API FastAPI | Latih model peramalan permintaan 3 hari (M5) dengan fitur kalender libur Malaysia dari Person 0 (Langkah 3 PDF) + bangun server FastAPI (endpoint lots, forecast, recommend, route OSRM, summary). | 🧠 Manual-Heavy (Tuning Time-Series) |
+| **3** | **Data Architect & Pipeline** | **Goal 3 & 4 Base** | Canonical Schema Dasar + Script Pipeline Toko | Rancang format data lot standar toko dan bangun script ETL Python yang mengolah inventaris mentah menjadi `lots_base.csv` siap konsumsi untuk Supabase dan dashboard. | ⚡ Ringkas dengan AI |
+| **4** | **Business Logic & Cloud DB** | **Goal 6 Base+ & 9** | Rule Engine Dynamic Markdown + Supabase Cloud DB | Bangun logika `assign_route()` berbasis harga acuan pasar DOSM MYR dan hari kadaluarsa (Langkah 4 PDF); terapkan segregasi donasi tertutup (*anti-moral-hazard pembeli*) + setup 5 tabel PostgreSQL & RLS Supabase. | ⚡ Ringkas dengan AI |
+| **5** | **Risk & Smart Dispatch Lead** | **Goal 5 & 7** | Model `waste_risk_model.pkl` + OSRM Dispatch Engine | Latih model probabilitas waste dari data 8K Person 0; susun daftar food bank Lembah Klang; integrasikan **API OSRM (1 baris HTTP GET)** untuk menghitung jarak km, durasi ETA, dan **polyline rute jalan riil** (Langkah 5 PDF). | 🔄 Mixed (ML Tabular + API GIS) |
+| **6** | **Frontend, GIS & Visual Lead** | **Goal 11 & 12 + GIS** | Dashboard Toko 6-Langkah + **Peta Rute Leaflet JS** + Admin | Bangun web app 6-langkah toko PDF; **pasang peta interaktif Leaflet JS** (plot lokasi supermarket, marker food bank terpilih, garis rute polyline jalan riil OSRM + estimasi waktu); panel admin; dan template Canva tim. | 🔄 Mixed (UI Komponen + Leaflet GIS) |
 
 ---
 
-### 👤 Person 0 — Dataset Quality Specialist
+### 🚀 TABEL 2: Pembagian Tugas UPGRADE & OPSIONAL (Target Menjelang UAS)
+> **Fokus:** Mengembangkan sistem dari level toko tunggal menjadi ekosistem simulasi multi-cabang terintegrasi (*Clearing House Scale*) dan analitik komparasi makro.
 
-#### 🏗️ BASE — Wajib Diselesaikan di Minggu 1 (Hanya ~1 Jam Total)
-- [ ] Rename kolom `Catagory` → `Category` di `Grocery_Inventory new v1.csv` *(1 baris Python)*.
-- [ ] Isi nilai null Baris 574 (Cabbage) dengan `'Produce'` *(1 baris Python)*.
-- [ ] Catat perubahan minimal di `dataset_fixes.md`.
+| No | Anggota & Peran | Kelanjutan dari BASE | Goal UPGRADE (Skala Multi-Toko) | Goal OPSIONAL (Stretch Goals) | Deskripsi Pekerjaan Lanjutan & Dampak Sistem |
+|:---:|---|---|:---:|:---:|---|
+| **0** | **Dataset Quality Specialist** | Melanjutkan tata kelola data untuk multi-region | Data Audit Multi-Store & Scraping DOSM Lanjutan | — | Memperkaya data pembanding harga antar-wilayah (Selangor, KL, Penang) untuk simulasi disparitas harga pangan. |
+| **1** | **Tech Lead & ML Tabular (Anda)** | Mengawasi evaluasi model & simulasi clearing house | Evaluasi Model Ensemble & Validasi Clearing House | Dampingi interpretasi **Goal 8** | Menguji ketahanan model saat volume surplus melonjak; menyusun bab metodologi dan arsitektur pada laporan akhir/makalah. |
+| **2** | **Forecaster & API Engineer** | Memperluas API toko tunggal ke API multi-cabang | Forecast Multi-Store + Endpoint Telemetri | — | Menambahkan parameter `store_id` pada endpoint forecasting dan menyediakan endpoint streaming telemetri simulasi. |
+| **3** | **Data Architect & Pipeline** | Memperluas generator lot tunggal ke simulator dinamis | **Goal 4 Full** (Multi-Source Simulator Engine) | — | Membangun engine simulasi dinamis multi-toko berbasis event loop (`simulation_events.csv`: penerimaan stok, penjualan harian, surplus, dan dispatch harian). |
+| **4** | **Business Logic & Cloud DB** | Memperluas jalur donasi ke taksonomi surplus lengkap | **Goal 6 Full** (ReFED 10-Destinasi Lengkap) | — | Menambahkan jalur surplus non-manusia: pengalihan ke pakan ternak (*animal feed*), industri kompos, dan mekanisme lelang B2B wholesale. |
+| **5** | **Risk & Smart Dispatch Lead** | Dari rute titik-ke-titik ke optimasi analitik toko | Optimasi Multi-Drop Dispatch | **Goal 8** (K-Means Clustering Toko & Produk) | **Upgrade:** Dispatch gabungan (1 armada mengambil dari 2 toko terdekat). **Opsional (Stretch):** Segmentasi toko K-Means (5 baris Sklearn) berdasarkan pola pemborosan untuk laporan. |
+| **6** | **Frontend, GIS & Visual Lead** | Dari peta 1 toko ke peta jaringan multi-cabang | Peta Jaringan Multi-Toko (Leaflet Multi-Layer) | **Tab Klaster Toko** (Scatter Plot) | **Upgrade:** Menampilkan seluruh armada dispatch aktif di peta Leaflet. **Opsional (Stretch):** Visualisasi scatter plot klaster toko untuk slide presentasi. |
 
-#### 🚀 UPGRADE — Dikerjakan Setelah Base Stabil
-> [!NOTE]
-> Ketiga tugas ini terdengar rumit tapi **jauh lebih ringan dari kedengarannya**. Semuanya bisa selesai dalam 1–2 jam duduk.
+---
 
-- [ ] **Kalender Hari Libur Malaysia:** Buat file `holidays_my.csv` berisi ~20 tanggal merah nasional setahun (bisa dari situs *officeholidays.com* atau Google, lalu salin ke Excel/CSV). Tidak perlu otomasi — cukup tabel 2 kolom: `date`, `holiday_name`.
-- [ ] **DOSM PriceCatcher Lookup:** Unduh `item.parquet` dan `premise.parquet` dari [open.dosm.gov.my](https://open.dosm.gov.my/data-catalogue/pricecatcher). Ini bukan dataset besar — cukup `pd.read_parquet()` lalu `merge` ke PriceCatcher CSV yang sudah ada.
-- [ ] **Imputasi `food_waste_dataset.csv`:** Isi nilai kosong di 5 kolom (hanya ~2–3% dari 8.000 baris) menggunakan median/modus per kelompok. AI bisa generate kode ini dalam hitungan detik.
+## 2. Rincian Detail Tugas Tiap Anggota (Fase BASE)
+
+---
+
+### 👤 Person 0 — Dataset Quality & Localization Specialist
+- [ ] Rename kolom `Catagory` → `Category` di `Grocery_Inventory new v1.csv`.
+- [ ] Isi nilai null baris 574 Cabbage dengan `'Produce'`.
+- [ ] Buat file `holidays_my.csv` berisi ~20 tanggal merah nasional Malaysia setahun (untuk Goal 2).
+- [ ] Unduh tabel lookup PriceCatcher DOSM (`item.parquet` dan `premise.parquet`) dari open.dosm.gov.my (untuk Goal 6).
+- [ ] Lakukan imputasi group-median pada 5 kolom null di `food_waste_dataset.csv` (8K baris) (untuk Goal 5).
+- [ ] Dokumentasikan hasil di `dataset_fixes.md` dan distribusikan file bersih ke folder `data/`.
 
 ---
 
 ### 👤 Person 1 (Anda) — Tech Lead & ML Tabular
-
-#### 🏗️ BASE
-- [ ] **Goal 1:** Latih model Spoilage Risk Classifier (Random Forest/XGBoost) berbasis `days_to_expiry`, `turnover_ratio`, `stock_quantity`.
-- [ ] Simpan ke `models/spoilage_classifier.pkl` dan buat fungsi inferensi `predict_spoilage_risk(lot_dict)`.
-- [ ] Pastikan output fungsi berupa JSON: `{"label": "HIGH", "score": 0.87}` yang langsung bisa dikonsumsi backend.
-- [ ] Pantau arah proyek agar sesuai `problem_statement.md` dan buka sesi konsultasi berkala.
-
-#### 🚀 UPGRADE *(Taktik Cadangan — Dikerjakan jika Ada Waktu Luang)*
-- [ ] Bantu Person 5 mencicil **Goal 8:** evaluasi elbow method + visualisasi scatter plot klaster toko.
+- [ ] Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok di `Grocery_Inventory`.
+- [ ] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
+- [ ] Latih model klasifikasi spoilage risk (`HIGH`, `MEDIUM`, `LOW`) dengan Random Forest / XGBoost.
+- [ ] Evaluasi model (F1-Score, Confusion Matrix) dan simpan ke `models/spoilage_classifier.pkl`.
+- [ ] Buat fungsi urutan FEFO: `sort_by_fefo(batch_list)`.
+- [ ] Supervisi arsitektur data, API contract, dan alur integrasi seluruh modul tim.
 
 ---
 
 ### 👤 Person 2 — Forecaster & API Engineer
-
-#### 🏗️ BASE
-- [ ] **Goal 2 Base:** Eksplorasi `train.csv` M5, buat fitur lag (7, 14 hari) dan rolling mean.
-- [ ] Latih model forecasting (LightGBM / Prophet) untuk prediksi demand **3 hari ke depan** per produk per toko.
-- [ ] **Goal 10:** Inisialisasi FastAPI, buat endpoint awal: `GET /api/lots`, `GET /api/dashboard/summary`, `GET /api/forecast/{product_id}`.
-- [ ] Aktifkan Swagger UI di `/docs` agar bisa langsung diuji tim.
-
-#### 🚀 UPGRADE
-- [ ] **Goal 2 Upgrade:** Terima file `holidays_my.csv` dari Person 0 → tambahkan kolom `is_holiday` ke training data → jalankan ulang training (~2 menit). Model kini peka terhadap lonjakan permintaan hari raya!
-
----
-
-### 👤 Person 3 — Data Architect & Simulator
-
-#### 🏗️ BASE
-- [ ] **Pipeline Data Tunggal:** Bersihkan dan standardisasi format `Grocery_Inventory new v1.csv` menjadi skema dasar: `lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `store_id`.
-- [ ] **Goal 4 Base:** Buat generator lot sederhana dari satu dataset (belum multi-sumber) → hasilkan `lots_base.csv` sebagai input simulator toko.
-
-#### 🚀 UPGRADE
-- [ ] **Goal 3 Full:** Satukan 5 dataset (Inventory + M5 + Food Waste + PriceCatcher + FAO) ke dalam skema kanonikal lengkap dengan mapping kategori dan normalisasi harga MYR.
-- [ ] **Goal 4 Full:** Upgrade generator menjadi simulator multi-toko terkalibrasi yang menghasilkan `simulation_events.csv` penuh.
+- [ ] Load data time-series penjualan `train.csv` (M5).
+- [ ] Gabungkan kalender hari libur Malaysia `holidays_my.csv` dari Person 0 sebagai fitur `is_holiday`.
+- [ ] Buat lag features (lag-7, lag-14, rolling mean penjualan).
+- [ ] Latih model forecasting (LightGBM) untuk prediksi permintaan 3 hari ke depan per produk.
+- [ ] Simpan model ke `models/demand_forecast.pkl`.
+- [ ] Bangun server FastAPI (`backend/main.py`) dengan endpoint:
+  - `GET /api/lots` (daftar stok FEFO)
+  - `GET /api/forecast/{product_id}` (prediksi demand 3 hari)
+  - `POST /api/recommend` (rekomendasi aksi diskon/donasi)
+  - `GET /api/dispatch-route/{batch_id}` (rute OSRM & polyline jalan)
+  - `GET /api/dashboard/summary` (KPI agregat)
+- [ ] Konfigurasi CORS dan Swagger docs di `/docs`.
 
 ---
 
-### 👤 Person 4 — Business Logic & Cloud DB Lead
-
-#### 🏗️ BASE
-- [ ] **Goal 6 Base (Rule Engine Sederhana):** Tulis fungsi `assign_route(days_to_expiry, quantity, demand_forecast)` dengan logika 3 cabang sederhana:
-  - `days_to_expiry > 3` → `"Normal Sale"`
-  - `1 < days_to_expiry ≤ 3` → `"Markdown"` (diskon flat 20%)
-  - `days_to_expiry ≤ 1` → `"Donate"`
-- [ ] **Goal 9:** Inisialisasi project Supabase, jalankan DDL 5 tabel inti, konfigurasikan RLS.
-
-#### 🚀 UPGRADE
-> [!NOTE]
-> Upgrade Rule Engine terdengar berat, tapi kode tambahannya hanya memperluas `if/elif` di `assign_route()`. Bukan menulis ulang dari nol!
-
-- [ ] **Goal 6 Upgrade:** Perluas `assign_route()` berdasarkan taksonomi 10 destinasi ReFED:  
-  `Normal Sale` → `Dynamic Pricing` *(harga berbasis PriceCatcher dari Person 0)* → `Commercial B2B` → `Donation` *(dengan kuota maksimal & cek reputasi donor)* → `Animal Feed / Composting`.
-- [ ] Tambahkan anti-moral-hazard: track rasio donasi per donor, tolak jika melebihi kuota.
+### 👤 Person 3 — Data Architect & Pipeline
+- [ ] Rumuskan Canonical Schema sederhana: nama kolom standar (`lot_id`, `product_id`, `category`, `quantity`, `expiry_date`, `unit_price_myr`).
+- [ ] Tulis script ETL Python (`etl/process_store_inventory.py`) untuk membersihkan dan menstandarisasi inventaris toko.
+- [ ] Ekspor file `lots_base.csv` yang terkalibrasi dan siap di-load oleh Supabase.
+- [ ] Buat script validasi integritas data (tidak ada tanggal kadaluarsa negatif, tidak ada kuantitas null).
 
 ---
 
-### 👤 Person 5 — Risk, Routing & Analytics Lead
-
-#### 🏗️ BASE
-- [ ] Buat daftar 10–20 penerima fiktif realistis (food bank / pantry di Lembah Klang) dalam format CSV: `receiver_id`, `name`, `lat`, `lng`, `capacity`, `accepted_categories`.
-- [ ] Tulis fungsi greedy matching dasar: urutkan penerima berdasarkan jarak terdekat ke donor *(hitung jarak Euclidean dulu jika belum ada OSRM)*.
-
-#### 🚀 UPGRADE
-> [!NOTE]
-> Jangan bayangkan ini seperti membangun Google Maps! Ketiga upgrade ini **jauh lebih simpel dari kesan pertamanya**:
-> - **OSRM** = 1 baris `requests.get("http://router.project-osrm.org/...")` → dapat jarak & ETA.
-> - **K-Means** = 5 baris Scikit-Learn: `KMeans(n_clusters=3).fit(df)`.
-> - **Waste-Risk** = standard ML tabular training seperti yang dilakukan Person 1 & 2.
-
-- [ ] **Goal 7 Upgrade:** Ganti jarak Euclidean dengan **API OSRM** untuk jarak riil & durasi pengiriman. Tambahkan constraint kategori penerima (food bank tertentu tidak menerima produk daging).
-- [ ] **Goal 5:** Latih model **Waste-Risk Scoring** menggunakan `food_waste_dataset.csv` (8K baris dari Person 0) → output skor probabilitas 0–100% untuk tiap lot.
-- [ ] **Goal 8:** Jalankan **K-Means clustering** pada profil agregat toko (waste_rate, clearance_speed) → interpretasikan klaster dan tulis `cluster_report.md` *(dibantu Person 1 jika perlu)*.
+### 👤 Person 4 — Business Logic & Cloud Database
+- [ ] **Rule Engine Dynamic Markdown (Goal 6 Base+):**
+  - Baca harga referensi pasar komoditas MYR dari file DOSM Person 0.
+  - Implementasikan fungsi `assign_route(days_to_expiry, quantity, forecast_demand)`:
+    - *Stok aman:* `Normal Sale` (harga penuh).
+    - *Stok surplus & umur 2–4 hari:* `Dynamic Markdown` (diskon bertahap 15%–40% berbasis harga pasar DOSM).
+    - *Stok surplus & umur ≤ 1 hari:* `Donation` (dialihkan ke mitra food bank).
+  - Terapkan aturan *Anti-Moral-Hazard Pembeli*: donasi dilakukan tertutup ke food bank resmi dan dibatasi kuota maksimal 30% dari surplus.
+- [ ] **Database Supabase (Goal 9):**
+  - Buat project di Supabase dan buat 5 tabel PostgreSQL (`batches`, `simulation_events`, `dispatch_log`, `receivers`, `cluster_results`).
+  - Terapkan Row Level Security (RLS) dan buat view ringkasan dashboard `v_dashboard_summary`.
 
 ---
 
-### 👤 Person 6 — Frontend & Visual Lead
-
-#### 🏗️ BASE
-- [ ] **Goal 11:** Inisialisasi frontend (Next.js / Streamlit + Tailwind CSS).
-- [ ] Bangun 6 langkah antarmuka persis seperti di `Alur_Penggunaan_Sistem.pdf`:
-  - Tampilan lot stok FEFO (badge *Pick First*, warna risiko LOW/MODERATE/HIGH).
-  - Grafik prediksi demand 3 hari ke depan.
-  - Tombol rekomendasi aksi: **Markdown / Bundle / Donate** + tombol Setuju/Tolak staf.
-  - KPI Cards dashboard: Clearance Rate, Lot Terselamatkan (kg), Prediksi Waste.
-- [ ] **Goal 12:** Bangun halaman Admin `/admin` dengan login Supabase Auth dan tabel manajemen lot/penerima.
-- [ ] **Visual Lead:** Koordinasikan template slide Canva (palet warna, tipografi, layout) untuk seluruh anggota tim.
-
-#### 🚀 UPGRADE *(Dipasang Setelah Upgrade Backend Selesai)*
-- [ ] Tambahkan **Tab Peta Rute Donasi** (Leaflet / Mapbox): visualisasi garis donor ↔ food bank terpilih beserta ETA dari OSRM.
-- [ ] Tambahkan **Tab Klaster Toko** di dashboard: scatter plot profil toko dari hasil K-Means Person 5.
+### 👤 Person 5 — Risk & Smart Dispatch Lead
+- [ ] **Model Waste-Risk Scoring (Goal 5):**
+  - Latih model ML (Random Forest/Logistic Regression) pada dataset `food_waste_dataset.csv` 8K hasil imputasi Person 0.
+  - Hasilkan estimasi probabilitas numerik (0–100%) suatu lot akan terbuang dalam berapa jam.
+  - Simpan ke `models/waste_risk_model.pkl`.
+- [ ] **Smart Dispatch & OSRM Engine (Goal 7):**
+  - Buat file `receivers_list.csv` (10–20 food bank, panti asuhan, dan dapur umum di Lembah Klang lengkap dengan lat/lng dan kapasitas).
+  - Buat fungsi matching seleksi penerima: cari food bank terdekat dengan kapasitas mencukupi.
+  - Panggil API OSRM publik via HTTP GET:
+    `requests.get(f"http://router.project-osrm.org/route/v1/driving/{lon_store},{lat_store};{lon_bank},{lat_bank}?overview=full&geometries=geojson")`
+  - Ekstrak: `distance_km`, `eta_minutes`, dan `geometry_coordinates` (polyline rute jalan riil).
+  - Simpan log pengiriman ke `dispatch_log.csv`.
 
 ---
 
-## 3. Timeline Dua Fase
-
-| Fase | Target Minggu | Milestone |
-|---|---|---|
-| 🏗️ **BASE selesai** | Minggu 4–7 (sebelum UTS) | Sistem 6-langkah di PDF berjalan end-to-end, ada demo produk nyata |
-| 🚀 **UPGRADE dimulai** | Minggu 8–11 | Person 0 selesai 3 dataset Upgrade, tim masing-masing colokkan ke sistem |
-| 🏆 **UPGRADE selesai** | Minggu 12–13 | Platform lengkap: OSRM Routing, Clustering, Dynamic Pricing MYR |
-| 📋 **Presentasi Akhir** | Minggu 14 | Demo sistem + laporan + video |
-
----
-
-## 4. Aturan Kerja & Kolaborasi
-
-1. **Zero-Waiting Day 1:** Lihat `INDEPENDENT_TASKS.md` — semua orang bisa mulai hari ini tanpa menunggu modul lain.
-2. **Laporan & Presentasi Sendiri:** Setiap anggota menulis bagian laporan dan slide dari Goal yang mereka kerjakan.
-3. **Kolom Database Disiapkan Sejak Base:** Person 4 wajib membuat tabel Supabase dengan kolom `waste_risk_score`, `receiver_id`, dan `market_price_myr` sejak awal (biarkan `NULL` dulu). Kolom ini yang akan diisi saat Upgrade masuk.
-4. **Format API Jangan Diubah:** Person 2 wajib menjaga format response JSON tidak berubah saat Upgrade. Frontend (Person 6) tidak perlu menyentuh kodenya sama sekali saat kecerdasan backend ditingkatkan.
+### 👤 Person 6 — Frontend, GIS & Visual Lead
+- [ ] Inisialisasi web app Next.js / Streamlit + Tailwind CSS.
+- [ ] Bangun antarmuka toko 6-langkah sesuai PDF:
+  1. Tabel inventaris FEFO dengan badge prioritas *Pick First*.
+  2. Indikator risiko kadaluarsa (warna & skor probabilitas waste dari Person 5).
+  3. Grafik peramalan demand 3 hari (Recharts / Chart.js).
+  4. Kartu rekomendasi aksi (Markdown harga DOSM / Donasi).
+  5. **Visualisasi Peta Interaktif Leaflet JS:**
+     - Plot marker lokasi supermarket (asal).
+     - Plot marker lokasi food bank terpilih (tujuan).
+     - Gambar polyline rute jalan riil dari GeoJSON OSRM.
+     - Tampilkan popup informasi: Jarak (km), Estimasi Waktu Tempuh (ETA menit), dan Jam Pengambilan.
+  6. Dashboard KPI: Lot terselamatkan (kg), Clearance Rate (%), Estimasi Nilai Rupiah/Ringgit yang diselamatkan.
+- [ ] Bangun halaman Admin `/admin` dengan login Supabase Auth.
+- [ ] Desain template presentasi resmi tim di Canva.

@@ -6,7 +6,8 @@
 
 > [!IMPORTANT]
 > **🏗️ BASE** = Dikerjakan pertama, target selesai sebelum UTS. Sistem 6-langkah sesuai `Alur_Penggunaan_Sistem.pdf`.  
-> **🚀 UPGRADE** = Dikerjakan setelah Base stabil. Menambah kecerdasan di balik layar tanpa mengubah UI/alur.
+> **🚀 UPGRADE** = Dikerjakan setelah Base stabil. Penyempurnaan alur PDF dengan 3 dataset riil & smart dispatch OSRM.  
+> **💡 OPSIONAL** = Fitur riset & analitik tambahan (seperti klastering toko K-Means) yang berada di luar alur operasional utama PDF (stretch goals).
 
 ---
 
@@ -138,14 +139,15 @@
 - [ ] Buat unit test dengan 5 contoh lot dummy
 - [ ] Output: field `recommended_route` + `discount_percent` per lot
 
-### 🚀 UPGRADE — Rule Engine ReFED (10 Jalur + Anti-Moral-Hazard)
-**Goal:** Perluas fungsi yang sudah ada (bukan tulis ulang) menggunakan taksonomi ReFED dan harga pasar DOSM.
+### 🚀 UPGRADE — Rule Engine ReFED (10 Jalur + Anti-Moral-Hazard Pembeli)
+**Goal:** Perluas fungsi yang sudah ada menggunakan taksonomi ReFED, harga pasar riil DOSM, dan pencegahan moral hazard pembeli (kanibalisasi penjualan).
 
 - [ ] Baca & pahami taksonomi destinasi surplus ReFED (10 jalur)
-- [ ] Perluas `assign_route()` dengan jalur tambahan: `commercial_offer` → `donation` *(berquota)* → `animal_feed` → `composting`
-- [ ] Implementasi dynamic pricing: hitung `discount_percent` berdasarkan `days_to_expiry` & `price_index_myr` dari DOSM
-- [ ] Implementasi kuota donasi per donor (anti-moral-hazard)
-- [ ] Implementasi reputasi donor: track rasio `donated / total_surplus`
+- [ ] Perluas `assign_route()` dengan jalur komersial sebelum donasi: `normal_sale` → `dynamic_markdown` (DOSM MYR) → `b2b_wholesale` → `donation` *(tertutup & berkuota)* → `animal_feed` → `composting`
+- [ ] Implementasi dynamic pricing: hitung `discount_percent` bertahap berdasarkan `days_to_expiry` & acuan harga pasar DOSM
+- [ ] Implementasi anti-moral-hazard pembeli:
+  - Salurkan donasi secara tertutup ke institusi/food bank terverifikasi (*channel segregation*), bukan di rak umum toko, agar konsumen tidak menahan belanja demi menunggu barang gratis.
+  - Terapkan kuota donasi maksimal (maks 30% dari surplus) agar toko terdorong mengoptimalkan diskon komersial.
 - [ ] Output: field `recommended_route`, `discount_percent`, `expected_value_myr` per lot
 
 ---
@@ -170,12 +172,12 @@
 
 ---
 
-## 🚀 UPGRADE — Step 14 — Monitoring & Clustering Toko
+## 💡 OPSIONAL — Step 14 — Monitoring & Clustering Toko (K-Means)
 
-**Goal:** Menganalisis pola output simulator untuk menemukan toko mana yang paling boros dan produk mana yang paling sering surplus.
+**Goal:** Menganalisis pola output simulator untuk menemukan toko mana yang paling boros dan produk mana yang paling sering surplus (stretch goal / nilai tambah analitik laporan akhir).
 
 > [!NOTE]
-> **K-Means hanya 5 baris Scikit-Learn.** Yang makan waktu adalah interpretasi dan narasi analitiknya — itulah kontribusi utama Person 5 (dibantu Person 1 jika perlu).
+> **K-Means hanya 5 baris Scikit-Learn.** Fitur ini berada di luar alur operasional 6-langkah toko PDF, berfungsi sebagai analisis manajerial dan bahan visualisasi laporan akademik.
 
 **ML/Teknik:** Unsupervised — K-Means / DBSCAN clustering  
 **Person:** 5 (dibantu Person 1)
@@ -204,7 +206,7 @@
 | `simulation_events.csv` | Step 10 Full | 🚀 UPGRADE |
 | `models/waste_risk_model.pkl` | Step 11 | 🚀 UPGRADE |
 | `dispatch_log.csv` | Step 13 | 🚀 UPGRADE |
-| `cluster_report.md` + visualisasi | Step 14 | 🚀 UPGRADE |
+| `cluster_report.md` + visualisasi | Step 14 | 💡 OPSIONAL |
 
 ---
 
@@ -221,5 +223,5 @@
 | Step 10 Full — Multi-Source Simulator | 🚀 UPGRADE | ⬜ Belum dimulai |
 | Step 11 — Waste-Risk Scoring | 🚀 UPGRADE | ⬜ Menunggu Person 0 (dataset 8K) |
 | Step 12 Full — Rule Engine ReFED | 🚀 UPGRADE | ⬜ Menunggu Person 0 (DOSM) |
-| Step 13 — Matching & Dispatch | 🚀 UPGRADE | ⬜ Belum dimulai |
-| Step 14 — Monitoring & Clustering | 🚀 UPGRADE | ⬜ Menunggu output simulator |
+| Step 13 — Matching & Dispatch (OSRM) | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step 14 — Monitoring & Clustering | 💡 OPSIONAL | ⬜ Menunggu output simulator (stretch goal) |

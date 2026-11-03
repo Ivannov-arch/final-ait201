@@ -10,7 +10,8 @@
 | Label | Nama | Target | Deskripsi |
 |---|---|---|---|
 | 🏗️ **BASE** | PDF-Level | Sebelum UTS | Fitur sesuai `Alur_Penggunaan_Sistem.pdf` — sistem toko tunggal, rule engine 3-jalur, tampilan KPI |
-| 🚀 **UPGRADE** | Blueprint-Level | Sebelum UAS | Fitur dari `problem_statement.md` — Clearing House penuh, peta rute OSRM, tab klaster, multi-toko |
+| 🚀 **UPGRADE** | Core Enhancement | Sebelum UAS | Penyempurnaan alur PDF dengan 3 dataset riil, smart dispatch OSRM, & anti-moral-hazard pembeli |
+| 💡 **OPSIONAL** | Stretch Goals | Bonus / Pasca-UAS | Fitur di luar alur operasional utama PDF (tab klaster K-Means, live simulation SSE streaming) |
 
 > **Komitmen arsitektur:** Semua kode BASE **tidak perlu ditulis ulang** saat Upgrade. Upgrade = tambah saja,
 > tidak ganti. Kolom Upgrade di Supabase wajib ada sejak Day 1 (isi NULL), dan format JSON FastAPI tidak
@@ -95,52 +96,61 @@ WORKSTEPS.md (ML Pipeline)
 
 ### 🏗️ BASE Tasks
 - [ ] Setup project struktur: `backend/main.py`, `backend/routers/`, `backend/services/`, `backend/schemas/`
-- [ ] Install dependensi: `fastapi`, `uvicorn`, `supabase-py`, `python-dotenv`, `pydantic`
+- [ ] Install dependensi: `fastapi`, `uvicorn`, `supabase-py`, `python-dotenv`, `pydantic`, `requests`
 - [ ] Implementasi endpoint `GET /api/batches` — list semua batch dengan filter opsional (store_id, risk_label, route)
 - [ ] Implementasi endpoint `GET /api/batches/{batch_id}` — detail satu batch + event history-nya
 - [ ] Implementasi endpoint `GET /api/dashboard/summary` — KPI: total batch, total waste saved, avg risk score, dispatch success rate
 - [ ] Implementasi endpoint `GET /api/dispatch` — list dispatch log dengan filter status
 - [ ] Implementasi endpoint `GET /api/receivers` — list semua penerima + kapasitas tersisa
+- [ ] Implementasi endpoint `GET /api/dispatch/{batch_id}/route` — panggil OSRM dan kembalikan jarak, ETA, & polyline GeoJSON untuk Leaflet
 - [ ] Setup CORS: izinkan request dari domain frontend
 - [ ] Setup Supabase auth middleware: endpoint `/api/simulate/run` dan `/api/admin/*` hanya bisa diakses dengan Supabase JWT
 - [ ] Tambahkan OpenAPI docs otomatis di `/docs` (default FastAPI)
 - [ ] Test semua endpoint via Swagger UI (`/docs`)
 
-### 🚀 UPGRADE Tasks
-- [ ] Implementasi endpoint `GET /api/clusters` — hasil clustering per entity type
+### 🚀 UPGRADE Tasks (Skala Multi-Toko)
+- [ ] Implementasi endpoint `GET /api/multi-store/routes` — agregasi seluruh rute dispatch antar-cabang toko
 - [ ] Implementasi endpoint `POST /api/simulate/run` — trigger ulang simulasi Python (subprocess call ke WORKSTEPS pipeline)
-- [ ] Implementasi endpoint `GET /api/dispatch/{batch_id}/route` — kembalikan polyline OSRM untuk peta
-- [ ] Implementasi endpoint `GET /api/batches/{batch_id}/waste_risk` — kembalikan waste_risk_score dari Goal 5
+
+### 💡 OPSIONAL Tasks (Stretch Goals)
+- [ ] Implementasi endpoint `GET /api/clusters` — hasil clustering K-Means per entity type
+- [ ] Implementasi WebSocket / SSE streaming telemetri simulasi
 
 ---
 
 ## Step A4 — Frontend Dashboard (Next.js)
 
-**Goal:** Dashboard yang bisa diakses publik (read-only) untuk memvisualisasikan hasil simulasi secara real-time.
+**Goal:** Dashboard yang bisa diakses publik (read-only) untuk memvisualisasikan hasil 6-langkah PDF dan rute pengiriman donasi riil di peta interaktif.
 
-**Stack:** Next.js (App Router) + Tailwind CSS + Recharts / Chart.js + Supabase JS client
+**Stack:** Next.js (App Router) + Tailwind CSS + Recharts / Chart.js + Leaflet.js (`react-leaflet`) + Supabase JS client
 
 ### 🏗️ BASE Tasks
-*(Sesuai 6-langkah alur di `Alur_Penggunaan_Sistem.pdf`)*
+*(Sesuai 6-langkah alur di `Alur_Penggunaan_Sistem.pdf` + Visualisasi GIS Leaflet)*
 - [ ] Init project: `npx create-next-app@latest frontend --typescript --tailwind --app`
-- [ ] Install dependensi: `@supabase/supabase-js`, `recharts`
+- [ ] Install dependensi: `@supabase/supabase-js`, `recharts`, `leaflet`, `react-leaflet`, `@types/leaflet`
 - [ ] Setup Supabase client di `lib/supabase.ts` dengan env vars
 - [ ] Buat halaman `/dashboard` — layout utama dengan sidebar navigasi
 - [ ] Implementasi KPI Cards: Total Batch, Waste Saved (kg), Avg Risk Score, Dispatch Success Rate — data dari `/api/dashboard/summary`
 - [ ] Implementasi chart: Waste Risk Distribution (Bar/Pie chart) — distribusi HIGH/MEDIUM/LOW per kategori
 - [ ] Implementasi chart: Batch Route Funnel — berapa batch di tiap jalur (normal_sale → discount → donation → wasted)
 - [ ] Implementasi chart: Demand Forecast vs Aktual (Line chart) — output Step 8
-- [ ] Implementasi tabel Batch List: filter by store, category, risk_label, route — dengan pagination
+- [ ] Implementasi tabel Batch List: filter by store, category, risk_label, route, serta badge skor probabilitas waste
+- [ ] **Implementasi Peta Interaktif Leaflet JS (Langkah 5 PDF):**
+  - Plot marker toko asal (ikon toko)
+  - Plot marker food bank/penerima terpilih (ikon food bank)
+  - Gambar garis rute jalan riil (*polyline*) dari data GeoJSON OSRM backend
+  - Tampilkan popup info interaktif: jarak tempuh (km), estimasi durasi (ETA menit), dan status pengiriman
 - [ ] Implementasi real-time update: subscribe Supabase Realtime pada tabel `simulation_events`
 - [ ] Responsive design: pastikan tampil baik di desktop & tablet
 - [ ] Deploy ke Vercel: `vercel deploy` + set env vars di Vercel dashboard
 
-### 🚀 UPGRADE Tasks
-*(Tambahan tab, tidak ubah BASE — ini inti inovasi Clearing House kita)*
-- [ ] Install dependensi tambahan: `leaflet`, `react-leaflet`
-- [ ] Tambah **Tab "Peta Rute"**: plot lokasi donor & penerima, garis dispatch dengan polyline OSRM, warna berdasarkan status — **ini bagian "Missing Parts" dari PDF: cara memilih food bank + jarak/ETA pengiriman**
+### 🚀 UPGRADE Tasks (Skala Multi-Toko)
+- [ ] Tambahkan layer visualisasi seluruh armada pengiriman multi-store di peta Leaflet
+- [ ] Filter rute peta berdasarkan `store_id` cabang
+
+### 💡 OPSIONAL Tasks (Stretch Goals)
 - [ ] Tambah **Tab "Klaster Toko"**: scatter plot klaster K-Means toko berdasarkan waste rate & velocity
-- [ ] Tambah indikator waste_risk_score per batch (badge warna merah/kuning/hijau di tabel Batch List)
+- [ ] Visualisasi analisis komparasi multi-store
 
 ---
 
@@ -158,9 +168,8 @@ WORKSTEPS.md (ML Pipeline)
 - [ ] Implementasi middleware Next.js: redirect ke `/admin/login` jika tidak ada Supabase session
 - [ ] Buat halaman `/admin` — layout admin dengan header "Developer Console"
 
-#### Simulation Control
+#### Simulation Control Dasar
 - [ ] Implementasi panel "Run Simulation": form parameter (horizon hari, jumlah toko, seed) → POST `/api/simulate/run`
-- [ ] Tampilkan live log output simulasi (stream dari backend via SSE / WebSocket)
 - [ ] Tampilkan status run terakhir: timestamp, duration, jumlah batch generated, errors
 
 #### Data Management
@@ -168,7 +177,7 @@ WORKSTEPS.md (ML Pipeline)
 - [ ] Implementasi tabel `Batches Raw View`: lihat semua batch dengan semua kolom, bisa export CSV
 - [ ] Implementasi tabel `Dispatch Log`: filter by status (success/failed/pending), bisa update status manual
 
-#### Monitoring
+#### Monitoring Dasar
 - [ ] Implementasi halaman `/admin/models` — info model ML: versi, tanggal training, metrik evaluasi (F1, RMSE, dll.)
 - [ ] Implementasi halaman `/admin/logs` — raw event log `simulation_events` dengan search & filter
 
@@ -177,7 +186,8 @@ WORKSTEPS.md (ML Pipeline)
 - [ ] Test full auth flow: login → akses admin → logout
 - [ ] Deploy bersama frontend ke Vercel (satu project, route terpisah)
 
-### 🚀 UPGRADE Tasks
+### 💡 OPSIONAL Tasks (Stretch Goals)
+- [ ] Tampilkan live log output simulasi streaming dari backend via SSE / WebSocket (cukup log statis di BASE)
 - [ ] Implementasi halaman `/admin/clusters` — visualisasi hasil clustering dengan scatter plot interaktif
 
 ---
@@ -224,12 +234,16 @@ final-ait201/
 |---|---|---|
 | Step A1 — Supabase Schema | 🏗️ BASE | ⬜ Belum dimulai |
 | Step A2 — Data Ingestion (batches only) | 🏗️ BASE | ⬜ Belum dimulai |
-| Step A2 — Data Ingestion (events + dispatch + clusters) | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step A2 — Data Ingestion (events + dispatch) | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step A2 — Data Ingestion (clusters) | 💡 OPSIONAL | ⬜ Belum dimulai |
 | Step A3 — Backend API (core endpoints) | 🏗️ BASE | ⬜ Belum dimulai |
-| Step A3 — Backend API (cluster + OSRM + simulate) | 🚀 UPGRADE | ⬜ Belum dimulai |
-| Step A4 — Frontend Dashboard (6-tab PDF flow) | 🏗️ BASE | ⬜ Belum dimulai |
-| Step A4 — Frontend (Peta Rute + Klaster tab) | 🚀 UPGRADE | ⬜ Belum dimulai |
-| Step A5 — Developer/CMS Page | 🏗️ BASE | ⬜ Belum dimulai |
+| Step A3 — Backend API (OSRM dispatch + waste risk) | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step A3 — Backend API (cluster analysis) | 💡 OPSIONAL | ⬜ Belum dimulai |
+| Step A4 — Frontend Dashboard (6-langkah PDF) | 🏗️ BASE | ⬜ Belum dimulai |
+| Step A4 — Frontend (Tab Peta Rute OSRM) | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step A4 — Frontend (Tab Klaster Toko K-Means) | 💡 OPSIONAL | ⬜ Belum dimulai |
+| Step A5 — Developer/CMS Page Dasar | 🏗️ BASE | ⬜ Belum dimulai |
+| Step A5 — SSE Live Streaming & Advanced Clusters | 💡 OPSIONAL | ⬜ Belum dimulai |
 
 > **Catatan urutan:** A1 → A2 → A3 → A4 → A5. Jangan mulai A2 sebelum minimal Step 10 di WORKSTEPS.md
 > selesai (butuh output CSV). BASE bisa demo tanpa Upgrade aktif sama sekali.

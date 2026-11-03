@@ -8,28 +8,29 @@
 
 ## Phase Legend
 
-| Label | Nama | Target |
-|---|---|---|
-| 🏗️ **BASE** | PDF-Level | Sebelum UTS — fitur sesuai `Alur_Penggunaan_Sistem.pdf` |
-| 🚀 **UPGRADE** | Blueprint-Level | Sebelum UAS — fitur dari `problem_statement.md` (Clearing House penuh) |
+| Label | Nama | Target | Deskripsi |
+|---|---|---|---|
+| 🏗️ **BASE** | PDF-Level | Sebelum UTS | Fitur minimum sesuai alur 6-langkah di `Alur_Penggunaan_Sistem.pdf` |
+| 🚀 **UPGRADE** | Core Enhancement | Sebelum UAS | Penyempurnaan alur PDF dengan 3 dataset riil, smart dispatch OSRM, & anti-moral-hazard pembeli |
+| 💡 **OPSIONAL** | Stretch Goals | Bonus / Laporan | Eksplorasi di luar alur operasional utama PDF (K-Means klastering toko, monitoring kompleks) |
 
-> **Catatan penting:** Task UPGRADE dimulai setelah BASE stabil — bukan karena lebih sulit, tapi
-> karena butuh output BASE sebagai input. Sebagian besar Upgrade jauh lebih sederhana dari namanya:
-> OSRM = 1 baris `requests.get(...)`, K-Means = 5 baris Scikit-Learn, Malaysia holidays = CSV 20 baris.
+> **Catatan penting:** Task UPGRADE dimulai setelah BASE stabil. Sebagian besar Upgrade jauh lebih sederhana
+> dari namanya: OSRM = 1 baris `requests.get(...)`, Malaysia holidays = CSV 20 baris, Food waste 8K = imputasi median.
+> Fitur OPSIONAL (seperti K-Means) hanya dikerjakan jika modul utama sudah berjalan lancar.
 
 ---
 
 ## Ringkasan: Siapa Bisa Langsung Kerja Apa?
 
-| Peran | Penanggung Jawab | Task BASE (Mulai Sekarang) | Task UPGRADE (Setelah BASE Stabil) |
-|---|---|---|---|
-| **Dataset Engineer** | Person 0 | Perbaikan typo + null (±1 jam) | DOSM lookup, holidays CSV, imputasi 8K |
-| **ML Tabular Lead** | Person 1 (Kamu) | **Goal 1:** Spoilage Classifier | *(Tidak ada — fokus supervisi + bantu Person 5 Goal 8)* |
-| **Forecaster & API** | Person 2 | **Goal 2:** Demand Forecasting baseline + **Goal 10:** FastAPI scaffold | Tambah Malaysia holidays ke model |
-| **Data Architect** | Person 3 | Pipeline single-dataset (`Grocery_Inventory`) | **Goal 3:** Canonical Schema multi-dataset + **Goal 4 Full** |
-| **Logic & Database** | Person 4 | **Goal 6 Base:** Rule Engine 3-jalur + **Goal 9:** Supabase setup | **Goal 6 Full:** ReFED 10-destinasi + dynamic pricing |
-| **Risk & Dispatch** | Person 5 | Siapkan daftar receivers CSV + greedy Euclidean matching placeholder | **Goal 5:** Waste-Risk model + **Goal 7:** OSRM + **Goal 8:** Clustering |
-| **Frontend & Design** | Person 6 | **Goal 11 & 12:** Next.js layout + mock data + Canva theme | Tambah Tab Peta Rute (Leaflet) + Tab Klaster |
+| Peran | Penanggung Jawab | Task BASE (Mulai Sekarang) | Task UPGRADE (Selaras PDF & 3 Dataset) | Opsional 💡 (Stretch) |
+|---|---|---|---|---|
+| **Dataset Engineer** | Person 0 | Perbaikan typo + null (±1 jam) | DOSM lookup, holidays CSV, imputasi 8K | — |
+| **ML Tabular Lead** | Person 1 (Kamu) | **Goal 1:** Spoilage Classifier | Supervisi tim + validasi OSRM dispatch | Bantu **Goal 8** jika dikerjakan |
+| **Forecaster & API** | Person 2 | **Goal 2:** Demand Forecasting baseline + **Goal 10:** FastAPI scaffold | Tambah Malaysia holidays ke model | — |
+| **Data Architect** | Person 3 | Pipeline single-dataset (`Grocery_Inventory`) | **Goal 3:** Canonical Schema + **Goal 4 Full** | — |
+| **Logic & Database** | Person 4 | **Goal 6 Base:** Rule Engine 3-jalur + **Goal 9:** Supabase setup | **Goal 6 Full:** ReFED + Dynamic Pricing DOSM + Anti-Moral-Hazard Pembeli | — |
+| **Risk & Dispatch** | Person 5 | Siapkan daftar receivers CSV + greedy Euclidean placeholder | **Goal 5:** Waste-Risk model + **Goal 7:** OSRM Smart Dispatch | **Goal 8:** K-Means Clustering |
+| **Frontend & Design** | Person 6 | **Goal 11 & 12:** Next.js layout + mock data + Canva theme | Tambah Tab Peta Rute OSRM (Leaflet) | Tambah Tab Klaster Toko |
 
 ---
 
@@ -125,36 +126,37 @@ Logika bisnis dan struktur database bisa dibangun dengan mock data:
 - **Bagian Rule Engine ReFED Full (Goal 6 Full):**
   - [ ] Pelajari taksonomi 10 destinasi surplus ReFED.
   - [ ] Perluas `assign_route()` dengan semua 10 jalur ReFED.
-  - [ ] Implementasikan rumus dynamic pricing (penurunan harga bertahap berdasarkan `days_to_expiry`).
-  - [ ] Implementasikan aturan kuota donasi maksimal (anti-moral-hazard: maks 30% batch ke donasi).
+  - [ ] Implementasikan dynamic pricing berbasis harga pasar riil DOSM (dari Person 0).
+  - [ ] **Implementasikan aturan anti-moral-hazard pembeli:**
+    - Segregasi jalur donasi secara tertutup ke institusi sosial berizin (*channel segregation*) agar konsumen toko tidak menahan pembelian demi menunggu donasi gratis.
+    - Kuota donasi maksimal (maks 30% dari total batch surplus).
 
 ---
 
-### 6. Person 5 — Risk, Dispatch & Clustering
+### 6. Person 5 — Risk, Dispatch & Analytics
 
-> **Klarifikasi scope:** Goal 5, 7, 8 adalah **inti inovasi proyek** — inilah yang membedakan kita dari
-> sekadar "kirim ke food bank terdekat". Tapi teknis pengerjaannya jauh lebih sederhana dari namanya:
-> OSRM = 1 baris `requests.get(...)`, K-Means = 5 baris Scikit-Learn.
+> **Klarifikasi scope:** Goal 5 & 7 adalah **penyempurnaan langsung dari alur PDF Langkah 5** (dari sekadar "kirim ke food bank" menjadi pencarian penerima riil, kapasitas, rute, dan ETA). Teknisnya sangat ringkas: OSRM hanya butuh 1 baris kode! Goal 8 (K-Means) adalah eksplorasi analitik opsional.
 
 #### 🏗️ BASE Tasks (bisa dikerjakan Day 1)
 - [ ] Buat daftar 10–20 penerima fiktif realistis di area Lembah Klang/Malaysia (nama, jenis, kapasitas, kategori diterima) — simpan sebagai `data/receivers_list.csv`.
 - [ ] Tulis fungsi seleksi sederhana (greedy Euclidean): `select_receiver(batch, receivers_df)` — pilih penerima dengan kapasitas cukup + kategori sesuai, tanpa OSRM dulu.
 - [ ] Buat unit test: jalankan fungsi dengan 5 batch dummy, pastikan output `receiver_id` valid.
 
-#### 🚀 UPGRADE Tasks (setelah BASE stabil)
+#### 🚀 UPGRADE Tasks (Selaras Alur PDF)
 - **Goal 5 — Waste-Risk Model:**
   - [ ] Gunakan `food_waste_dataset.csv` (8.000 baris, setelah Person 0 imputasi).
   - [ ] Latih model klasifikasi/regresi untuk memprediksi probabilitas waste (`waste_risk_score`).
   - [ ] Simpan model ke `models/waste_risk_model.pkl`.
-- **Goal 7 — OSRM Routing (inti inovasi: "cara memilih food bank + jarak/ETA pengiriman"):**
+- **Goal 7 — OSRM Routing (Penyempurnaan Langkah 5 PDF: Smart Dispatch):**
   - [ ] Tes integrasi API Nominatim untuk mengubah alamat penerima menjadi koordinat lat/long.
   - [ ] Tes pemanggilan API OSRM publik: `requests.get("http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}")` — **1 baris kode**.
   - [ ] Upgrade fungsi `select_receiver()` agar gunakan jarak riil OSRM (km + ETA) bukan Euclidean.
   - [ ] Simpan polyline rute ke `dispatch_log.csv` untuk ditampilkan di Peta Rute frontend.
-- **Goal 8 — Clustering (inti inovasi: "pola buang antar toko"):**
+
+#### 💡 OPSIONAL Tasks (Stretch Goals - Di Luar Alur PDF)
+- **Goal 8 — K-Means Clustering Toko:**
   - [ ] Jalankan K-Means (5 baris Scikit-Learn) pada output simulasi untuk klaster toko berdasarkan waste rate & velocity.
-  - [ ] Interpretasikan setiap klaster dengan narasi (misal: "Klaster A = toko dengan waste tinggi dan stok lambat").
-  - [ ] Export hasil ke `output/cluster_results.csv`.
+  - [ ] Tulis `cluster_report.md` untuk bahan analisis makalah/laporan akhir.
 
 ---
 
@@ -170,11 +172,13 @@ Frontend modern tidak perlu menunggu backend selesai berkat teknik *mocking*:
 - [ ] Buat layout halaman Admin `/admin` dengan proteksi form login Supabase Auth.
 - [ ] Buat template slide presentasi di Canva (palet warna, tipografi, layout konsisten).
 
-#### 🚀 UPGRADE Tasks
+#### 🚀 UPGRADE Tasks (Selaras Alur PDF)
 - [ ] Install `leaflet` + `react-leaflet`.
-- [ ] Tambah **Tab "Peta Rute"** ke dashboard: plot marker penerima + polyline OSRM dari `dispatch_log` — **ini visualisasi dari "Missing Parts": bagaimana kita memilih food bank + jarak/ETA**.
-- [ ] Tambah **Tab "Klaster Toko"**: scatter plot K-Means dari `cluster_results`.
+- [ ] Tambah **Tab "Peta Rute"** ke dashboard: plot marker penerima + polyline OSRM dari `dispatch_log` — **visualisasi rute pengiriman donasi riil (Langkah 5 PDF)**.
 - [ ] Tambah badge warna `waste_risk_score` di tabel Batch List (merah/kuning/hijau).
+
+#### 💡 OPSIONAL Tasks (Stretch Goals)
+- [ ] Tambah **Tab "Klaster Toko"**: scatter plot K-Means dari `cluster_results` (analisis profil toko multi-cabang).
 
 ---
 
@@ -189,15 +193,21 @@ Pekerjaan berikut adalah satu-satunya bagian yang **harus menunggu** modul lain 
 | **Step A2 BASE:** Upload `batches` ke Supabase | Output `canonical_batch_table.csv` dari Person 3 | Minggu ke-2/3 |
 | **Koneksi frontend ke API asli** | API FastAPI Person 2 membaca Supabase asli | Akhir BASE phase |
 
-### 🚀 UPGRADE Bottlenecks
+### 🚀 UPGRADE Bottlenecks (Core Enhancement)
 
 | Pekerjaan yang Menunggu | Menunggu Apa? | Kapan Mulai? |
 |---|---|---|
 | **Goal 4 Full (Person 3):** Multi-dataset merge | Person 0 selesai DOSM lookup | Setelah BASE stabil |
 | **Goal 5 (Person 5):** Waste-Risk model | Person 0 selesai imputasi 8K | Setelah BASE stabil |
-| **Goal 8 (Person 5):** Clustering | Output CSV simulasi Goal 4 + Goal 7 | Setelah BASE stabil |
-| **Step A2 UPGRADE:** Upload events/dispatch/clusters | Output penuh simulasi Step 12–14 | Setelah BASE stabil |
 | **Tab Peta Rute (Person 6)** | Person 5 Goal 7 OSRM selesai, polyline tersedia | Setelah Upgrade dimulai |
+| **Step A2 UPGRADE:** Upload events & dispatch log | Output simulasi Step 10 & 13 selesai | Setelah Upgrade dimulai |
+
+### 💡 OPSIONAL Bottlenecks (Stretch Goals)
+
+| Pekerjaan yang Menunggu | Menunggu Apa? | Kapan Mulai? |
+|---|---|---|
+| **Goal 8 (Person 5):** K-Means Clustering Toko | Output CSV simulasi Goal 4 + Goal 7 | Hanya jika tugas utama selesai lebih awal |
+| **Step A2:** Upload tabel cluster results | Goal 8 selesai dieksekusi | Opsional / Stretch goal |
 
 ---
 
