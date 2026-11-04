@@ -190,3 +190,31 @@ Fitur visualisasi peta jalan interaktif Leaflet JS diputuskan untuk **dieliminas
 5. **Menjaga Fokus pada Core Value Akademis & Machine Learning:**
    - Nilai akademis utama proyek ini berfokus pada **Retail Intelligence**, **Algoritma FEFO**, **Prediksi Spoilage Risk (ML Tabular)**, dan **Demand Forecasting 3-Hari (Time-Series)**.
    - Menambahkan peta Leaflet hanya menjadi *visual gimmick* yang mengaburkan esensi solusi kecerdasan buatan dalam pencegahan *food waste*.
+
+---
+
+### 💡 Tanggapan & Arahan Tech Lead (Apresiasi & Resolusi: Pre-rendered Modal Map)
+
+> **Catatan dari Tech Lead (Person 1):**  
+> Oke I Appreciate To, Nice Consideration.
+> 
+> Terkait fitur peta, ada sedikit klarifikasi soal tujuan awalnya dan usulan solusi jalan tengah yang simpel:
+
+1. **Bukan Navigasi Kurir Dinamis, Melainkan *Executive Strategic Overview*:**
+   - Peta ini dari awal **bukan** dirancang sebagai GPS pelacak pergerakan supir secara dinamis (*live driver tracking* ala Grab/Waze).
+   - Peta ini berfungsi sebagai **visualisasi hasil keputusan akhir (*culmination / proof of spatial computation*)**: ketika seluruh proses seleksi stok selesai, sistem menampilkan peta kawasan Lembah Klang dengan titik supermarket, beberapa kandidat food bank, status prioritas, jarak km, dan garis jalur jalan raya riil hasil perhitungan OSRM.
+   - Ini merupakan elemen **"Wow Factor" akademis yang sangat krusial** saat presentasi dan demo ke dosen/evaluator guna membuktikan bahwa integrasi komputasi spasial (kontribusi Person 5) benar-benar terhubung dan berfungsi nyata.
+
+2. **Solusi Jalan Tengah (*Win-Win Architecture*): *Pre-rendered Route Preview Modal***
+   - **Layar Kasir / Dashboard Utama:** Tetap bersih dan ringan 100% menggunakan **Dispatch Summary Card** buatan Person 6 (tanpa elemen peta yang memakan ruang operasional toko).
+   - **Akses Peta ("Wow Factor"):** Pada kartu ringkasan tersebut, sediakan satu tombol interaktif:  
+     👉 **[ 🗺️ Lihat Peta Rute Distribusi ]**
+   - **Teknik Pre-render di Balik Layar (*Off-Screen Rendering / Background Pre-fetching*):**
+     - Komponen modal peta Leaflet sudah di-mount di DOM sejak awal dengan status tersembunyi (opacity: 0; pointer-events: none; atau *off-screen* dengan ukuran tetap width & height).
+     - Di latar belakang (*idle time*), Leaflet sudah selesai mengunduh *tiles* OpenStreetMap (hanya ~100–150 KB) serta langsung menggambar marker dan garis rute *polyline* OSRM dari Person 5.
+     - Saat tombol diklik, modal langsung muncul **seketika (0 milidetik)** tanpa *loading spinner*, tanpa layar abu-abu, dan tanpa *lag* (cukup panggil map.invalidateSize() saat modal terbuka).
+
+3. **Dampak Positif bagi Tim:**
+   - **Person 6:** Desain UI kasir tetap bersih, modern, dan bebas *bloatware*.
+   - **Person 5:** Data polyline OSRM dan koordinat food bank yang ditarik Person 5 memiliki panggung visual nyata untuk dinilai dosen.
+   - **Presentasi Tim:** Memperoleh dampak visual komputasi spasial yang sangat impresif (*enterprise-grade retail clearing house*).
