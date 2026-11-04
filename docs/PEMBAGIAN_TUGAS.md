@@ -165,33 +165,7 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 | **Cakupan Halaman** | Hanya dashboard internal 1 halaman | **Ekosistem Aplikasi Penuh (Landing Page + Multi-tab Dashboard)** | Menyediakan tampilan web publik profesional untuk presentasi bisnis ke dosen/stakeholder, dilengkapi modul Sales Log dan detail Inventory interaktif. |
 | **Sistem State** | Static mock | **State Reaktif Tersinkronisasi (*Single Source of Truth*)** | Aksi yang dieksekusi pada tabel Inventory langsung memicu pembaruan serentak pada KPI Dashboard, Riwayat Aktivitas, dan kalkulasi profit. |
 
----
-
-### 🚫 Justifikasi Teknis: Mengapa Peta Interaktif (Leaflet JS) Ditiadakan / Tidak Penting
-
-Fitur visualisasi peta jalan interaktif Leaflet JS diputuskan untuk **dieliminasi / tidak dipakai** berdasarkan pertimbangan teknis dan realitas operasional retail berikut:
-
-1. **Mismatch Profil Pengguna (Store Floor Staff vs Logistics Courier):**
-   - Target pengguna FreshGuard adalah **Store Manager, Supervisor Gudang, dan Staf Kasir Supermarket**.
-   - Kebutuhan utama mereka di dashboard toko adalah **pengambilan keputusan stok cepat** (*"Batch mana yang harus didiskon hari ini, dan batch mana yang harus diserahkan ke food bank?"*).
-   - Staf toko **bukan supir kurir logistik** yang membutuhkan peta navigasi rute jalan (*turn-by-turn routing*). Menampilkan peta navigasi jalan raya di layar komputer manajer toko tidak relevan dengan tugas inventaris harian mereka.
-
-2. **Realitas Lapangan: Penjemputan Dilakukan oleh Pihak Ketiga (Armada Food Bank):**
-   - Dalam ekosistem riil retail makanan di Malaysia (seperti kerja sama dengan *The Lost Food Project* atau *Kechara Soup Kitchen*), penjemputan barang donasi dilakukan oleh armada truk/mobil dari pihak food bank yang datang langsung ke *loading dock* supermarket.
-   - Supir food bank tersebut sudah menggunakan aplikasi navigasi GPS di smartphone mereka sendiri (Google Maps atau Waze). Mereka tidak memerlukan dan tidak akan melihat peta di dashboard kasir toko.
-
-3. **Beban Performa & Bloatware yang Tidak Diperlukan (*Performance Overhead*):**
-   - Leaflet JS membutuhkan download tile maps dari server OpenStreetMap secara terus-menerus, memakan bandwidth internet toko dan membebani rendering memori peramban.
-   - Peta interaktif sering kali memperlambat waktu muat dashboard toko, terutama jika diakses melalui tablet kasir / handheld barcode scanner operasional.
-
-4. **Solusi yang Jauh Lebih Efektif & Profesional: *Dispatch Summary Card*:**
-   - Informasi penting seperti **Nama Mitra Food Bank**, **Alamat/Cabang Tujuan**, **Jarak Tempuh (km)**, **Estimasi Waktu Penjemputan (ETA)**, dan **Jumlah Kilogram yang Dialihkan** disajikan jauh lebih ringkas, bersih, dan informatif dalam bentuk **Kartu Ringkasan Serah Terima (Dispatch Info Card / Status Badge)** di tabel aktivitas, tanpa perlu memakan ruang layar dengan peta besar yang statis.
-
-5. **Menjaga Fokus pada Core Value Akademis & Machine Learning:**
-   - Nilai akademis utama proyek ini berfokus pada **Retail Intelligence**, **Algoritma FEFO**, **Prediksi Spoilage Risk (ML Tabular)**, dan **Demand Forecasting 3-Hari (Time-Series)**.
-   - Menambahkan peta Leaflet hanya menjadi *visual gimmick* yang mengaburkan esensi solusi kecerdasan buatan dalam pencegahan *food waste*.
-
----
+-
 
 ### 💡 Tanggapan & Arahan Tech Lead (Apresiasi & Resolusi: Pre-rendered Modal Map)
 
