@@ -23,7 +23,7 @@ wheels/
 venv/
 env/
 ENV/
-
+.md
 # Environment Variables & Secrets
 .env
 .env.local
