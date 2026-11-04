@@ -36,8 +36,8 @@ ENV/
 */.ipynb_checkpoints/*
 
 # Machine Learning Models (binaries)
-models/*.pkl
-models/*.joblib
+!models/*.pkl
+!models/*.joblib
 models/*.pt
 models/*.onnx
 !models/.gitkeep
