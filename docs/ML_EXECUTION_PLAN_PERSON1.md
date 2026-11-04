@@ -1,4 +1,4 @@
-# Rencana Eksekusi ML End-to-End — Person 1 (Goal 1: Spoilage Classifier & FEFO)
+﻿# Rencana Eksekusi ML End-to-End â€” Person 1 (Goal 1: Spoilage Classifier & FEFO)
 > Dataset: `Grocery_Inventory new v1.csv` + `perishable_goods_management.csv`  
 > Platform: Google Colab | Output: `spoilage_classifier.pkl` + `predict_spoilage_risk()` + `sort_by_fefo()`
 
@@ -7,13 +7,13 @@
 ## Overview Masalah Spesifik Kita
 
 > [!IMPORTANT]
-> Ini bukan klasifikasi generik. Labelnya **tidak ada di dataset mentah** — kita harus **membuat target label sendiri** dari kolom `Expiration_Date` dan `Reorder_Level` sebelum bisa melatih model apapun. Ini adalah keputusan desain terpenting Anda sebagai Person 1.
+> Ini bukan klasifikasi generik. Labelnya **tidak ada di dataset mentah** â€” kita harus **membuat target label sendiri** dari kolom `Expiration_Date` dan `Reorder_Level` sebelum bisa melatih model apapun. Ini adalah keputusan desain terpenting Anda sebagai Person 1.
 
 ```
 Dataset mentah (Grocery_Inventory)
-├── TIDAK ADA kolom "spoilage_risk"
-├── Punya: Expiration_Date, Date_Received, Reorder_Level, Inventory_Turnover_Rate
-└── Kita harus: hitung days_to_expiry → assign label → baru latih model
+â”œâ”€â”€ TIDAK ADA kolom "spoilage_risk"
+â”œâ”€â”€ Punya: Expiration_Date, Date_Received, Reorder_Level, Inventory_Turnover_Rate
+â””â”€â”€ Kita harus: hitung days_to_expiry â†’ assign label â†’ baru latih model
 ```
 
 ---
@@ -22,17 +22,17 @@ Dataset mentah (Grocery_Inventory)
 
 ### 1.1 Urutan yang Akan Dieksekusi
 
-**STEP A — Preprocessing Defensif (Menunggu Person 0)**
+**STEP A â€” Preprocessing Defensif (Menunggu Person 0)**
 
 | Isu (dari `dataset_audit.md`) | Penanganan |
 |---|---|
-| Kolom `Catagory` (typo) | Rename → `Category` (Person 0 sudah handle ini) |
-| Baris 574 Cabbage, `Category = NaN` | **Isi dengan `'Produce'`** — kategori paling logis untuk Cabbage. Ini bukan imputasi statistik, tapi domain knowledge. |
+| Kolom `Catagory` (typo) | Rename â†’ `Category` (Person 0 sudah handle ini) |
+| Baris 574 Cabbage, `Category = NaN` | **Isi dengan `'Produce'`** â€” kategori paling logis untuk Cabbage. Ini bukan imputasi statistik, tapi domain knowledge. |
 
 > [!NOTE]
-> Karena dataset kita **hanya 1 baris null dari category** (bukan ratusan), strategi terbaik bukan median/mode — tapi pengisian manual berbasis pengetahuan domain. Cabbage = sayuran = `Produce`. Ini defensibel secara akademis.
+> Karena dataset kita **hanya 1 baris null dari category** (bukan ratusan), strategi terbaik bukan median/mode â€” tapi pengisian manual berbasis pengetahuan domain. Cabbage = sayuran = `Produce`. Ini defensibel secara akademis.
 
-**STEP B — Feature Engineering (Inti Pekerjaan Anda)**
+**STEP B â€” Feature Engineering (Inti Pekerjaan Anda)**
 
 ```python
 import pandas as pd
@@ -40,10 +40,10 @@ import pandas as pd
 df['Expiration_Date'] = pd.to_datetime(df['Expiration_Date'])
 df['Date_Received'] = pd.to_datetime(df['Date_Received'])
 
-# Feature 1: Total umur simpan lot (deterministik — tidak bergantung "hari ini")
+# Feature 1: Total umur simpan lot (deterministik â€” tidak bergantung "hari ini")
 # Pakai ini, BUKAN (Expiration_Date - today()), karena dataset Kaggle ini adalah
 # data historis statis. Jika pakai today() (Nov 2026), semua Expiration_Date
-# lama akan jadi negatif → fitur tidak bermakna dan model rusak.
+# lama akan jadi negatif â†’ fitur tidak bermakna dan model rusak.
 df['days_to_expiry'] = (df['Expiration_Date'] - df['Date_Received']).dt.days
 
 # Feature 2: Usia lot sejak diterima
@@ -60,9 +60,9 @@ df['stock_pressure'] = df['Stock_Quantity'] / (df['Reorder_Level'] + 1)
 > **Training vs Inferensi:** Di training kita pakai total shelf life (time-agnostic).
 > Di production, Person 3 (ETL) yang menghitung `days_to_expiry = Expiration_Date - today()`
 > secara real-time sebelum memanggil `predict_spoilage_risk()`. Fungsi inferensi Anda
-> menerima `days_to_expiry` sebagai input yang sudah dihitung — bukan menghitungnya sendiri.
+> menerima `days_to_expiry` sebagai input yang sudah dihitung â€” bukan menghitungnya sendiri.
 
-**STEP C — Pembuatan Label Target (Keputusan Desain Anda)**
+**STEP C â€” Pembuatan Label Target (Keputusan Desain Anda)**
 
 Ini adalah keputusan paling krusial. Label `HIGH/MODERATE/LOW` tidak ada di dataset, Anda yang menentukan threshold-nya:
 
@@ -79,13 +79,13 @@ df['spoilage_risk'] = df['days_to_expiry'].apply(assign_spoilage_label)
 ```
 
 > [!WARNING]
-> **Threshold ini harus Anda dokumentasikan dan justifikasi** di laporan/presentasi. Alasan yang defensibel: Standar retail Malaysia (MYDIN, Aeon) biasanya menerapkan markdown pada produk ≤3 hari sebelum expired. Anda bisa kutip ini.
+> **Threshold ini harus Anda dokumentasikan dan justifikasi** di laporan/presentasi. Alasan yang defensibel: Standar retail Malaysia (MYDIN, Aeon) biasanya menerapkan markdown pada produk â‰¤3 hari sebelum expired. Anda bisa kutip ini.
 
-**STEP D — Encoding Kategorikal**
+**STEP D â€” Encoding Kategorikal**
 
 ```python
 # Category: gunakan One-Hot Encoding (karena jumlah kategori sedikit, ~10)
-# Alasan: OHE lebih aman dari Label Encoding untuk tree models — tidak ada asumsi ordinalitas
+# Alasan: OHE lebih aman dari Label Encoding untuk tree models â€” tidak ada asumsi ordinalitas
 df = pd.get_dummies(df, columns=['Category'], prefix='cat', drop_first=True)
 ```
 
@@ -94,7 +94,7 @@ df = pd.get_dummies(df, columns=['Category'], prefix='cat', drop_first=True)
 **TIDAK PERLU.** Ini adalah keputusan arsitektur yang penting:
 
 - Model yang akan kita pakai (Random Forest, XGBoost) adalah **tree-based algorithms**
-- Tree models **tidak sensitif terhadap skala fitur** — berbeda dengan kNN atau SVM
+- Tree models **tidak sensitif terhadap skala fitur** â€” berbeda dengan kNN atau SVM
 - Menambah StandardScaler untuk Random Forest **tidak meningkatkan akurasi, hanya menambah kompleksitas pipeline**
 
 > [!TIP]
@@ -104,9 +104,9 @@ df = pd.get_dummies(df, columns=['Category'], prefix='cat', drop_first=True)
 
 | Opsi Alternatif | Risikonya |
 |---|---|
-| Pakai `food_waste_ml_1000.csv` (dataset Step 11) | ❌ Data sudah scaled `[0,1]`, tidak ada label kategori, hanya 1.000 baris — tidak cocok untuk Grocery Classifier |
-| Pakai Label Encoding untuk Category | ⚠️ Model akan salah asumsikan "Dairy > Bakery > Produce" secara ordinal — bisa menurunkan akurasi |
-| Drop baris dengan `days_to_expiry < 0` | ✅ Boleh — produk sudah expired tidak relevan untuk prediksi. Tapi catat di notebook berapa baris yang di-drop |
+| Pakai `food_waste_ml_1000.csv` (dataset Step 11) | âŒ Data sudah scaled `[0,1]`, tidak ada label kategori, hanya 1.000 baris â€” tidak cocok untuk Grocery Classifier |
+| Pakai Label Encoding untuk Category | âš ï¸ Model akan salah asumsikan "Dairy > Bakery > Produce" secara ordinal â€” bisa menurunkan akurasi |
+| Drop baris dengan `days_to_expiry < 0` | âœ… Boleh â€” produk sudah expired tidak relevan untuk prediksi. Tapi catat di notebook berapa baris yang di-drop |
 
 ---
 
@@ -117,12 +117,12 @@ df = pd.get_dummies(df, columns=['Category'], prefix='cat', drop_first=True)
 Anda akan melatih **3 model secara berurutan** untuk perbandingan:
 
 ```
-Model 0 (Non-ML Baseline)  →  Model 1 (Random Forest)  →  Model 2 (XGBoost)
-         ↓                            ↓                          ↓
+Model 0 (Non-ML Baseline)  â†’  Model 1 (Random Forest)  â†’  Model 2 (XGBoost)
+         â†“                            â†“                          â†“
   Tebakan terbaik manual       Ensemble trees stabil       Boosting lebih presisi
 ```
 
-**Model 0 — Simple Rule Baseline (WAJIB ADA)**
+**Model 0 â€” Simple Rule Baseline (WAJIB ADA)**
 
 ```python
 # Baseline: tebak semua produk sebagai kelas mayoritas
@@ -134,7 +134,7 @@ print(f"Baseline Accuracy: {baseline_score:.3f}")
 # Tujuan: model kita HARUS lebih baik dari ini untuk punya nilai
 ```
 
-**Model 1 — Random Forest (Pilihan Primer)**
+**Model 1 â€” Random Forest (Pilihan Primer)**
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
@@ -153,7 +153,7 @@ Alasan Random Forest dipilih sebagai primer:
 - **Interpretable**: bisa lihat `feature_importances_` untuk presentasi
 - Tidak butuh scaling
 
-**Model 2 — XGBoost (Pilihan Sekunder / Pembanding)**
+**Model 2 â€” XGBoost (Pilihan Sekunder / Pembanding)**
 
 ```python
 from xgboost import XGBClassifier
@@ -185,7 +185,7 @@ XGBoost memang umumnya lebih akurat, tapi untuk presentasi akademis:
 | **Logistic Regression** | Jika butuh probabilitas yang sangat terkalibrasi | Membutuhkan scaling, performa lebih rendah pada fitur non-linear seperti `days_to_expiry` |
 | **Decision Tree tunggal** | Lebih mudah divisualisasikan | Sangat rentan overfitting, tidak stabil |
 | **SVM** | Dataset kecil + linear separation | Sangat lambat di Colab jika data besar, butuh scaling |
-| **kNN** | — | Tidak cocok: sensitif skala, tidak ada `feature_importances_`, lambat saat inferensi |
+| **kNN** | â€” | Tidak cocok: sensitif skala, tidak ada `feature_importances_`, lambat saat inferensi |
 
 ---
 
@@ -212,7 +212,7 @@ param_dist = {
 search = RandomizedSearchCV(
     RandomForestClassifier(class_weight='balanced', random_state=42),
     param_distributions=param_dist,
-    n_iter=30,       # coba 30 kombinasi acak (bukan semua 4×5×3×3×3 = 540)
+    n_iter=30,       # coba 30 kombinasi acak (bukan semua 4Ã—5Ã—3Ã—3Ã—3 = 540)
     cv=5,            # 5-fold cross-validation per kombinasi
     scoring='f1_weighted',  # pakai F1 bukan accuracy (antisipasi imbalance)
     n_jobs=-1,       # paralelisasi penuh
@@ -240,7 +240,7 @@ best_model = search.best_estimator_
 
 ### 4.1 Metrik yang Dipilih dan Alasannya
 
-**Primary metric: F1-Score (Weighted)** — BUKAN Accuracy
+**Primary metric: F1-Score (Weighted)** â€” BUKAN Accuracy
 
 Alasan: Dataset Grocery Inventory hampir pasti **tidak seimbang**. Mayoritas produk dalam kondisi `LOW` risk. Jika model Anda hanya menebak "LOW" untuk semua produk, akurasi mentah bisa 80%+, tapi model tidak berguna sama sekali.
 
@@ -254,20 +254,20 @@ print(classification_report(y_pred, y_test, target_names=['HIGH', 'LOW', 'MODERA
 
 # Confusion Matrix visual
 ConfusionMatrixDisplay.from_estimator(best_model, X_test, y_test)
-plt.title("Spoilage Risk Classifier — Confusion Matrix")
+plt.title("Spoilage Risk Classifier â€” Confusion Matrix")
 plt.savefig("confusion_matrix.png")
 ```
 
-### 4.2 Analisis Type I vs Type II Error — Yang Paling Penting untuk Proyek Ini
+### 4.2 Analisis Type I vs Type II Error â€” Yang Paling Penting untuk Proyek Ini
 
 > [!IMPORTANT]
 > Dalam konteks **Spoilage Classifier untuk sistem food bank**, kesalahan yang paling berbahaya adalah:
 >
 > - **False Negative (Miss) = HIGH risk diklasifikasikan sebagai LOW**
->   - Dampak: Produk kritis tidak ditangani, berakhir di tempat sampah → kerugian ekonomi dan makanan
+>   - Dampak: Produk kritis tidak ditangani, berakhir di tempat sampah â†’ kerugian ekonomi dan makanan
 >   - **Ini yang paling mahal dan harus diminimalkan**
 > - **False Positive (Alarm Palsu) = LOW risk diklasifikasikan sebagai HIGH**
->   - Dampak: Produk masih aman tapi dimarkdown atau didonasikan lebih awal → margin toko sedikit berkurang
+>   - Dampak: Produk masih aman tapi dimarkdown atau didonasikan lebih awal â†’ margin toko sedikit berkurang
 >   - **Masih bisa ditoleransi**
 >
 > **Implikasi kode:** Prioritaskan **Recall untuk kelas HIGH** (bukan Precision). Bisa diatur via `class_weight='balanced'` atau threshold tuning.
@@ -285,14 +285,14 @@ auc = roc_auc_score(y_bin, y_prob, multi_class='ovr', average='weighted')
 print(f"ROC-AUC (weighted OvR): {auc:.4f}")
 ```
 
-### 4.4 Feature Importance — Wajib untuk Presentasi
+### 4.4 Feature Importance â€” Wajib untuk Presentasi
 
 ```python
 import matplotlib.pyplot as plt
 
 feat_imp = pd.Series(best_model.feature_importances_, index=X_train.columns)
 feat_imp.sort_values(ascending=True).tail(10).plot(kind='barh')
-plt.title("Top 10 Feature Importances — Spoilage Classifier")
+plt.title("Top 10 Feature Importances â€” Spoilage Classifier")
 plt.tight_layout()
 plt.savefig("feature_importance.png")
 ```
@@ -311,15 +311,15 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.2,      # 80% train, 20% test
     random_state=42,
-    stratify=y          # ← ini yang memastikan proporsi HIGH/MODERATE/LOW sama di train & test
+    stratify=y          # â† ini yang memastikan proporsi HIGH/MODERATE/LOW sama di train & test
 )
 ```
 
 **Mengapa 80/20 dan bukan 70/15/15?**
 
-Karena kita tidak butuh Validation Set terpisah — Randomized Search sudah menggunakan **Cross-Validation internal (k=5)** sebagai pengganti validation set. Ini lebih efisien untuk dataset kecil-menengah.
+Karena kita tidak butuh Validation Set terpisah â€” Randomized Search sudah menggunakan **Cross-Validation internal (k=5)** sebagai pengganti validation set. Ini lebih efisien untuk dataset kecil-menengah.
 
-### 5.2 Cross-Validation Tambahan — Untuk Angka di Laporan (Opsional tapi Berguna)
+### 5.2 Cross-Validation Tambahan â€” Untuk Angka di Laporan (Opsional tapi Berguna)
 
 Betul bahwa RandomizedSearchCV sudah pakai `cv=5` secara internal. Tapi keduanya melayani **tujuan yang berbeda**:
 
@@ -335,11 +335,11 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 cv_scores = cross_val_score(best_model, X, y, cv=skf, scoring='f1_weighted')
-print(f"CV F1-Score: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
-# Contoh output: "CV F1-Score: 0.8721 ± 0.0134"
+print(f"CV F1-Score: {cv_scores.mean():.4f} Â± {cv_scores.std():.4f}")
+# Contoh output: "CV F1-Score: 0.8721 Â± 0.0134"
 ```
 
-**Angka `mean ± std` inilah yang ditulis di laporan**, bukan angka dari satu `X_test` saja.
+**Angka `mean Â± std` inilah yang ditulis di laporan**, bukan angka dari satu `X_test` saja.
 Alasannya: satu test split bisa kebetulan mudah atau susah. CV 5-fold lebih representatif.
 
 > [!NOTE]
@@ -356,10 +356,10 @@ Alasannya: satu test split bisa kebetulan mudah atau susah. CV 5-fold lebih repr
 >
 > **Solusi:** Hitung `days_to_expiry` relatif terhadap `Date_Received`, bukan terhadap hari ini:
 > ```python
-> # ✅ BENAR: relatif terhadap tanggal penerimaan (deterministik, tidak bocor)
+> # âœ… BENAR: relatif terhadap tanggal penerimaan (deterministik, tidak bocor)
 > df['days_to_expiry'] = (df['Expiration_Date'] - df['Date_Received']).dt.days
 >
-> # ⚠️ HATI-HATI: relatif terhadap hari ini (model menjadi time-sensitive)
+> # âš ï¸ HATI-HATI: relatif terhadap hari ini (model menjadi time-sensitive)
 > # df['days_to_expiry'] = (df['Expiration_Date'] - pd.Timestamp.now()).dt.days
 > ```
 
@@ -377,7 +377,7 @@ def sort_by_fefo(batch_list: list[dict]) -> list[dict]:
     return sorted(batch_list, key=lambda x: x['expiry_date'])
 ```
 
-Fungsi ini **tidak butuh ML** — murni logika sorting. Tapi wajib ada di `src/ml/spoilage.py` dan di-import oleh FastAPI (Person 2).
+Fungsi ini **tidak butuh ML** â€” murni logika sorting. Tapi wajib ada di `src/ml/spoilage.py` dan di-import oleh FastAPI (Person 2).
 
 ### 6.2 Kontrak Fungsi Inferensi (API Contract dengan Person 2)
 
@@ -414,7 +414,7 @@ joblib.dump(best_model, "spoilage_classifier.pkl")
 print(f"Model saved! Size: {os.path.getsize('spoilage_classifier.pkl') / 1024:.1f} KB")
 ```
 
-Lalu download dari Colab → taruh di `models/spoilage_classifier.pkl` → commit ke repo.
+Lalu download dari Colab â†’ taruh di `models/spoilage_classifier.pkl` â†’ commit ke repo.
 
 ### 6.4 Koneksi ke Person Lain
 
@@ -432,7 +432,7 @@ Lalu download dari Colab → taruh di `models/spoilage_classifier.pkl` → commi
 - [ ] Tunggu Person 0 deliver `Grocery_Inventory` bersih (rename `Catagory` + isi baris 574)
 - [ ] Hitung `days_to_expiry` relatif terhadap `Date_Received` (bukan `today()`)
 - [ ] Buat threshold label dan dokumentasikan justifikasinya
-- [ ] Latih Dummy Baseline → Random Forest → XGBoost
+- [ ] Latih Dummy Baseline â†’ Random Forest â†’ XGBoost
 - [ ] Evaluasi dengan F1-Weighted + Confusion Matrix (bukan Accuracy biasa)
 - [ ] Prioritaskan Recall untuk kelas HIGH (minimalkan False Negative)
 - [ ] Jalankan Randomized Search (n_iter=30, cv=5, n_jobs=-1)

@@ -214,8 +214,7 @@
 
 | Step | Phase | Status |
 |---|---|---|
-| Step 7 — FEFO & Stok | 🏗️ BASE | ⬜ Belum dimulai |
-| Step 7 — FEFO & Stok | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 7 — FEFO & Stok | 🏗️ BASE | ✅ Selesai |
 | Step 8 — Demand Forecasting | 🏗️ BASE | ⬜ Belum dimulai |
 | Step 10 Base — Batch Generator (`lots_base.csv`) | 🏗️ BASE | ⬜ Belum dimulai |
 | Step 11 — Waste-Risk Scoring | 🏗️ BASE | ⬜ Menunggu Person 0 (dataset 8K) |

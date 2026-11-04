@@ -41,8 +41,8 @@
 Tidak memerlukan kode atau output dari siapapun. Langsung bekerja pada file mentah:
 
 #### 🏗️ BASE Tasks (±1 jam, selesaikan Minggu 1)
-- [ ] Rename kolom `Catagory` → `Category` di `Grocery_Inventory new v1.csv` (1 baris Python).
-- [ ] Isi nilai null baris 574 Cabbage dengan `'Produce'` (manual assignment).
+- [x] Rename kolom `Catagory` → `Category` di `Grocery_Inventory new v1.csv` (1 baris Python).
+- [x] Isi nilai null baris 574 Cabbage dengan `'Produce'` (manual assignment).
 - [ ] Dokumentasikan hasil perbaikan di `dataset_fixes.md`.
 
 #### 🚀 UPGRADE Tasks (bisa dikerjakan paralel, tidak blokir orang lain)
@@ -57,12 +57,12 @@ Tidak memerlukan kode atau output dari siapapun. Langsung bekerja pada file ment
 
 Dataset sudah tersedia di folder lokal (`Grocery Inventory` / `perishable_goods_management.csv`). **100% tidak blokir siapapun dan tidak diblokir siapapun.**
 
-- [ ] Lakukan Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok.
-- [ ] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
-- [ ] Buat label risiko kerusakan (`HIGH`, `MEDIUM`, `LOW`).
-- [ ] Latih model klasifikasi (Random Forest / XGBoost) dengan Scikit-Learn.
-- [ ] Evaluasi performa (Confusion Matrix, F1-Score) dan simpan model ke `models/spoilage_classifier.pkl`.
-- [ ] Buat fungsi inferensi mandiri: `predict_spoilage_risk(batch_dict)`.
+- [x] Lakukan Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok.
+- [x] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
+- [x] Buat label risiko kerusakan (`HIGH`, `MEDIUM`, `LOW`).
+- [x] Latih model klasifikasi (Random Forest / XGBoost) dengan Scikit-Learn.
+- [x] Evaluasi performa (Confusion Matrix, F1-Score) dan simpan model ke `models/spoilage_classifier.pkl`.
+- [x] Buat fungsi inferensi mandiri: `predict_spoilage_risk(batch_dict)`.
 
 > *(Setelah BASE selesai: alihkan ke supervisi tim + bantu Person 5 interpretasi K-Means untuk Goal 8)*
 

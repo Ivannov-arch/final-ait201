@@ -65,8 +65,8 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 0 — Dataset Quality & Localization Specialist
-- [ ] Rename kolom `Catagory` → `Category` di `Grocery_Inventory new v1.csv`.
-- [ ] Isi nilai null baris 574 Cabbage dengan `'Produce'`.
+- [x] Rename kolom `Catagory` → `Category` di `Grocery_Inventory new v1.csv`.
+- [x] Isi nilai null baris 574 Cabbage dengan `'Produce'`.
 - [ ] Buat file `holidays_my.csv` berisi ~20 tanggal merah nasional Malaysia setahun (untuk Goal 2).
 - [ ] Unduh tabel lookup PriceCatcher DOSM (`item.parquet` dan `premise.parquet`) dari open.dosm.gov.my (untuk Goal 6).
 - [ ] Lakukan imputasi group-median pada 5 kolom null di `food_waste_dataset.csv` (8K baris) (untuk Goal 5).
@@ -75,12 +75,12 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 1 (Anda) — Tech Lead & ML Tabular
-- [ ] Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok di `Grocery_Inventory`.
-- [ ] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
-- [ ] Latih model klasifikasi spoilage risk (`HIGH`, `MEDIUM`, `LOW`) dengan Random Forest / XGBoost.
-- [ ] Evaluasi model (F1-Score, Confusion Matrix) dan simpan ke `models/spoilage_classifier.pkl`.
-- [ ] Buat fungsi urutan FEFO: `sort_by_fefo(batch_list)`.
-- [ ] Supervisi arsitektur data, API contract, dan alur integrasi seluruh modul tim.
+- [x] Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok di `Grocery_Inventory`.
+- [x] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
+- [x] Latih model klasifikasi spoilage risk (`HIGH`, `MEDIUM`, `LOW`) dengan Random Forest / XGBoost.
+- [x] Evaluasi model (F1-Score, Confusion Matrix) dan simpan ke `models/spoilage_classifier.pkl`.
+- [x] Buat fungsi urutan FEFO: `sort_by_fefo(batch_list)`.
+- [x] Supervisi arsitektur data, API contract, dan alur integrasi seluruh modul tim.
 
 ---
 
