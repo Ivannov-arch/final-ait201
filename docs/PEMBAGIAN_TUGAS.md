@@ -137,18 +137,56 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 
 ---
 
-### 👤 Person 6 — Frontend, GIS & Visual Lead
-- [ ] Inisialisasi web app Next.js / Streamlit + Tailwind CSS.
-- [ ] Bangun antarmuka toko 6-langkah sesuai PDF:
-  1. Tabel inventaris FEFO dengan badge prioritas *Pick First*.
-  2. Indikator risiko kadaluarsa (warna & skor probabilitas waste dari Person 5).
-  3. Grafik peramalan demand 3 hari (Recharts / Chart.js).
-  4. Kartu rekomendasi aksi (Markdown harga DOSM / Donasi).
-  5. **Visualisasi Peta Interaktif Leaflet JS:**
-     - Plot marker lokasi supermarket (asal).
-     - Plot marker lokasi food bank terpilih (tujuan).
-     - Gambar polyline rute jalan riil dari GeoJSON OSRM.
-     - Tampilkan popup informasi: Jarak (km), Estimasi Waktu Tempuh (ETA menit), dan Jam Pengambilan.
-  6. Dashboard KPI: Lot terselamatkan (kg), Clearance Rate (%), Estimasi Nilai Rupiah/Ringgit yang diselamatkan.
-- [ ] Bangun halaman Admin `/admin` dengan login Supabase Auth.
+### 👤 Person 6 - Frontend, Visual & Retail Experience Lead
+- [x] Inisialisasi web app modern: **React 18 + Vite + Modular BEM CSS + GSAP Animation Engine** *(Responsif, ringan, performa tinggi, dan optimal untuk dashboard toko retail dibanding Next.js SSR / Streamlit)*.
+- [x] Bangun antarmuka toko 6-langkah sesuai PDF:
+  - [x] 1. Tabel inventaris FEFO dengan indikator prioritas visual, pencarian global terpadu, filter multi-kategori, dan sorting risiko kedaluwarsa.
+  - [x] 2. Indikator risiko kedaluwarsa visual (Badges High Risk / Med Risk / Low Risk, countdown sisa hari DTE, komparasi harga modal vs jual).
+  - [x] 3. Grafik peramalan demand 3 hari (Besok, Lusa, H+3) vs stok sisa menggunakan **Pure Lightweight SVG Charts** + Interactive Day Detail Card (Status Surplus/Defisit & Rekomendasi).
+  - [x] 4. Rekomendasi aksi dinamis: Modal keputusan aksi (*30% Dynamic Markdown*, *Donasi Food Bank/NGO*, dan *Normal Sale*) yang langsung sinkron serentak (*real-time*) ke KPI Finansial dan Log Aktivitas.
+  - [x] 5. **Dispatch Information Summary (Substitusi Leaflet JS):** Log serah terima dan status tujuan mitra donasi terintegrasi rapi pada tab Dispatch dan Recent Activities. *(Peta interaktif Leaflet JS resmi ditiadakan — lihat alasan teknis & operasional di bawah)*.
+  - [x] 6. Dashboard KPI Eksekutif: Total Batch Aktif, Batch Kritis (DTE ≤ 2 Hari), Nilai Stok Berisiko (RM), Tingkat Penyelamatan Stok (%), Grafik Tren Penyelamatan Makanan (kg), dan Proporsi Saluran Penyelamatan (ReFED-aligned).
+- [x] Halaman & Fitur Tambahan (Nilai Tambah Nyata):
+  - [x] Halaman Landing Page B2B interaktif lengkap dengan navigasi, value proposition, kalkulator dampak, dan animasi GSAP.
+  - [x] Modul Sales Log kasir/transaksi dengan filter tanggal, pencarian, dan metrik revenue markdown.
+  - [x] Preloader & Mascot FreshBot AI terintegrasi.
+- [ ] Integrasi endpoint API backend FastAPI (menghubungkan data mock saat ini dengan live backend Python).
+- [ ] Bangun halaman Admin `/admin` dengan autentikasi cloud (Supabase Auth).
 - [ ] Desain template presentasi resmi tim di Canva.
+
+---
+
+### 📝 Catatan Perbedaan Implementasi Nyata vs Dokumen Awal (Deviasi Arsitektur)
+
+| Komponen | Rencana Awal Dokumen | Realisasi Implementasi Saat Ini | Alasan & Keuntungan |
+|---|---|---|---|
+| **Tech Stack Frontend** | Next.js / Streamlit + Tailwind | **React 18 (Vite) + Vanilla CSS Modern + GSAP** | Performa jauh lebih cepat, load instan tanpa overhead SSR Next.js yang lambat di mesin lokal, serta kontrol styling presisi tanpa clutter utility class Tailwind. |
+| **Charting Engine** | Recharts / Chart.js | **Custom Native SVG Charts** | Sangat ringan (zero external bundle weight), tidak ada lag re-render, responsif pixel-perfect, dan dapat dikustomisasi penuh sesuai kebutuhan retail. |
+| **Cakupan Halaman** | Hanya dashboard internal 1 halaman | **Ekosistem Aplikasi Penuh (Landing Page + Multi-tab Dashboard)** | Menyediakan tampilan web publik profesional untuk presentasi bisnis ke dosen/stakeholder, dilengkapi modul Sales Log dan detail Inventory interaktif. |
+| **Sistem State** | Static mock | **State Reaktif Tersinkronisasi (*Single Source of Truth*)** | Aksi yang dieksekusi pada tabel Inventory langsung memicu pembaruan serentak pada KPI Dashboard, Riwayat Aktivitas, dan kalkulasi profit. |
+
+---
+
+### 🚫 Justifikasi Teknis: Mengapa Peta Interaktif (Leaflet JS) Ditiadakan / Tidak Penting
+
+Fitur visualisasi peta jalan interaktif Leaflet JS diputuskan untuk **dieliminasi / tidak dipakai** berdasarkan pertimbangan teknis dan realitas operasional retail berikut:
+
+1. **Mismatch Profil Pengguna (Store Floor Staff vs Logistics Courier):**
+   - Target pengguna FreshGuard adalah **Store Manager, Supervisor Gudang, dan Staf Kasir Supermarket**.
+   - Kebutuhan utama mereka di dashboard toko adalah **pengambilan keputusan stok cepat** (*"Batch mana yang harus didiskon hari ini, dan batch mana yang harus diserahkan ke food bank?"*).
+   - Staf toko **bukan supir kurir logistik** yang membutuhkan peta navigasi rute jalan (*turn-by-turn routing*). Menampilkan peta navigasi jalan raya di layar komputer manajer toko tidak relevan dengan tugas inventaris harian mereka.
+
+2. **Realitas Lapangan: Penjemputan Dilakukan oleh Pihak Ketiga (Armada Food Bank):**
+   - Dalam ekosistem riil retail makanan di Malaysia (seperti kerja sama dengan *The Lost Food Project* atau *Kechara Soup Kitchen*), penjemputan barang donasi dilakukan oleh armada truk/mobil dari pihak food bank yang datang langsung ke *loading dock* supermarket.
+   - Supir food bank tersebut sudah menggunakan aplikasi navigasi GPS di smartphone mereka sendiri (Google Maps atau Waze). Mereka tidak memerlukan dan tidak akan melihat peta di dashboard kasir toko.
+
+3. **Beban Performa & Bloatware yang Tidak Diperlukan (*Performance Overhead*):**
+   - Leaflet JS membutuhkan download tile maps dari server OpenStreetMap secara terus-menerus, memakan bandwidth internet toko dan membebani rendering memori peramban.
+   - Peta interaktif sering kali memperlambat waktu muat dashboard toko, terutama jika diakses melalui tablet kasir / handheld barcode scanner operasional.
+
+4. **Solusi yang Jauh Lebih Efektif & Profesional: *Dispatch Summary Card*:**
+   - Informasi penting seperti **Nama Mitra Food Bank**, **Alamat/Cabang Tujuan**, **Jarak Tempuh (km)**, **Estimasi Waktu Penjemputan (ETA)**, dan **Jumlah Kilogram yang Dialihkan** disajikan jauh lebih ringkas, bersih, dan informatif dalam bentuk **Kartu Ringkasan Serah Terima (Dispatch Info Card / Status Badge)** di tabel aktivitas, tanpa perlu memakan ruang layar dengan peta besar yang statis.
+
+5. **Menjaga Fokus pada Core Value Akademis & Machine Learning:**
+   - Nilai akademis utama proyek ini berfokus pada **Retail Intelligence**, **Algoritma FEFO**, **Prediksi Spoilage Risk (ML Tabular)**, dan **Demand Forecasting 3-Hari (Time-Series)**.
+   - Menambahkan peta Leaflet hanya menjadi *visual gimmick* yang mengaburkan esensi solusi kecerdasan buatan dalam pencegahan *food waste*.
