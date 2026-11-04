@@ -237,3 +237,496 @@
   background: #dc2626 !important;
   color: #ffffff !important;
 }
+
+/* 🌟 Batch Summary Banner & Risk Mascot 🌟 */
+.fg-inv-decision-banner {
+  background: #f4f8f5;
+  border: 1px solid #e2ebe5;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1.25rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.fg-inv-decision-banner--high {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+.fg-inv-decision-banner--high .fg-inv-decision-img {
+  border-color: #fca5a5 !important;
+}
+
+.fg-inv-decision-banner--med {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+.fg-inv-decision-banner--med .fg-inv-decision-img {
+  border-color: #fcd34d !important;
+}
+
+.fg-inv-decision-banner--low {
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.fg-inv-decision-banner--low .fg-inv-decision-img {
+  border-color: #86efac !important;
+}
+
+.fg-inv-decision-main {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.fg-inv-decision-mascot-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.2rem;
+}
+
+.fg-inv-decision-mascot-img {
+  width: 82px;
+  height: 82px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 14px rgba(12, 31, 21, 0.12));
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fg-inv-decision-mascot-img:hover {
+  transform: scale(1.08) translateY(-2px);
+}
+
+/* Action Cards styling refinement */
+.fg-inv-action-card {
+  padding: 1.5rem 1.25rem 1.25rem;
+}
+
+.fg-inv-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fg-inv-action-card:hover .fg-inv-action-icon {
+  transform: translateY(-2px) scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .fg-inv-decision-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+  }
+  .fg-inv-decision-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .fg-inv-decision-mascot-box {
+    align-self: center;
+  }
+}
+
+/* 🌟 Three-Dots Menu Dropdown Stacking Context Fix 🌟 */
+.fg-inv-row.is-menu-open {
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+.fg-inv-row.is-menu-open td {
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+.fg-inv-mob-card.is-menu-open {
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+.fg-inv-dots-menu-wrap {
+  position: relative !important;
+}
+
+.fg-inv-dots-dropdown {
+  position: absolute !important;
+  right: 0 !important;
+  top: calc(100% + 6px) !important;
+  background: #ffffff !important;
+  border: 1px solid #dfeae3 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 14px 36px rgba(12, 31, 21, 0.28) !important;
+  min-width: 155px !important;
+  padding: 0.35rem !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.15rem !important;
+  animation: fgDropdownFade 0.16s ease-out !important;
+}
+
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   TYPESET PASS — /impeccable typeset dashboard + inventory
+   + sales log + forecast  |  /impeccable distill inventory
+   ───────────────────────────────────────────────────────────
+   Goals:
+   1. Land all text on the token scale (--step-xs → --step-2)
+   2. tabular-nums on every numeric column / KPI value
+   3. text-wrap: balance on card titles, text-wrap: pretty on body
+   4. Proper monospaced stack for batch IDs (not bare "monospace")
+   5. Remove muddy hierarchy (13px / 14px / 15px clustering)
+   6. Consistent letter-spacing roles: uppercase labels +0.04em,
+      display heads −0.025em, body 0
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 1. Card titles: balance + correct token ───────────────── */
+.fg-card__title,
+.fg-inv-card-title,
+.fg-inv-decision-title,
+.fg-inv-delete-title,
+.fg-fefo-empty h3,
+.fg-activity-empty__title {
+  text-wrap: balance;
+  font-kerning: normal;
+}
+
+.fg-card__subtitle,
+.fg-inv-subtitle,
+.fg-fefo-subtitle,
+.fg-inv-modal-desc,
+.fg-inv-delete-desc,
+.fg-inv-action-desc,
+.fg-esg-card__p,
+.fg-module-view__desc {
+  text-wrap: pretty;
+}
+
+/* ── 2. Numeric columns: tabular-nums everywhere ───────────── */
+.fg-inv-price,
+.fg-inv-qty,
+.fg-inv-dte,
+.fg-inv-date,
+.fg-inv-batch-id,
+.fg-fefo-score-num,
+.fg-fefo-horizon-count,
+.fg-fefo-sensor-val,
+.fg-table-qty,
+.fg-table-time,
+.fg-kpi-card__value,
+.fg-fefo-kpi-value,
+.fg-donut-center-num,
+.fg-donut-legend-pct,
+.fg-donut-legend-wt,
+.fg-esg-card__stat-val,
+.fg-module-view__val {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 3. Batch ID: proper mono stack ───────────────────────── */
+.fg-batch-code,
+.fg-inv-batch-id {
+  font-family: "SF Mono", ui-monospace, Consolas, "Cascadia Code", Menlo, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* ── 4. Table headers: unified uppercase label role ────────── */
+.fg-table th,
+.fg-inv-table th,
+.fg-fefo-table th {
+  font-family: var(--ff-body);
+  font-size: var(--step-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #496354;
+}
+
+/* ── 5. Table body: unified body role ──────────────────────── */
+.fg-table td,
+.fg-inv-row td {
+  font-size: 0.875rem;      /* one clean stop, not 0.84/0.86/0.88 */
+  line-height: 1.4;
+}
+
+/* ── 6. KPI card label: tighten tracking ───────────────────── */
+.fg-kpi-card__label,
+.fg-fefo-kpi-label {
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+}
+
+/* ── 7. KPI value: tighter head-level tracking ─────────────── */
+.fg-kpi-card__value,
+.fg-fefo-kpi-value {
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  font-kerning: normal;
+}
+
+/* ── 8. KPI subtext: step-xs not 0.76rem ad-hoc ───────────── */
+.fg-kpi-card__subtext,
+.fg-fefo-kpi-sub {
+  font-size: var(--step-xs);
+}
+
+/* ── 9. Sidebar brand: balance the wordmark ─────────────────── */
+.fg-sidebar__brand-text h1 {
+  text-wrap: balance;
+  letter-spacing: -0.025em;
+}
+
+/* ── 10. Header h1: same tight tracking as design token ─────── */
+.fg-header__h1,
+.fg-fefo-title,
+.fg-inv-title {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+/* ── 11. Header subtitle: pretty wrap, readable line-height ─── */
+.fg-header__subtitle,
+.fg-fefo-subtitle,
+.fg-inv-subtitle {
+  text-wrap: pretty;
+  line-height: 1.55;
+  max-width: 68ch;
+}
+
+/* ── 12. Modal form labels: consistent uppercase label role ─── */
+.fg-inv-form-field label {
+  font-family: var(--ff-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #195038;
+  line-height: 1.1;
+}
+
+/* ── 13. Modal form inputs: body scale ─────────────────────── */
+.fg-inv-form-field input,
+.fg-inv-form-field select {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* ── 14. Sales log / activity table secondary text ─────────── */
+.fg-product-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.fg-product-cat,
+.fg-table-time {
+  font-size: 0.75rem;
+}
+
+/* ── 15. Risk badges: cap size, enforce tracking ───────────── */
+.fg-inv-risk-badge,
+.fg-risk-badge,
+.fg-fefo-rank-chip,
+.fg-fefo-rec-badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  font-kerning: normal;
+}
+
+/* ── 16. Activity tab counts: consistent ───────────────────── */
+.fg-activity-tab,
+.fg-fefo-tab {
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* ── 17. ESG card heading: balance ─────────────────────────── */
+.fg-esg-card__h3 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+/* ── 18. Bar chart day/date labels: use token, not px ─────── */
+.fg-bar-day {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.fg-bar-date {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 19. Donut legend: tighter, cleaner ───────────────────── */
+.fg-donut-legend-name {
+  font-size: 0.84rem;
+  letter-spacing: -0.01em;
+}
+
+.fg-donut-legend-sub,
+.fg-donut-center-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+/* ── 20. FEFO horizon day label ───────────────────────────── */
+.fg-fefo-horizon-day {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.fg-fefo-horizon-time {
+  font-size: 0.7rem;
+}
+
+/* ── 21. Toast / toast list: clean small text ─────────────── */
+.fg-fefo-toast {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.fg-header__toast-item {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* ── 22. Inventory decision modal metadata ─────────────────── */
+.fg-inv-decision-meta {
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.fg-inv-decision-title {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* ── 23. Mobile nav bottom bar labels ─────────────────────── */
+.fg-mobile-nav-btn {
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+}
+
+/* ── 24. Inventory action card titles: balance ─────────────── */
+.fg-inv-action-title {
+  text-wrap: balance;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+/* ── 25. FEFO row: tabular-nums for price/DTE cells ────────── */
+.fg-fefo-row td:is(:nth-child(4), :nth-child(5), :nth-child(6)) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 26. Sensor readings: head font, tight ─────────────────── */
+.fg-fefo-sensor-val {
+  font-family: var(--ff-head);
+  letter-spacing: -0.02em;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SALES LOG — semantic typography classes
+   (replaces ad-hoc inline style attributes in SalesLogPage)
+   ══════════════════════════════════════════════════════════ */
+
+/* Date secondary (time row) */
+.fg-table-date-sub {
+  font-size: 0.74rem;
+  color: #7a9d8a;
+  font-variant-numeric: tabular-nums;
+  display: block;
+  margin-top: 1px;
+}
+
+/* Discount amount: amber, tabular */
+.fg-sales-discount {
+  color: #c05b1a;
+  font-weight: 600;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Total paid: emerald, Nunito head, tabular */
+.fg-sales-total {
+  font-family: var(--ff-head);
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #1b9b55;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Payment method: muted body */
+.fg-sales-pay-method {
+  font-size: 0.84rem;
+  color: #2c4737;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DEMAND FORECAST — semantic typography classes
+   ══════════════════════════════════════════════════════════ */
+
+/* Forecast day column header */
+.fg-forecast-day-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7b9987;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+}
+
+/* Forecast numeric value */
+.fg-forecast-value {
+  font-family: var(--ff-head);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Forecast unit suffix */
+.fg-forecast-unit {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #688975;
+}
+
+/* Forecast status pill */
+.fg-forecast-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* Forecast recommendation text */
+.fg-forecast-rec {
+  font-size: 0.78rem;
+  color: #496354;
+  line-height: 1.45;
+  text-wrap: pretty;
+}

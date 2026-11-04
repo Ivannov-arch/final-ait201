@@ -253,7 +253,7 @@ export default function SalesLogPage({
       paid: 'Paid (Lunas)',
       pending: 'Pending (Menunggu)',
       refunded: 'Refunded (Retur)',
-      void: 'Void (Batal)'
+      void: 'Void'
     }
     showToast(`✓ Status ${txnId} diubah menjadi "${statusLabels[newStatus] || newStatus}"`)
   }
@@ -451,7 +451,7 @@ export default function SalesLogPage({
             type="button"
             className="fg-inv-notify-btn"
             aria-label="Notifications"
-            onClick={() => showToast('🔔 Kasir aktif · Sinkronisasi POS berjalan realtime')}
+            onClick={() => showToast('? Cashier active � POS sync running in real-time')}
           >
             <span className="fg-inv-notify-dot"></span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -475,7 +475,7 @@ export default function SalesLogPage({
         <div>
           <h1 className="fg-inv-title">Sales Log</h1>
           <p className="fg-inv-subtitle">
-            Pencatatan transaksi kasir real-time. Sinkronisasi stok inventori dan profit secara otomatis.
+            Real-time cashier sales recording. Inventory stock and profit dashboard sync automatically.
           </p>
         </div>
 
@@ -490,7 +490,7 @@ export default function SalesLogPage({
               <line x1="3" y1="6" x2="21" y2="6" />
               <path d="M16 10a4 4 0 0 1-8 0" />
             </svg>
-            <span>+ Catat Penjualan</span>
+            <span>+ Record Sale</span>
           </button>
         </div>
       </div>
@@ -499,14 +499,14 @@ export default function SalesLogPage({
       <div className="fg-kpi-grid" ref={kpiContainerRef} style={{ marginBottom: '1.4rem' }}>
         <div className="fg-kpi-card">
           <div className="fg-kpi-card__header">
-            <span className="fg-kpi-card__label">Total Omzet Kasir</span>
+            <span className="fg-kpi-card__label">Total Sales Revenue</span>
             <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--success">Lunas</span>
           </div>
           <div className="fg-kpi-card__main">
             <span className="fg-kpi-card__value" style={{ color: '#147b43' }}>
               <AnimatedNumber value={totalRevenue} prefix="RM " decimals={2} />
             </span>
-            <span className="fg-kpi-card__subtext">Akumulasi penerimaan transaksi kasir yang lunas</span>
+            <span className="fg-kpi-card__subtext">Cumulative revenue from all paid cashier transactions</span>
           </div>
         </div>
 
@@ -627,15 +627,15 @@ export default function SalesLogPage({
 
         <div className="fg-kpi-card">
           <div className="fg-kpi-card__header">
-            <span className="fg-kpi-card__label">Total Transaksi</span>
+            <span className="fg-kpi-card__label">Total Transactions</span>
             <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--neutral">{paidCount} Paid</span>
           </div>
           <div className="fg-kpi-card__main">
             <span className="fg-kpi-card__value">
               <AnimatedNumber value={sales.length} decimals={0} />{' '}
-              <small style={{ fontSize: '0.85rem', fontWeight: 600, color: '#688975' }}>Struk</small>
+              <small style={{ fontSize: '0.85rem', fontWeight: 600, color: '#688975' }}>Receipts</small>
             </span>
-            <span className="fg-kpi-card__subtext">Semua transaksi struk kasir & clearance</span>
+            <span className="fg-kpi-card__subtext">All cashier receipts and clearance transactions</span>
           </div>
         </div>
       </div>
@@ -696,7 +696,7 @@ export default function SalesLogPage({
               </svg>
               <input
                 type="text"
-                placeholder="Cari transaksi atau produk..."
+                placeholder="Search transaction or product..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 aria-label="Search transactions"
@@ -711,7 +711,7 @@ export default function SalesLogPage({
                 </button>
               )}
             </div>
-            <span className="fg-inv-count-pill" style={{ marginLeft: 'auto' }}>{filteredSales.length} Transaksi</span>
+            <span className="fg-inv-count-pill" style={{ marginLeft: 'auto' }}>{filteredSales.length} Transactions</span>
           </div>
         </div>
 
@@ -725,9 +725,9 @@ export default function SalesLogPage({
                 <th>Product</th>
                 <th>Batch LOT</th>
                 <th>Qty Sold</th>
-                <th>Harga Jual</th>
+                <th>Selling Price</th>
                 <th>Discount</th>
-                <th>Total Terbayar</th>
+                <th>Total Paid</th>
                 <th>Payment</th>
                 <th>Status</th>
                 <th style={{ width: '80px', textAlign: 'center' }}>Aksi</th>
@@ -737,13 +737,13 @@ export default function SalesLogPage({
               {filteredSales.map((s, idx) => (
                 <tr key={`${s.id}-${idx}`}>
                   <td>
-                    <span className="fg-batch-code" style={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                    <span className="fg-batch-code">
                       {s.id}
                     </span>
                   </td>
                   <td className="fg-table-time">
                     <div>{s.time}</div>
-                    <div style={{ fontSize: '0.74rem', color: '#8aaa96' }}>{s.date}</div>
+                    <div className="fg-table-date-sub">{s.date}</div>
                   </td>
                   <td>
                     <div className="fg-table-product">
@@ -770,7 +770,7 @@ export default function SalesLogPage({
                   </td>
                   <td>
                     {s.discount > 0 ? (
-                      <span style={{ color: '#e07b3a', fontWeight: 600, fontSize: '0.84rem' }}>
+                      <span className="fg-sales-discount">
                         {s.discount}% (-RM {s.discountAmt.toFixed(2)})
                       </span>
                     ) : (
@@ -778,12 +778,12 @@ export default function SalesLogPage({
                     )}
                   </td>
                   <td>
-                    <strong style={{ color: '#1b9b55', fontSize: '0.92rem' }}>
+                    <strong className="fg-sales-total">
                       RM {s.total.toFixed(2)}
                     </strong>
                   </td>
                   <td>
-                    <span style={{ fontSize: '0.84rem', color: '#2c4737', fontWeight: 500 }}>
+                    <span className="fg-sales-pay-method">
                       {s.payMethod}
                     </span>
                   </td>
@@ -794,7 +794,7 @@ export default function SalesLogPage({
                         value={s.status || 'paid'}
                         onChange={(e) => handleUpdateStatus(s.id, e.target.value)}
                         aria-label={`Ubah status ${s.id}`}
-                        title="Klik untuk mengubah status transaksi"
+                        title="Click to change transaction status"
                       >
                         <option value="paid">Paid</option>
                         <option value="pending">Pending</option>
@@ -817,7 +817,7 @@ export default function SalesLogPage({
                         gap: '0.3rem',
                         borderRadius: '8px'
                       }}
-                      title="Edit seluruh informasi transaksi ini"
+                      title="Edit this transaction"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -865,7 +865,7 @@ export default function SalesLogPage({
                   <span className="fg-table-qty"><strong>{s.qty}</strong> {s.unit}</span>
                 </div>
                 <div>
-                  <span className="fg-inv-mob-label">Harga</span>
+                  <span className="fg-inv-mob-label">Price</span>
                   <span className="fg-inv-price fg-inv-sell-price">RM {s.unitPrice.toFixed(2)}</span>
                 </div>
                 <div>
@@ -905,7 +905,7 @@ export default function SalesLogPage({
                     gap: '0.3rem',
                     borderRadius: '8px'
                   }}
-                  title="Edit transaksi"
+                  title="Edit transaction"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -923,7 +923,7 @@ export default function SalesLogPage({
         <div className="fg-inv-modal-backdrop" ref={posModalRef} onClick={() => setShowPOSModal(false)}>
           <div className="fg-inv-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
             <div className="fg-inv-modal-header">
-              <h3>Catat Penjualan (Kasir)</h3>
+              <h3>Record Sale (Cashier)</h3>
               <button
                 type="button"
                 className="fg-inv-modal-close"
@@ -934,12 +934,12 @@ export default function SalesLogPage({
             </div>
 
             <p className="fg-inv-modal-desc">
-              Pilih batch produk yang dibeli. Stok batch akan otomatis dikurangi dan profit dashboard akan bertambah serentak.
+              Select the product batch purchased. Batch stock is automatically deducted and the profit dashboard updates instantly.
             </p>
 
             <form onSubmit={handleRecordSale} className="fg-inv-modal-form">
               <div className="fg-inv-form-field">
-                <label>Pilih Batch Produk (Stok Aktif)</label>
+                <label>Select Product Batch (Active Stock)</label>
                 <select
                   value={selectedBatchId}
                   onChange={(e) => {
@@ -1068,7 +1068,7 @@ export default function SalesLogPage({
               <div>
                 <h3 style={{ margin: 0 }}>Edit Transaksi {editingSale.id}</h3>
                 <p style={{ fontSize: '0.8rem', color: '#6b8f78', margin: '3px 0 0' }}>
-                  Koreksi rincian produk, harga, diskon, atau metode bayar jika kasir salah input.
+                  Correct product details, price, discount, or payment method if the cashier made an input error.
                 </p>
               </div>
               <button
@@ -1151,7 +1151,7 @@ export default function SalesLogPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Harga Jual / Unit (RM)</label>
+                  <label>Selling Price / Unit (RM)</label>
                   <input
                     type="number"
                     step="0.10"
@@ -1194,7 +1194,7 @@ export default function SalesLogPage({
                     <option value="paid">Paid (Lunas)</option>
                     <option value="pending">Pending (Menunggu)</option>
                     <option value="refunded">Refunded (Retur)</option>
-                    <option value="void">Void (Batal)</option>
+                    <option value="void">Void (Cancelled)</option>
                   </select>
                 </div>
               </div>

@@ -21,6 +21,25 @@ function fromInputDate(isoStr) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// Risk level mascot mapping: High Risk (worried/alert), Medium Risk (curious/thinking), Normal/Low Risk (happy/smiling)
+const RISK_MASCOT_MAP = {
+  high: {
+    src: '/image/decision/donate.png',
+    alt: 'High Risk Mascot',
+    label: 'High Risk'
+  },
+  med: {
+    src: '/image/decision/dynamic.png',
+    alt: 'Med Risk Mascot',
+    label: 'Med Risk'
+  },
+  low: {
+    src: '/image/decision/normal_sale.png',
+    alt: 'Normal Risk Mascot',
+    label: 'Normal Risk'
+  }
+}
+
 export default function InventoryFefoRiskPage({
   batches: externalBatches,
   onUpdateBatches,
@@ -158,7 +177,7 @@ export default function InventoryFefoRiskPage({
         gsap.fromTo(
           Array.from(tableRows),
           { opacity: 0, y: 8 },
-          { opacity: 1, y: 0, duration: 0.32, stagger: 0.035, ease: 'power2.out' }
+          { opacity: 1, y: 0, duration: 0.32, stagger: 0.035, ease: 'power2.out', clearProps: 'transform' }
         )
       }
       const mobileCards = container.querySelectorAll('.fg-inv-mobile-card')
@@ -166,7 +185,7 @@ export default function InventoryFefoRiskPage({
         gsap.fromTo(
           Array.from(mobileCards),
           { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: 0.32, stagger: 0.04, ease: 'power2.out' }
+          { opacity: 1, y: 0, duration: 0.32, stagger: 0.04, ease: 'power2.out', clearProps: 'transform' }
         )
       }
     }, container)
@@ -174,7 +193,7 @@ export default function InventoryFefoRiskPage({
     return () => ctx.revert()
   }, [batches, searchTerm, selectedRiskFilter, selectedCategoryFilter, sortBy])
 
-  // GSAP animation for Action Decision modal + 3 mascot cards
+  // GSAP animation for Action Decision modal + 3 action cards + risk mascot
   useEffect(() => {
     if (!selectedBatchForAction) return
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -189,6 +208,11 @@ export default function InventoryFefoRiskPage({
         '.fg-inv-action-card',
         { scale: 0.9, y: 24, opacity: 0 },
         { scale: 1, y: 0, opacity: 1, duration: 0.45, stagger: 0.08, ease: 'back.out(1.2)', delay: 0.05 }
+      )
+      gsap.fromTo(
+        '.fg-inv-decision-mascot-img',
+        { scale: 0.75, opacity: 0, rotate: -6 },
+        { scale: 1, opacity: 1, rotate: 0, duration: 0.45, ease: 'back.out(1.4)', delay: 0.08 }
       )
     }, actionModalRef)
 
@@ -272,11 +296,11 @@ export default function InventoryFefoRiskPage({
     }
 
     if (actionType === 'normal') {
-      text = `Batch ${batch.id} (${batch.product}) dipertahankan untuk Normal Sale`
+      text = `Batch ${batch.id} (${batch.product}) retained for Normal Sale`
     } else if (actionType === 'markdown') {
-      text = `30% Dynamic Markdown diterapkan pada Batch ${batch.id}. Sinkronisasi POS aktif.`
+      text = `30% Dynamic Markdown applied to Batch ${batch.id}. POS sync active.`
     } else if (actionType === 'donate') {
-      text = `Pengiriman donasi disiapkan untuk Batch ${batch.id} ke Food Bank.`
+      text = `Donation shipment arranged for Batch ${batch.id} to Food Bank.`
     }
 
     // Persist appliedAction on the batch item
@@ -293,7 +317,7 @@ export default function InventoryFefoRiskPage({
     if (externalOnDeleteBatch && deleted) {
       externalOnDeleteBatch(deleted)
     }
-    showToast(`Batch ${idToDelete} berhasil dihapus dari inventori`)
+    showToast(`Batch ${idToDelete} deleted successfully from inventory`)
   }
 
   // Live recalculate DTE and Risk when user edits Expiry Date (DTE cannot be edited manually!)
@@ -315,14 +339,14 @@ export default function InventoryFefoRiskPage({
     if (!editBatch) return
     setBatches(prev => prev.map(b => (b.id === editBatch.id ? editBatch : b)))
     setEditBatch(null)
-    showToast(`Perubahan berhasil disimpan untuk Batch ${editBatch.id}`)
+    showToast(`Changes saved successfully for Batch ${editBatch.id}`)
   }
 
   // Submit Add Batch Form
   const handleAddBatchSubmit = (e) => {
     e.preventDefault()
     if (!newBatchForm.product.trim()) {
-      showToast('Silakan isi nama produk terlebih dahulu')
+      showToast('Please enter the product name first')
       return
     }
 
@@ -362,7 +386,7 @@ export default function InventoryFefoRiskPage({
       dateIn: 'Oct 30, 2026',
       expiryDate: 'Nov 06, 2026'
     })
-    showToast(`Batch ${newId} (${createdBatch.product}) berhasil ditambahkan ke rotasi FEFO`)
+    showToast(`Batch ${newId} (${createdBatch.product}) added successfully to FEFO rotation`)
   }
 
   // Render Action Decision trigger button with appliedAction stamp (No emojis)
@@ -415,10 +439,10 @@ export default function InventoryFefoRiskPage({
         type="button"
         className={`fg-inv-decision-trigger-btn ${mobileClass} fg-inv-decision-trigger-btn--${b.riskType}`}
         onClick={() => setSelectedBatchForAction(b)}
-        title={`Tentukan aksi mitigasi untuk batch ${b.id}`}
+        title={`Determine mitigation action for batch ${b.id}`}
       >
         <span className="fg-inv-trigger-dot"></span>
-        <span>{b.riskType === 'high' ? 'Aksi Kritis' : b.riskType === 'med' ? 'Review Aksi' : 'Normal Sale'}</span>
+        <span>{b.riskType === 'high' ? 'Critical Action' : b.riskType === 'med' ? 'Review Action' : 'Normal Sale'}</span>
         <span className="fg-inv-btn-arrow">→</span>
       </button>
     )
@@ -462,10 +486,10 @@ export default function InventoryFefoRiskPage({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
               <h1 className="fg-inv-title">Inventory</h1>
-              <span className="fg-inv-header-count">{batches.length} Batch Terdaftar</span>
+              <span className="fg-inv-header-count">{batches.length} Batches Registered</span>
             </div>
             <p className="fg-inv-subtitle">
-              Prioritas rotasi FEFO (First Expiry, First Out) dan mitigasi risiko pembusukan stok.
+              FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation.
             </p>
           </div>
         </div>
@@ -493,13 +517,13 @@ export default function InventoryFefoRiskPage({
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>Tambah Batch</span>
+            <span>Add Batch</span>
           </button>
         </div>
       </div>
 
       {/* Distilled Health Filter Strip (Compact, Zero Emojis) */}
-      <div className="fg-inv-distilled-pills" role="tablist" aria-label="Filter status risiko">
+      <div className="fg-inv-distilled-pills" role="tablist" aria-label="Filter risk status">
         <button
           type="button"
           role="tab"
@@ -507,7 +531,7 @@ export default function InventoryFefoRiskPage({
           className={`fg-inv-pill-tab ${selectedRiskFilter === 'all' ? 'is-active' : ''}`}
           onClick={() => setSelectedRiskFilter('all')}
         >
-          <span className="fg-inv-pill-tab__name">Semua Batch</span>
+          <span className="fg-inv-pill-tab__name">All Batches</span>
           <span className="fg-inv-pill-tab__count">{riskCounts.total}</span>
         </button>
 
@@ -519,7 +543,7 @@ export default function InventoryFefoRiskPage({
           onClick={() => setSelectedRiskFilter(prev => prev === 'high' ? 'all' : 'high')}
         >
           <span className="fg-inv-pill-dot fg-inv-pill-dot--high"></span>
-          <span className="fg-inv-pill-tab__name">Kritis (DTE &le; 2 Hari)</span>
+          <span className="fg-inv-pill-tab__name">Critical (DTE &le; 2 Days)</span>
           <span className="fg-inv-pill-tab__count">{riskCounts.high}</span>
         </button>
 
@@ -531,7 +555,7 @@ export default function InventoryFefoRiskPage({
           onClick={() => setSelectedRiskFilter(prev => prev === 'med' ? 'all' : 'med')}
         >
           <span className="fg-inv-pill-dot fg-inv-pill-dot--med"></span>
-          <span className="fg-inv-pill-tab__name">Waspada (3 - 5 Hari)</span>
+          <span className="fg-inv-pill-tab__name">Warning (3 - 5 Days)</span>
           <span className="fg-inv-pill-tab__count">{riskCounts.med}</span>
         </button>
 
@@ -543,7 +567,7 @@ export default function InventoryFefoRiskPage({
           onClick={() => setSelectedRiskFilter(prev => prev === 'low' ? 'all' : 'low')}
         >
           <span className="fg-inv-pill-dot fg-inv-pill-dot--low"></span>
-          <span className="fg-inv-pill-tab__name">Aman (&gt; 5 Hari)</span>
+          <span className="fg-inv-pill-tab__name">Safe (&gt; 5 Days)</span>
           <span className="fg-inv-pill-tab__count">{riskCounts.low}</span>
         </button>
       </div>
@@ -561,10 +585,10 @@ export default function InventoryFefoRiskPage({
               </svg>
               <input
                 type="text"
-                placeholder="Cari Batch ID, produk, atau kategori..."
+                placeholder="Search Batch ID, product, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Cari Batch ID atau nama produk"
+                aria-label="Search Batch ID or product name"
               />
               {searchTerm && (
                 <button
@@ -584,9 +608,9 @@ export default function InventoryFefoRiskPage({
                 className="fg-inv-select"
                 value={selectedCategoryFilter}
                 onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                aria-label="Filter kategori"
+                aria-label="Filter category"
               >
-                <option value="all">Semua Kategori</option>
+                <option value="all">All Categories</option>
                 {categories.filter(c => c !== 'all').map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -599,12 +623,12 @@ export default function InventoryFefoRiskPage({
                 className="fg-inv-select"
                 value={selectedRiskFilter}
                 onChange={(e) => setSelectedRiskFilter(e.target.value)}
-                aria-label="Filter tingkat risiko"
+                aria-label="Filter risk level"
               >
-                <option value="all">Semua Risiko</option>
-                <option value="high">High Risk (DTE &le; 2 hari)</option>
-                <option value="med">Med Risk (DTE 3 - 5 hari)</option>
-                <option value="low">Low Risk (DTE &gt; 5 hari)</option>
+                <option value="all">All Risks</option>
+                <option value="high">High Risk (DTE &le; 2 days)</option>
+                <option value="med">Med Risk (DTE 3 - 5 days)</option>
+                <option value="low">Low Risk (DTE &gt; 5 days)</option>
               </select>
             </div>
 
@@ -614,11 +638,11 @@ export default function InventoryFefoRiskPage({
                 className="fg-inv-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                aria-label="Urutkan batch"
+                aria-label="Sort batches"
               >
-                <option value="fefo">Urutan: FEFO Terdekat</option>
-                <option value="dte-desc">Urutan: DTE Terjauh</option>
-                <option value="qty-desc">Urutan: Qty Terbanyak</option>
+                <option value="fefo">Sort: FEFO (Earliest Expiry)</option>
+                <option value="dte-desc">Sort: Longest DTE</option>
+                <option value="qty-desc">Sort: Highest Qty</option>
               </select>
             </div>
 
@@ -628,14 +652,14 @@ export default function InventoryFefoRiskPage({
                 type="button"
                 className="fg-inv-reset-btn"
                 onClick={handleResetFilters}
-                title="Reset semua filter"
+                title="Reset all filters"
               >
-                Reset Filter
+                Reset Filters
               </button>
             )}
 
             <span className="fg-inv-count-pill" style={{ marginLeft: 'auto' }}>
-              {filteredBatches.length} dari {batches.length} Batch
+              {filteredBatches.length} of {batches.length} Batches
             </span>
           </div>
         </div>
@@ -646,14 +670,14 @@ export default function InventoryFefoRiskPage({
             <thead>
               <tr>
                 <th>Batch ID</th>
-                <th>Produk</th>
-                <th>Harga (Modal / Jual)</th>
+                <th>Product</th>
+                <th>Price (Cost / Sell)</th>
                 <th>Qty</th>
-                <th>Jadwal (Masuk → Expired)</th>
-                <th>Sisa Hari (DTE)</th>
-                <th>Status Risiko</th>
+                <th>Timeline (Intake → Expiry)</th>
+                <th>Days Left (DTE)</th>
+                <th>Risk Status</th>
                 <th>Action Decision</th>
-                <th style={{ width: '44px', textAlign: 'center' }}>Aksi</th>
+                <th style={{ width: '44px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -668,9 +692,9 @@ export default function InventoryFefoRiskPage({
                           <line x1="8" y1="11" x2="14" y2="11" />
                         </svg>
                       </div>
-                      <div className="fg-inv-empty-title">Tidak ada batch yang cocok</div>
+                      <div className="fg-inv-empty-title">No matching batches found</div>
                       <p className="fg-inv-empty-desc">
-                        Tidak ada inventori yang sesuai dengan kata kunci pencarian atau filter yang dipilih.
+                        No inventory items match your search query or selected filters.
                       </p>
                       <button
                         type="button"
@@ -678,7 +702,7 @@ export default function InventoryFefoRiskPage({
                         style={{ margin: '0 auto', display: 'inline-flex' }}
                         onClick={handleResetFilters}
                       >
-                        Reset Semua Filter
+                        Reset All Filters
                       </button>
                     </div>
                   </td>
@@ -691,7 +715,8 @@ export default function InventoryFefoRiskPage({
                   return (
                     <tr
                       key={b.id}
-                      className={`fg-inv-row ${isHighRisk ? 'fg-inv-row--high-risk' : ''}`}
+                      className={`fg-inv-row ${isHighRisk ? 'fg-inv-row--high-risk' : ''} ${isMenuOpen ? 'is-menu-open' : ''}`}
+                      style={isMenuOpen ? { position: 'relative', zIndex: 100 } : undefined}
                     >
                     <td>
                       <span className={`fg-inv-batch-id ${isHighRisk ? 'is-red' : ''}`}>
@@ -717,11 +742,11 @@ export default function InventoryFefoRiskPage({
                     {/* Stacked Column 1: Harga (Modal / Jual) */}
                     <td>
                       <div className="fg-inv-stacked-cell">
-                        <span className="fg-inv-price fg-inv-cost-price" title="Harga Modal">
+                        <span className="fg-inv-price fg-inv-cost-price" title="Cost Price">
                           {b.costPrice || 'RM 6.00/kg'}
                         </span>
                         <span className="fg-inv-price-slash">/</span>
-                        <span className="fg-inv-price fg-inv-sell-price" title="Harga Jual">
+                        <span className="fg-inv-price fg-inv-sell-price" title="Selling Price">
                           {b.sellPrice || 'RM 7.50/kg'}
                         </span>
                       </div>
@@ -734,9 +759,9 @@ export default function InventoryFefoRiskPage({
                     {/* Stacked Column 2: Jadwal (Masuk → Expired) */}
                     <td>
                       <div className="fg-inv-stacked-cell fg-inv-stacked-cell--date">
-                        <span className="fg-inv-date fg-inv-date--in" title="Tanggal Masuk">{b.dateIn}</span>
+                        <span className="fg-inv-date fg-inv-date--in" title="Intake Date">{b.dateIn}</span>
                         <span className="fg-inv-date-flow">→</span>
-                        <span className={`fg-inv-date fg-inv-date--exp ${isHighRisk ? 'is-red' : ''}`} title="Tanggal Expired">{b.expiryDate}</span>
+                        <span className={`fg-inv-date fg-inv-date--exp ${isHighRisk ? 'is-red' : ''}`} title="Expiry Date">{b.expiryDate}</span>
                       </div>
                     </td>
 
@@ -757,8 +782,8 @@ export default function InventoryFefoRiskPage({
                     </td>
 
                     {/* Three-Dots Menu (Edit & Delete Batch) */}
-                    <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
-                      <div className="fg-inv-dots-menu-wrap">
+                    <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative', zIndex: isMenuOpen ? 120 : undefined }}>
+                      <div className="fg-inv-dots-menu-wrap" style={isMenuOpen ? { position: 'relative', zIndex: 130 } : undefined}>
                         <button
                           type="button"
                           className={`fg-inv-dots-btn ${isMenuOpen ? 'is-active' : ''}`}
@@ -821,15 +846,15 @@ export default function InventoryFefoRiskPage({
         <div className="fg-mobile-activity-list fg-inv-mobile-list" aria-label="Inventory Batches Mobile View">
           {filteredBatches.length === 0 ? (
             <div className="fg-inv-empty-state" style={{ padding: '2.5rem 1rem', textAlign: 'center' }}>
-              <div className="fg-inv-empty-title">Tidak ada batch yang cocok</div>
-              <p className="fg-inv-empty-desc">Coba sesuaikan kata kunci pencarian atau filter risiko.</p>
+              <div className="fg-inv-empty-title">No matching batches found</div>
+              <p className="fg-inv-empty-desc">Try adjusting your search query or risk filters.</p>
               <button
                 type="button"
                 className="fg-inv-btn-outline"
                 style={{ margin: '0.6rem auto', display: 'inline-flex' }}
                 onClick={handleResetFilters}
               >
-                Reset Semua Filter
+                Reset All Filters
               </button>
             </div>
           ) : (
@@ -840,7 +865,8 @@ export default function InventoryFefoRiskPage({
               return (
                 <div
                   key={`mob-${b.id}`}
-                  className={`fg-mobile-activity-card fg-inv-mobile-card fg-inv-mob-card ${isHighRisk ? 'fg-inv-mob-card--high' : ''}`}
+                  className={`fg-mobile-activity-card fg-inv-mobile-card fg-inv-mob-card ${isHighRisk ? 'fg-inv-mob-card--high' : ''} ${isMenuOpen ? 'is-menu-open' : ''}`}
+                  style={isMenuOpen ? { position: 'relative', zIndex: 100 } : undefined}
                 >
                 <div className="fg-mobile-card__top">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -865,7 +891,11 @@ export default function InventoryFefoRiskPage({
                     </span>
 
                     {/* Three-dots menu for mobile card */}
-                    <div className="fg-inv-dots-menu-wrap" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="fg-inv-dots-menu-wrap"
+                      onClick={(e) => e.stopPropagation()}
+                      style={isMenuOpen ? { position: 'relative', zIndex: 130 } : undefined}
+                    >
                       <button
                         type="button"
                         className={`fg-inv-dots-btn ${isMenuOpen ? 'is-active' : ''}`}
@@ -919,7 +949,7 @@ export default function InventoryFefoRiskPage({
 
                 <div className="fg-inv-mob-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem 0.85rem' }}>
                   <div>
-                    <span className="fg-inv-mob-label">Harga (Modal / Jual)</span>
+                    <span className="fg-inv-mob-label">Price (Cost / Sell)</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span className="fg-inv-price fg-inv-cost-price">{b.costPrice || 'RM 6.00'}</span>
                       <span style={{ color: '#94a3b8' }}>/</span>
@@ -927,7 +957,7 @@ export default function InventoryFefoRiskPage({
                     </div>
                   </div>
                   <div>
-                    <span className="fg-inv-mob-label">Qty & Sisa DTE</span>
+                    <span className="fg-inv-mob-label">Qty & Days Left (DTE)</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className={`fg-inv-qty ${isHighRisk ? 'is-red' : ''}`}>{b.qty}</span>
                       <span style={{ color: '#94a3b8' }}>•</span>
@@ -935,7 +965,7 @@ export default function InventoryFefoRiskPage({
                     </div>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
-                    <span className="fg-inv-mob-label">Jadwal (Masuk → Expired)</span>
+                    <span className="fg-inv-mob-label">Timeline (Intake → Expiry)</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="fg-inv-date">{b.dateIn}</span>
                       <span style={{ color: '#94a3b8' }}>→</span>
@@ -978,8 +1008,8 @@ export default function InventoryFefoRiskPage({
                   </svg>
                 </div>
                 <div>
-                  <h2 id="action-decision-title" className="fg-inv-card-title">Tentukan Tindakan Stok</h2>
-                  <span className="fg-inv-modal-subtitle">Prioritas rotasi FEFO & mitigasi risiko pembusukan</span>
+                  <h2 id="action-decision-title" className="fg-inv-card-title">Determine Stock Action</h2>
+                  <span className="fg-inv-modal-subtitle">FEFO rotation priority & spoilage risk mitigation</span>
                 </div>
               </div>
 
@@ -988,52 +1018,75 @@ export default function InventoryFefoRiskPage({
                   type="button"
                   className="fg-inv-modal-close"
                   onClick={() => setSelectedBatchForAction(null)}
-                  aria-label="Tutup Pop-up"
+                  aria-label="Close modal"
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            {/* Selected Batch Summary Banner */}
-            <div className="fg-inv-decision-banner">
-              <img
-                src={selectedBatchForAction.image}
-                alt={selectedBatchForAction.product}
-                className="fg-inv-decision-img"
-                loading="lazy"
-              />
-              <div className="fg-inv-decision-info">
-                <h3 className="fg-inv-decision-title">
-                  Batch {selectedBatchForAction.id} — {selectedBatchForAction.product}
-                </h3>
-                <div className="fg-inv-decision-meta">
-                  <span className={`fg-inv-decision-badge fg-inv-decision-badge--${selectedBatchForAction.riskType}`}>
-                    <span className="fg-inv-decision-dot"></span>
-                    {selectedBatchForAction.risk}
-                  </span>
-                  <span className="fg-inv-meta-sep">•</span>
-                  <span className="fg-inv-meta-item">Modal: {selectedBatchForAction.costPrice || selectedBatchForAction.price || 'RM 6.50/kg'}</span>
-                  <span className="fg-inv-meta-sep">•</span>
-                  <span className="fg-inv-meta-item">Jual: {selectedBatchForAction.sellPrice || 'RM 8.00/kg'}</span>
-                  <span className="fg-inv-meta-sep">•</span>
-                  <span className="fg-inv-meta-item">Stok: {selectedBatchForAction.qty}</span>
-                  <span className="fg-inv-meta-sep">•</span>
-                  <span className="fg-inv-meta-item">Kedaluwarsa: {selectedBatchForAction.expiryDate}</span>
-                  <span className="fg-inv-meta-sep">•</span>
-                  <span className="fg-inv-meta-item" style={{ fontWeight: 700, color: selectedBatchForAction.dteNum <= 2 ? '#dc2626' : '#2c4737' }}>
-                    DTE: {selectedBatchForAction.dte}
-                  </span>
+            {/* Selected Batch Summary Banner with Risk Mascot on the side */}
+            <div className={`fg-inv-decision-banner fg-inv-decision-banner--${selectedBatchForAction.riskType}`}>
+              <div className="fg-inv-decision-main">
+                <img
+                  src={selectedBatchForAction.image}
+                  alt={selectedBatchForAction.product}
+                  className="fg-inv-decision-img"
+                  loading="lazy"
+                />
+                <div className="fg-inv-decision-info">
+                  <h3 className="fg-inv-decision-title">
+                    Batch {selectedBatchForAction.id} — {selectedBatchForAction.product}
+                  </h3>
+                  <div className="fg-inv-decision-meta">
+                    <span className={`fg-inv-decision-badge fg-inv-decision-badge--${selectedBatchForAction.riskType}`}>
+                      <span className="fg-inv-decision-dot"></span>
+                      {selectedBatchForAction.risk}
+                    </span>
+                    <span className="fg-inv-meta-sep">•</span>
+                    <span className="fg-inv-meta-item">Cost: {selectedBatchForAction.costPrice || selectedBatchForAction.price || 'RM 6.50/kg'}</span>
+                    <span className="fg-inv-meta-sep">•</span>
+                    <span className="fg-inv-meta-item">Sell: {selectedBatchForAction.sellPrice || 'RM 8.00/kg'}</span>
+                    <span className="fg-inv-meta-sep">•</span>
+                    <span className="fg-inv-meta-item">Stock: {selectedBatchForAction.qty}</span>
+                    <span className="fg-inv-meta-sep">•</span>
+                    <span className="fg-inv-meta-item">Expiry: {selectedBatchForAction.expiryDate}</span>
+                    <span className="fg-inv-meta-sep">•</span>
+                    <span className="fg-inv-meta-item" style={{ fontWeight: 700, color: selectedBatchForAction.dteNum <= 2 ? '#dc2626' : '#2c4737' }}>
+                      DTE: {selectedBatchForAction.dte}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* Risk Mascot placed beside the batch information */}
+              {(() => {
+                const mascot = RISK_MASCOT_MAP[selectedBatchForAction.riskType] || RISK_MASCOT_MAP.low
+                return (
+                  <div
+                    className={`fg-inv-decision-mascot-box fg-inv-decision-mascot-box--${selectedBatchForAction.riskType}`}
+                    title={`Mascot: ${selectedBatchForAction.risk}`}
+                  >
+                    <img
+                      src={mascot.src}
+                      alt={mascot.alt}
+                      className="fg-inv-decision-mascot-img"
+                    />
+                  </div>
+                )
+              })()}
             </div>
 
             {/* 3 Action Options Grid */}
             <div className="fg-inv-action-grid">
               {/* Card 1: Normal Sale */}
               <div className="fg-inv-action-card fg-inv-action-card--normal">
-                <div className="fg-inv-action-mascot">
-                  <img src="/image/decision/normal_sale.png" alt="Normal Sale mascot" className="fg-inv-action-mascot-img" />
+                <div className="fg-inv-action-icon fg-inv-action-icon--green">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                    <path d="M3 6h18" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
                 </div>
                 <h4 className="fg-inv-action-title">Normal Sale</h4>
                 <p className="fg-inv-action-desc">
@@ -1051,8 +1104,12 @@ export default function InventoryFefoRiskPage({
 
               {/* Card 2: Dynamic Markdown */}
               <div className="fg-inv-action-card fg-inv-action-card--markdown">
-                <div className="fg-inv-action-mascot">
-                  <img src="/image/decision/dynamic.png" alt="Dynamic Markdown mascot" className="fg-inv-action-mascot-img" />
+                <div className="fg-inv-action-icon fg-inv-action-icon--amber">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="5" x2="5" y2="19" />
+                    <circle cx="6.5" cy="6.5" r="2.5" />
+                    <circle cx="17.5" cy="17.5" r="2.5" />
+                  </svg>
                 </div>
                 <h4 className="fg-inv-action-title">Dynamic Markdown</h4>
                 <p className="fg-inv-action-desc">
@@ -1070,8 +1127,10 @@ export default function InventoryFefoRiskPage({
 
               {/* Card 3: Donate to Food Bank */}
               <div className="fg-inv-action-card fg-inv-action-card--donate">
-                <div className="fg-inv-action-mascot">
-                  <img src="/image/decision/donate.png" alt="Donate mascot" className="fg-inv-action-mascot-img" />
+                <div className="fg-inv-action-icon fg-inv-action-icon--red">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                  </svg>
                 </div>
                 <h4 className="fg-inv-action-title">Donate to Food Bank</h4>
                 <p className="fg-inv-action-desc">
@@ -1131,7 +1190,7 @@ export default function InventoryFefoRiskPage({
                   </select>
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Harga Modal (Cost Price)</label>
+                  <label>Cost Price</label>
                   <input
                     type="text"
                     value={editBatch.costPrice || ''}
@@ -1144,7 +1203,7 @@ export default function InventoryFefoRiskPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Harga Jual (Sell Price)</label>
+                  <label>Selling Price</label>
                   <input
                     type="text"
                     value={editBatch.sellPrice || ''}
@@ -1165,7 +1224,7 @@ export default function InventoryFefoRiskPage({
               </div>
 
               <div className="fg-inv-form-field">
-                <label>Expiry Date (Tanggal Expired)</label>
+                <label>Expiry Date</label>
                 <input
                   type="date"
                   value={toInputDate(editBatch.expiryDate)}
@@ -1209,18 +1268,18 @@ export default function InventoryFefoRiskPage({
         <div className="fg-inv-modal-backdrop" ref={addModalRef} onClick={() => setShowAddModal(false)}>
           <div className="fg-inv-modal" onClick={(e) => e.stopPropagation()}>
             <div className="fg-inv-modal-header">
-              <h3>Tambah Batch Inventori Baru</h3>
+              <h3>Add New Inventory Batch</h3>
               <button
                 type="button"
                 className="fg-inv-modal-close"
                 onClick={() => setShowAddModal(false)}
-                aria-label="Tutup"
+                aria-label="Close"
               >
                 ✕
               </button>
             </div>
             <p className="fg-inv-modal-desc">
-              Daftarkan batch inventori masuk dengan harga modal, harga jual, dan tanggal kedaluwarsa untuk rotasi FEFO otomatis.
+              Register an intake batch with cost price, selling price, and expiry date for automated FEFO rotation.
             </p>
             <form onSubmit={handleAddBatchSubmit} className="fg-inv-modal-form">
               <div className="fg-inv-form-row">
@@ -1261,7 +1320,7 @@ export default function InventoryFefoRiskPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Harga Modal (Cost Price)</label>
+                  <label>Cost Price</label>
                   <input
                     type="text"
                     placeholder="e.g. RM 8.50/kg"
@@ -1271,7 +1330,7 @@ export default function InventoryFefoRiskPage({
                   />
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Harga Jual (Sell Price)</label>
+                  <label>Selling Price</label>
                   <input
                     type="text"
                     placeholder="e.g. RM 10.00/kg"
@@ -1294,7 +1353,7 @@ export default function InventoryFefoRiskPage({
                   />
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Date In (Tanggal Masuk)</label>
+                  <label>Date In</label>
                   <input
                     type="date"
                     value={toInputDate(newBatchForm.dateIn)}
@@ -1306,7 +1365,7 @@ export default function InventoryFefoRiskPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Expiry Date (Tanggal Expired)</label>
+                  <label>Expiry Date</label>
                   <input
                     type="date"
                     value={toInputDate(newBatchForm.expiryDate)}
@@ -1369,10 +1428,10 @@ export default function InventoryFefoRiskPage({
                 </svg>
               </div>
               <h3 id="delete-confirm-title" className="fg-inv-delete-title">
-                Hapus Batch {batchToDelete.id}?
+                Delete Batch {batchToDelete.id}?
               </h3>
               <p className="fg-inv-delete-desc">
-                Anda akan menghapus <strong>{batchToDelete.product}</strong> ({batchToDelete.qty}) dari daftar rotasi FEFO. Tindakan ini tidak dapat dibatalkan.
+                You are about to permanently remove <strong>{batchToDelete.product}</strong> ({batchToDelete.qty}) from FEFO rotation. This action cannot be undone.
               </p>
               <div className="fg-inv-delete-actions">
                 <button
@@ -1391,7 +1450,7 @@ export default function InventoryFefoRiskPage({
                     handleDeleteBatch(id)
                   }}
                 >
-                  Ya, Hapus Batch
+                  Delete Batch
                 </button>
               </div>
             </div>

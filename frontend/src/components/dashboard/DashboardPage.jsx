@@ -231,7 +231,7 @@ export default function DashboardPage({ onNavigateHome }) {
         ) : (
           <div className="fg-card fg-module-view">
             <div className="fg-module-view__badge">Module Active</div>
-            <h2 className="fg-card__title" style={{ fontSize: '1.65rem', marginBottom: '0.6rem' }}>
+            <h2 className="fg-card__title" style={{ fontSize: 'clamp(1.4rem,2vw,1.75rem)', marginBottom: '0.6rem', textWrap: 'balance' }}>
               {activeNav.charAt(0).toUpperCase() + activeNav.slice(1).replace(/-/g, ' ')}
             </h2>
             <p className="fg-module-view__desc">
