@@ -91,7 +91,7 @@ export default function Preloader({
         setStatus("Welcome to FreshGuard Hub!");
         setTimeout(() => dismiss(), 500);
       }
-    }, 50);
+    }, 20);
 
     const onKeyDown = (e) => {
       if (e.key === "Escape") {
