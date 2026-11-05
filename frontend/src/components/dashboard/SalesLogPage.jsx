@@ -397,6 +397,7 @@ export default function SalesLogPage({
   const totalRevenue = sales.filter(s => s.status === 'paid').reduce((sum, s) => sum + s.total, 0)
   const totalUnitsSold = sales.filter(s => s.status === 'paid').reduce((sum, s) => sum + (Number(s.qty) || 0), 0)
   const paidCount = sales.filter(s => s.status === 'paid').length
+  const averageSaleValue = paidCount > 0 ? totalRevenue / paidCount : 0
 
   // Staggered entrance for table rows and mobile card items
   useEffect(() => {
@@ -451,7 +452,7 @@ export default function SalesLogPage({
             type="button"
             className="fg-inv-notify-btn"
             aria-label="Notifications"
-            onClick={() => showToast('? Cashier active � POS sync running in real-time')}
+            onClick={() => showToast('? Cashier active � POS sync running in real-time')}
           >
             <span className="fg-inv-notify-dot"></span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -495,59 +496,38 @@ export default function SalesLogPage({
         </div>
       </div>
 
-      {/* Financial Quick-Stats KPI Strip */}
-      <div className="fg-kpi-grid" ref={kpiContainerRef} style={{ marginBottom: '1.4rem' }}>
+      <div className="fg-kpi-grid" ref={kpiContainerRef}>
         <div className="fg-kpi-card">
           <div className="fg-kpi-card__header">
-            <span className="fg-kpi-card__label">Total Sales Revenue</span>
-            <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--success">Lunas</span>
+            <span className="fg-kpi-card__label">Total Revenue</span>
+            <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--success">Paid</span>
           </div>
           <div className="fg-kpi-card__main">
             <span className="fg-kpi-card__value" style={{ color: '#147b43' }}>
               <AnimatedNumber value={totalRevenue} prefix="RM " decimals={2} />
             </span>
-            <span className="fg-kpi-card__subtext">Cumulative revenue from all paid cashier transactions</span>
+            <span className="fg-kpi-card__subtext">Cumulative sales from settled receipts</span>
           </div>
         </div>
 
         <div className="fg-kpi-card">
           <div className="fg-kpi-card__header">
-            <span className="fg-kpi-card__label">Volume Terjual</span>
-            <div style={{ display: 'flex', gap: '0.2rem', alignItems: 'center' }}>
+            <span className="fg-kpi-card__label">Units Sold</span>
+            <div className="fg-sales-unit-switcher">
               <button
                 type="button"
                 onClick={() => setSelectedUnitFilter('all')}
-                style={{
-                  padding: '0.15rem 0.45rem',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  borderRadius: '5px',
-                  border: selectedUnitFilter === 'all' ? '1px solid #2563eb' : '1px solid #cbd5e1',
-                  backgroundColor: selectedUnitFilter === 'all' ? '#2563eb' : '#ffffff',
-                  color: selectedUnitFilter === 'all' ? '#ffffff' : '#64748b',
-                  cursor: 'pointer',
-                  lineHeight: 1.2
-                }}
+                className={selectedUnitFilter === 'all' ? 'is-active' : ''}
                 title="Tampilkan semua unit"
               >
-                Semua
+                All
               </button>
               {unitList.map(u => (
                 <button
                   key={u}
                   type="button"
                   onClick={() => setSelectedUnitFilter(u)}
-                  style={{
-                    padding: '0.15rem 0.45rem',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    borderRadius: '5px',
-                    border: selectedUnitFilter === u ? '1px solid #2563eb' : '1px solid #cbd5e1',
-                    backgroundColor: selectedUnitFilter === u ? '#2563eb' : '#ffffff',
-                    color: selectedUnitFilter === u ? '#ffffff' : '#64748b',
-                    cursor: 'pointer',
-                    lineHeight: 1.2
-                  }}
+                  className={selectedUnitFilter === u ? 'is-active' : ''}
                   title={`Filter unit ${u}`}
                 >
                   {u}
@@ -561,24 +541,15 @@ export default function SalesLogPage({
                 <span className="fg-kpi-card__value" style={{ color: '#1d4ed8' }}>
                   <AnimatedNumber value={totalUnitsSold} decimals={0} />{' '}
                   <small style={{ fontSize: '0.82rem', fontWeight: 600, color: '#688975' }}>
-                    total item
+                    items
                   </small>
                 </span>
-                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                <div className="fg-sales-unit-summary">
                   {unitList.map(u => (
                     <span
                       key={u}
                       onClick={() => setSelectedUnitFilter(u)}
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        color: '#1d4ed8',
-                        backgroundColor: '#eff6ff',
-                        padding: '0.15rem 0.45rem',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        border: '1px solid #bfdbfe'
-                      }}
+                      className="fg-sales-unit-pill"
                       title={`Klik untuk rincian ${u}`}
                     >
                       {unitBreakdown[u].totalQty} {u} →
@@ -586,7 +557,7 @@ export default function SalesLogPage({
                   ))}
                 </div>
                 <span className="fg-kpi-card__subtext" style={{ marginTop: '0.35rem' }}>
-                  Pilih unit di atas untuk filter tabel dan rincian per satuan
+                  Unit detail for the current sales log
                 </span>
               </>
             ) : (
@@ -597,28 +568,20 @@ export default function SalesLogPage({
                     {selectedUnitFilter}
                   </small>
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#047857', backgroundColor: '#ecfdf5', padding: '0.15rem 0.45rem', borderRadius: '4px', border: '1px solid #a7f3d0' }}>
-                    ✓ {unitBreakdown[selectedUnitFilter]?.items.length || 0} Produk ({selectedUnitFilter})
+                <div className="fg-sales-unit-summary fg-sales-unit-summary--selected">
+                  <span className="fg-sales-unit-tag">
+                    ✓ {unitBreakdown[selectedUnitFilter]?.items.length || 0} Products ({selectedUnitFilter})
                   </span>
                   <button
                     type="button"
                     onClick={() => setSelectedUnitFilter('all')}
-                    style={{
-                      fontSize: '0.72rem',
-                      color: '#64748b',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                      textDecoration: 'underline'
-                    }}
+                    className="fg-sales-unit-reset"
                   >
-                    Reset Semua
+                    Reset
                   </button>
                 </div>
                 <span className="fg-kpi-card__subtext" style={{ marginTop: '0.35rem' }}>
-                  Produk: {unitBreakdown[selectedUnitFilter]?.items.join(', ')}
+                  Products: {unitBreakdown[selectedUnitFilter]?.items.join(', ')}
                 </span>
               </>
             )}
@@ -633,9 +596,22 @@ export default function SalesLogPage({
           <div className="fg-kpi-card__main">
             <span className="fg-kpi-card__value">
               <AnimatedNumber value={sales.length} decimals={0} />{' '}
-              <small style={{ fontSize: '0.85rem', fontWeight: 600, color: '#688975' }}>Receipts</small>
+              <small style={{ fontSize: '0.85rem', fontWeight: 600, color: '#688975' }}>receipts</small>
             </span>
-            <span className="fg-kpi-card__subtext">All cashier receipts and clearance transactions</span>
+            <span className="fg-kpi-card__subtext">All recorded sales and clearance entries</span>
+          </div>
+        </div>
+
+        <div className="fg-kpi-card">
+          <div className="fg-kpi-card__header">
+            <span className="fg-kpi-card__label">Average Sale Value</span>
+            <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--neutral">Avg</span>
+          </div>
+          <div className="fg-kpi-card__main">
+            <span className="fg-kpi-card__value" style={{ color: '#195038' }}>
+              <AnimatedNumber value={averageSaleValue} prefix="RM " decimals={2} />
+            </span>
+            <span className="fg-kpi-card__subtext">Average value per paid receipt</span>
           </div>
         </div>
       </div>

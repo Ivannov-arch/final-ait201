@@ -66,6 +66,7 @@ export default function InventoryFefoRiskPage({
   const [batchToDelete, setBatchToDelete] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [toastMessage, setToastMessage] = useState(null)
 
   // Controlled form state for Add Batch
@@ -276,6 +277,27 @@ export default function InventoryFefoRiskPage({
     }
   }, [])
 
+  const getRecommendationText = (batch) => {
+    if (batch.appliedAction === 'markdown') return 'Dynamic Markdown'
+    if (batch.appliedAction === 'donate') return 'Food Bank Dispatch'
+    if (batch.appliedAction === 'normal') return 'Normal Sale'
+    if (batch.recommended) return batch.recommended
+    if (batch.riskType === 'high') return 'Dynamic Markdown'
+    if (batch.riskType === 'med') return 'Dynamic Markdown'
+    return 'Normal Sale'
+  }
+
+  const getRecoveryContext = (batch) => {
+    if (batch.appliedAction === 'markdown') return 'Sales recovery route active'
+    if (batch.appliedAction === 'donate') return 'Donation route active'
+    if (batch.appliedAction === 'normal') return 'Store retention selected'
+    if (batch.riskType === 'high') return 'Prioritize markdown or donation before expiry'
+    if (batch.riskType === 'med') return 'Review markdown before expiry'
+    return 'Standard retail cycle'
+  }
+
+  const priorityBatches = filteredBatches.filter(batch => batch.riskType !== 'low').slice(0, 3)
+
   const showToast = (msg) => {
     setToastMessage(msg)
     setTimeout(() => {
@@ -389,60 +411,38 @@ export default function InventoryFefoRiskPage({
     showToast(`Batch ${newId} (${createdBatch.product}) added successfully to FEFO rotation`)
   }
 
-  // Render Action Decision trigger button with appliedAction stamp (No emojis)
+  // Render a standardized action button to reduce visual noise while preserving function.
   const renderActionButton = (b, isMobile = false) => {
     const mobileClass = isMobile ? 'fg-inv-decision-trigger-btn--mobile' : ''
-    if (b.appliedAction === 'markdown') {
-      return (
-        <button
-          type="button"
-          className={`fg-inv-decision-trigger-btn ${mobileClass} fg-inv-decision-trigger-btn--applied-markdown`}
-          onClick={() => setSelectedBatchForAction(b)}
-          title={`30% Markdown Aktif untuk ${b.id} — Klik untuk ubah tindakan`}
-        >
-          <span className="fg-inv-trigger-check">✓</span>
-          <span>Markdown Aktif</span>
-          <span className="fg-inv-btn-arrow">Ubah</span>
-        </button>
-      )
-    }
-    if (b.appliedAction === 'donate') {
-      return (
-        <button
-          type="button"
-          className={`fg-inv-decision-trigger-btn ${mobileClass} fg-inv-decision-trigger-btn--applied-donate`}
-          onClick={() => setSelectedBatchForAction(b)}
-          title={`Donasi Food Bank Siap untuk ${b.id} — Klik untuk ubah tindakan`}
-        >
-          <span className="fg-inv-trigger-check">✓</span>
-          <span>Donasi Siap</span>
-          <span className="fg-inv-btn-arrow">Ubah</span>
-        </button>
-      )
-    }
-    if (b.appliedAction === 'normal') {
-      return (
-        <button
-          type="button"
-          className={`fg-inv-decision-trigger-btn ${mobileClass} fg-inv-decision-trigger-btn--applied-normal`}
-          onClick={() => setSelectedBatchForAction(b)}
-          title={`Normal Sale dipertahankan untuk ${b.id} — Klik untuk ubah tindakan`}
-        >
-          <span className="fg-inv-trigger-check">✓</span>
-          <span>Normal Sale</span>
-          <span className="fg-inv-btn-arrow">Ubah</span>
-        </button>
-      )
-    }
+    const stateClass = b.appliedAction === 'markdown'
+      ? 'fg-inv-decision-trigger-btn--markdown'
+      : b.appliedAction === 'donate'
+        ? 'fg-inv-decision-trigger-btn--donate'
+        : b.appliedAction === 'normal'
+          ? 'fg-inv-decision-trigger-btn--normal'
+          : `fg-inv-decision-trigger-btn--${b.riskType}`
+
+    const label = b.appliedAction === 'markdown'
+      ? 'Markdown active'
+      : b.appliedAction === 'donate'
+        ? 'Donation ready'
+        : b.appliedAction === 'normal'
+          ? 'Normal sale'
+          : b.riskType === 'high'
+            ? 'Review action'
+            : b.riskType === 'med'
+              ? 'Review action'
+              : 'Normal sale'
+
     return (
       <button
         type="button"
-        className={`fg-inv-decision-trigger-btn ${mobileClass} fg-inv-decision-trigger-btn--${b.riskType}`}
+        className={`fg-inv-decision-trigger-btn ${mobileClass} ${stateClass}`}
         onClick={() => setSelectedBatchForAction(b)}
-        title={`Determine mitigation action for batch ${b.id}`}
+        title={`Review action for batch ${b.id}`}
       >
         <span className="fg-inv-trigger-dot"></span>
-        <span>{b.riskType === 'high' ? 'Critical Action' : b.riskType === 'med' ? 'Review Action' : 'Normal Sale'}</span>
+        <span>{label}</span>
         <span className="fg-inv-btn-arrow">→</span>
       </button>
     )
@@ -522,145 +522,157 @@ export default function InventoryFefoRiskPage({
         </div>
       </div>
 
-      {/* Distilled Health Filter Strip (Compact, Zero Emojis) */}
-      <div className="fg-inv-distilled-pills" role="tablist" aria-label="Filter risk status">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={selectedRiskFilter === 'all'}
-          className={`fg-inv-pill-tab ${selectedRiskFilter === 'all' ? 'is-active' : ''}`}
-          onClick={() => setSelectedRiskFilter('all')}
-        >
-          <span className="fg-inv-pill-tab__name">All Batches</span>
-          <span className="fg-inv-pill-tab__count">{riskCounts.total}</span>
-        </button>
+      <div className="fg-inv-toolbar" role="tablist" aria-label="Filter risk status">
+        <div className="fg-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search batch or product..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search Batch ID or product name"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              className="fg-search-clear"
+              onClick={() => setSearchTerm('')}
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="fg-inv-risk-switcher" aria-label="Risk filter options">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedRiskFilter === 'all'}
+            className={`fg-inv-chip ${selectedRiskFilter === 'all' ? 'is-active' : ''}`}
+            onClick={() => setSelectedRiskFilter('all')}
+          >
+            <span>All</span>
+            <strong>{riskCounts.total}</strong>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedRiskFilter === 'high'}
+            className={`fg-inv-chip fg-inv-chip--critical ${selectedRiskFilter === 'high' ? 'is-active' : ''}`}
+            onClick={() => setSelectedRiskFilter(prev => prev === 'high' ? 'all' : 'high')}
+          >
+            <span>Critical</span>
+            <strong>{riskCounts.high}</strong>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedRiskFilter === 'med'}
+            className={`fg-inv-chip fg-inv-chip--warning ${selectedRiskFilter === 'med' ? 'is-active' : ''}`}
+            onClick={() => setSelectedRiskFilter(prev => prev === 'med' ? 'all' : 'med')}
+          >
+            <span>Warning</span>
+            <strong>{riskCounts.med}</strong>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedRiskFilter === 'low'}
+            className={`fg-inv-chip fg-inv-chip--safe ${selectedRiskFilter === 'low' ? 'is-active' : ''}`}
+            onClick={() => setSelectedRiskFilter(prev => prev === 'low' ? 'all' : 'low')}
+          >
+            <span>Safe</span>
+            <strong>{riskCounts.low}</strong>
+          </button>
+        </div>
 
         <button
           type="button"
-          role="tab"
-          aria-selected={selectedRiskFilter === 'high'}
-          className={`fg-inv-pill-tab fg-inv-pill-tab--high ${selectedRiskFilter === 'high' ? 'is-active' : ''}`}
-          onClick={() => setSelectedRiskFilter(prev => prev === 'high' ? 'all' : 'high')}
+          className={`fg-inv-toggle ${showAdvancedFilters ? 'is-open' : ''}`}
+          onClick={() => setShowAdvancedFilters(prev => !prev)}
         >
-          <span className="fg-inv-pill-dot fg-inv-pill-dot--high"></span>
-          <span className="fg-inv-pill-tab__name">Critical (DTE &le; 2 Days)</span>
-          <span className="fg-inv-pill-tab__count">{riskCounts.high}</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={selectedRiskFilter === 'med'}
-          className={`fg-inv-pill-tab fg-inv-pill-tab--med ${selectedRiskFilter === 'med' ? 'is-active' : ''}`}
-          onClick={() => setSelectedRiskFilter(prev => prev === 'med' ? 'all' : 'med')}
-        >
-          <span className="fg-inv-pill-dot fg-inv-pill-dot--med"></span>
-          <span className="fg-inv-pill-tab__name">Warning (3 - 5 Days)</span>
-          <span className="fg-inv-pill-tab__count">{riskCounts.med}</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          aria-selected={selectedRiskFilter === 'low'}
-          className={`fg-inv-pill-tab fg-inv-pill-tab--low ${selectedRiskFilter === 'low' ? 'is-active' : ''}`}
-          onClick={() => setSelectedRiskFilter(prev => prev === 'low' ? 'all' : 'low')}
-        >
-          <span className="fg-inv-pill-dot fg-inv-pill-dot--low"></span>
-          <span className="fg-inv-pill-tab__name">Safe (&gt; 5 Days)</span>
-          <span className="fg-inv-pill-tab__count">{riskCounts.low}</span>
+          {showAdvancedFilters ? 'Hide filters' : 'Advanced filters'}
         </button>
       </div>
+
+      {showAdvancedFilters && (
+        <div className="fg-inv-advanced-panel">
+          <div className="fg-inv-select-wrapper">
+            <label>Category</label>
+            <select
+              className="fg-inv-select"
+              value={selectedCategoryFilter}
+              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+              aria-label="Filter category"
+            >
+              <option value="all">All categories</option>
+              {categories.filter(c => c !== 'all').map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="fg-inv-select-wrapper">
+            <label>Sort</label>
+            <select
+              className="fg-inv-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              aria-label="Sort batches"
+            >
+              <option value="fefo">FEFO order</option>
+              <option value="dte-desc">Longest DTE</option>
+              <option value="qty-desc">Highest quantity</option>
+            </select>
+          </div>
+
+          {hasActiveFilters && (
+            <button type="button" className="fg-inv-reset-btn" onClick={handleResetFilters} title="Reset all filters">
+              Reset filters
+            </button>
+          )}
+
+          <span className="fg-inv-count-pill">{filteredBatches.length} of {batches.length}</span>
+        </div>
+      )}
+
+      {priorityBatches.length > 0 && (
+        <div className="fg-inv-priority-strip" aria-label="Priority recovery queue">
+          {priorityBatches.map(batch => (
+            <article key={batch.id} className={`fg-inv-priority-card fg-inv-priority-card--${batch.riskType}`}>
+              <div className="fg-inv-priority-head">
+                <span className={`fg-inv-risk-badge fg-inv-risk-badge--${batch.riskType}`}>{batch.risk}</span>
+                <span className="fg-inv-priority-dte">{batch.dte}</span>
+              </div>
+              <h3>{batch.product}</h3>
+              <div className="fg-inv-priority-meta">
+                <span>{batch.id}</span>
+                <span>{batch.category}</span>
+              </div>
+              <p className="fg-inv-priority-label">Recommended action</p>
+              <p className="fg-inv-priority-action">{getRecommendationText(batch)}</p>
+              <p className="fg-inv-priority-context">{getRecoveryContext(batch)}</p>
+              <button type="button" className="fg-inv-priority-button" onClick={() => setSelectedBatchForAction(batch)}>
+                Review action
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
 
       {/* Stock Inventory Table Card */}
       <div className="fg-card fg-inv-section-card" ref={tableContainerRef}>
         <div className="fg-inv-card-head">
-          {/* Distilled Filter & Search Bar */}
-          <div className="fg-inv-filter-toolbar">
-            {/* Search Input */}
-            <div className="fg-search">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search Batch ID, product, or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search Batch ID or product name"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  className="fg-search-clear"
-                  onClick={() => setSearchTerm('')}
-                  aria-label="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* Category Dropdown */}
-            <div className="fg-inv-select-wrapper">
-              <select
-                className="fg-inv-select"
-                value={selectedCategoryFilter}
-                onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                aria-label="Filter category"
-              >
-                <option value="all">All Categories</option>
-                {categories.filter(c => c !== 'all').map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Risk Dropdown (No Emojis) */}
-            <div className="fg-inv-select-wrapper">
-              <select
-                className="fg-inv-select"
-                value={selectedRiskFilter}
-                onChange={(e) => setSelectedRiskFilter(e.target.value)}
-                aria-label="Filter risk level"
-              >
-                <option value="all">All Risks</option>
-                <option value="high">High Risk (DTE &le; 2 days)</option>
-                <option value="med">Med Risk (DTE 3 - 5 days)</option>
-                <option value="low">Low Risk (DTE &gt; 5 days)</option>
-              </select>
-            </div>
-
-            {/* Sort Selector */}
-            <div className="fg-inv-select-wrapper">
-              <select
-                className="fg-inv-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                aria-label="Sort batches"
-              >
-                <option value="fefo">Sort: FEFO (Earliest Expiry)</option>
-                <option value="dte-desc">Sort: Longest DTE</option>
-                <option value="qty-desc">Sort: Highest Qty</option>
-              </select>
-            </div>
-
-            {/* Reset Filters button */}
-            {hasActiveFilters && (
-              <button
-                type="button"
-                className="fg-inv-reset-btn"
-                onClick={handleResetFilters}
-                title="Reset all filters"
-              >
-                Reset Filters
-              </button>
-            )}
-
-            <span className="fg-inv-count-pill" style={{ marginLeft: 'auto' }}>
-              {filteredBatches.length} of {batches.length} Batches
-            </span>
+          <div className="fg-inv-card-head-text">
+            <h2>Inventory list</h2>
+            <span>{filteredBatches.length} items</span>
           </div>
         </div>
 
@@ -669,21 +681,18 @@ export default function InventoryFefoRiskPage({
           <table className="fg-table fg-inv-table">
             <thead>
               <tr>
-                <th>Batch ID</th>
                 <th>Product</th>
-                <th>Price (Cost / Sell)</th>
-                <th>Qty</th>
-                <th>Timeline (Intake → Expiry)</th>
-                <th>Days Left (DTE)</th>
-                <th>Risk Status</th>
-                <th>Action Decision</th>
-                <th style={{ width: '44px', textAlign: 'center' }}>Actions</th>
+                <th>Risk</th>
+                <th>DTE</th>
+                <th>Recommended action</th>
+                <th>Action</th>
+                <th style={{ width: '44px', textAlign: 'center' }}>More</th>
               </tr>
             </thead>
             <tbody>
               {filteredBatches.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
+                  <td colSpan="6" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
                     <div className="fg-inv-empty-state">
                       <div className="fg-inv-empty-icon">
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -718,126 +727,105 @@ export default function InventoryFefoRiskPage({
                       className={`fg-inv-row ${isHighRisk ? 'fg-inv-row--high-risk' : ''} ${isMenuOpen ? 'is-menu-open' : ''}`}
                       style={isMenuOpen ? { position: 'relative', zIndex: 100 } : undefined}
                     >
-                    <td>
-                      <span className={`fg-inv-batch-id ${isHighRisk ? 'is-red' : ''}`}>
-                        {b.id}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="fg-table-product">
-                        <img
-                          src={b.image}
-                          alt={b.product}
-                          className="fg-product-thumb"
-                          loading="lazy"
-                          onError={(e) => { e.currentTarget.style.display = 'none' }}
-                        />
-                        <div>
-                          <div className="fg-product-name">{b.product}</div>
-                          <div className="fg-product-cat">{b.category}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Stacked Column 1: Harga (Modal / Jual) */}
-                    <td>
-                      <div className="fg-inv-stacked-cell">
-                        <span className="fg-inv-price fg-inv-cost-price" title="Cost Price">
-                          {b.costPrice || 'RM 6.00/kg'}
-                        </span>
-                        <span className="fg-inv-price-slash">/</span>
-                        <span className="fg-inv-price fg-inv-sell-price" title="Selling Price">
-                          {b.sellPrice || 'RM 7.50/kg'}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td>
-                      <span className={`fg-inv-qty ${isHighRisk ? 'is-red' : ''}`}>{b.qty}</span>
-                    </td>
-
-                    {/* Stacked Column 2: Jadwal (Masuk → Expired) */}
-                    <td>
-                      <div className="fg-inv-stacked-cell fg-inv-stacked-cell--date">
-                        <span className="fg-inv-date fg-inv-date--in" title="Intake Date">{b.dateIn}</span>
-                        <span className="fg-inv-date-flow">→</span>
-                        <span className={`fg-inv-date fg-inv-date--exp ${isHighRisk ? 'is-red' : ''}`} title="Expiry Date">{b.expiryDate}</span>
-                      </div>
-                    </td>
-
-                    <td>
-                      <span className={`fg-inv-dte ${isHighRisk ? 'is-red' : ''}`}>
-                        {b.dte}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`fg-inv-risk-badge fg-inv-risk-badge--${b.riskType}`}>
-                        {b.risk}
-                      </span>
-                    </td>
-
-                    {/* Action Decision Pop-up Trigger with appliedAction stamp */}
-                    <td>
-                      {renderActionButton(b, false)}
-                    </td>
-
-                    {/* Three-Dots Menu (Edit & Delete Batch) */}
-                    <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative', zIndex: isMenuOpen ? 120 : undefined }}>
-                      <div className="fg-inv-dots-menu-wrap" style={isMenuOpen ? { position: 'relative', zIndex: 130 } : undefined}>
-                        <button
-                          type="button"
-                          className={`fg-inv-dots-btn ${isMenuOpen ? 'is-active' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setActiveMenuBatchId(prev => prev === b.id ? null : b.id)
-                          }}
-                          aria-label={`Options for batch ${b.id}`}
-                          title="Batch options"
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="1.5" />
-                            <circle cx="12" cy="5" r="1.5" />
-                            <circle cx="12" cy="19" r="1.5" />
-                          </svg>
-                        </button>
-
-                        {isMenuOpen && (
-                          <div className="fg-inv-dots-dropdown">
-                            <button
-                              type="button"
-                              className="fg-inv-dropdown-item"
-                              onClick={() => {
-                                setActiveMenuBatchId(null)
-                                setEditBatch(b)
-                              }}
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                              </svg>
-                              <span>Edit Batch</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              className="fg-inv-dropdown-item fg-inv-dropdown-item--delete"
-                              onClick={() => {
-                                setActiveMenuBatchId(null)
-                                setBatchToDelete(b)
-                              }}
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                              <span>Delete Batch</span>
-                            </button>
+                      <td>
+                        <div className="fg-inv-product-identity">
+                          <img
+                            src={b.image}
+                            alt={b.product}
+                            className="fg-product-thumb"
+                            loading="lazy"
+                            onError={(e) => { e.currentTarget.style.display = 'none' }}
+                          />
+                          <div className="fg-inv-product-copy">
+                            <div className="fg-product-name">{b.product}</div>
+                            <div className="fg-product-meta">
+                              <span>{b.id}</span>
+                              <span>{b.category}</span>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              }))}
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className={`fg-inv-risk-badge fg-inv-risk-badge--${b.riskType}`}>
+                          {b.risk}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="fg-inv-dte-stack">
+                          <span className="fg-inv-dte-main">{b.dte}</span>
+                          <span className="fg-inv-dte-sub">{b.expiryDate}</span>
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="fg-inv-recommendation">
+                          <span>{getRecommendationText(b)}</span>
+                          <small>{b.qty}</small>
+                        </div>
+                      </td>
+
+                      <td>
+                        {renderActionButton(b, false)}
+                      </td>
+
+                      <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative', zIndex: isMenuOpen ? 120 : undefined }}>
+                        <div className="fg-inv-dots-menu-wrap" style={isMenuOpen ? { position: 'relative', zIndex: 130 } : undefined}>
+                          <button
+                            type="button"
+                            className={`fg-inv-dots-btn ${isMenuOpen ? 'is-active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActiveMenuBatchId(prev => prev === b.id ? null : b.id)
+                            }}
+                            aria-label={`Options for batch ${b.id}`}
+                            title="Batch options"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="1.5" />
+                              <circle cx="12" cy="5" r="1.5" />
+                              <circle cx="12" cy="19" r="1.5" />
+                            </svg>
+                          </button>
+
+                          {isMenuOpen && (
+                            <div className="fg-inv-dots-dropdown">
+                              <button
+                                type="button"
+                                className="fg-inv-dropdown-item"
+                                onClick={() => {
+                                  setActiveMenuBatchId(null)
+                                  setEditBatch(b)
+                                }}
+                              >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                </svg>
+                                <span>Edit Batch</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="fg-inv-dropdown-item fg-inv-dropdown-item--delete"
+                                onClick={() => {
+                                  setActiveMenuBatchId(null)
+                                  setBatchToDelete(b)
+                                }}
+                              >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                                <span>Delete Batch</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                }))}
             </tbody>
           </table>
         </div>
