@@ -77,8 +77,8 @@ export default function ProfitDailyChart() {
     <div className="fg-card" ref={chartRef}>
       <div className="fg-card__header">
         <div>
-          <h2 className="fg-card__title">Profit Harian</h2>
-          <p className="fg-card__subtitle">Akumulasi keuntungan bersih penjualan harian</p>
+          <h2 className="fg-card__title">Daily Net Profit</h2>
+          <p className="fg-card__subtitle">Cumulative daily net profit from store cashier sales</p>
         </div>
         <div className="fg-card__header-right">
           <span className="fg-card__stat-highlight" ref={totalRef}>

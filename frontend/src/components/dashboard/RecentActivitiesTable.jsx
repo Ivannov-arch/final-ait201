@@ -3,9 +3,9 @@ import gsap from 'gsap'
 import { INITIAL_ACTIVITIES } from './activitiesData'
 
 const CATEGORY_TABS = [
-  { id: 'all', label: 'Semua Channel' },
-  { id: 'sales', label: 'Sales (Penjualan)' },
-  { id: 'foodbank', label: 'Food Bank (Donasi)' },
+  { id: 'all', label: 'All Channels' },
+  { id: 'sales', label: 'Sales (Cashier)' },
+  { id: 'foodbank', label: 'Food Bank (Donation)' },
   { id: 'high-risk', label: 'At Risk' }
 ]
 
@@ -105,7 +105,7 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
       <div className="fg-card__header">
         <div>
           <h2 className="fg-card__title">Recent Activities</h2>
-          <p className="fg-card__subtitle">Aktivitas transaksi penjualan kasir dan donasi food bank terbaru</p>
+          <p className="fg-card__subtitle">Real-time log of cashier sales transactions and food bank donations</p>
         </div>
         <div className="fg-table__header-actions">
           <button

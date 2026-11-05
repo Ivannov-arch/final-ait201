@@ -51,12 +51,12 @@ const FORECAST_DATABASE = {
   'Organic Spinach': {
     category: 'Vegetables',
     unit: 'kg',
-    currentStock: 95, // Stok saat ini
+    currentStock: 95, // Current on-hand stock
     maxScale: 150,
     points: [
-      { label: 'Besok', date: 'Nov 04', demand: 42, stockRemaining: 53, status: 'Stok Cukup' },
-      { label: 'Lusa', date: 'Nov 05', demand: 38, stockRemaining: 15, status: 'Stok Menipis' },
-      { label: 'Hari ke-3', date: 'Nov 06', demand: 35, stockRemaining: 0, stockDeficit: 20, status: 'Habis — Perlu Pengadaan' }
+      { label: 'Tomorrow', date: 'Nov 04', demand: 42, stockRemaining: 53, status: 'Sufficient Stock' },
+      { label: 'Day After Tomorrow', date: 'Nov 05', demand: 38, stockRemaining: 15, status: 'Stock Running Low' },
+      { label: 'Day 3', date: 'Nov 06', demand: 35, stockRemaining: 0, stockDeficit: 20, status: 'Out of Stock — Reorder Needed' }
     ],
     totalDemand: 115,
     reorderNeeded: true,
@@ -68,9 +68,9 @@ const FORECAST_DATABASE = {
     currentStock: 110,
     maxScale: 150,
     points: [
-      { label: 'Besok', date: 'Nov 04', demand: 32, stockRemaining: 78, status: 'Stok Aman' },
-      { label: 'Lusa', date: 'Nov 05', demand: 30, stockRemaining: 48, status: 'Stok Aman' },
-      { label: 'Hari ke-3', date: 'Nov 06', demand: 28, stockRemaining: 20, status: 'Stok Cukup' }
+      { label: 'Tomorrow', date: 'Nov 04', demand: 32, stockRemaining: 78, status: 'Stock Safe' },
+      { label: 'Day After Tomorrow', date: 'Nov 05', demand: 30, stockRemaining: 48, status: 'Stock Safe' },
+      { label: 'Day 3', date: 'Nov 06', demand: 28, stockRemaining: 20, status: 'Sufficient Stock' }
     ],
     totalDemand: 90,
     reorderNeeded: false,
@@ -82,9 +82,9 @@ const FORECAST_DATABASE = {
     currentStock: 60,
     maxScale: 150,
     points: [
-      { label: 'Besok', date: 'Nov 04', demand: 35, stockRemaining: 25, status: 'Stok Menipis' },
-      { label: 'Lusa', date: 'Nov 05', demand: 32, stockRemaining: 0, stockDeficit: 7, status: 'Habis di Lusa' },
-      { label: 'Hari ke-3', date: 'Nov 06', demand: 28, stockRemaining: 0, stockDeficit: 35, status: 'Kekurangan Stok' }
+      { label: 'Tomorrow', date: 'Nov 04', demand: 35, stockRemaining: 25, status: 'Stock Running Low' },
+      { label: 'Day After Tomorrow', date: 'Nov 05', demand: 32, stockRemaining: 0, stockDeficit: 7, status: 'Depleted Day After Tomorrow' },
+      { label: 'Day 3', date: 'Nov 06', demand: 28, stockRemaining: 0, stockDeficit: 35, status: 'Stock Deficit' }
     ],
     totalDemand: 95,
     reorderNeeded: true,
@@ -96,9 +96,9 @@ const FORECAST_DATABASE = {
     currentStock: 120,
     maxScale: 150,
     points: [
-      { label: 'Besok', date: 'Nov 04', demand: 28, stockRemaining: 92, status: 'Stok Aman' },
-      { label: 'Lusa', date: 'Nov 05', demand: 26, stockRemaining: 66, status: 'Stok Aman' },
-      { label: 'Hari ke-3', date: 'Nov 06', demand: 25, stockRemaining: 41, status: 'Stok Aman' }
+      { label: 'Tomorrow', date: 'Nov 04', demand: 28, stockRemaining: 92, status: 'Stock Safe' },
+      { label: 'Day After Tomorrow', date: 'Nov 05', demand: 26, stockRemaining: 66, status: 'Stock Safe' },
+      { label: 'Day 3', date: 'Nov 06', demand: 25, stockRemaining: 41, status: 'Stock Safe' }
     ],
     totalDemand: 79,
     reorderNeeded: false,
@@ -110,9 +110,9 @@ const FORECAST_DATABASE = {
     currentStock: 75,
     maxScale: 150,
     points: [
-      { label: 'Besok', date: 'Nov 04', demand: 36, stockRemaining: 39, status: 'Stok Cukup' },
-      { label: 'Lusa', date: 'Nov 05', demand: 30, stockRemaining: 9, status: 'Hampir Habis' },
-      { label: 'Hari ke-3', date: 'Nov 06', demand: 26, stockRemaining: 0, stockDeficit: 17, status: 'Habis — Perlu Pengadaan' }
+      { label: 'Tomorrow', date: 'Nov 04', demand: 36, stockRemaining: 39, status: 'Sufficient Stock' },
+      { label: 'Day After Tomorrow', date: 'Nov 05', demand: 30, stockRemaining: 9, status: 'Almost Depleted' },
+      { label: 'Day 3', date: 'Nov 06', demand: 26, stockRemaining: 0, stockDeficit: 17, status: 'Out of Stock — Reorder Needed' }
     ],
     totalDemand: 92,
     reorderNeeded: true,
@@ -218,7 +218,7 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
       setIsLoading(false)
       setHasPredicted(true)
       setSelectedDayIdx(0)
-      showToast(`✓ Proyeksi stok & kebutuhan untuk "${selectedProduct}" diperbarui!`)
+      showToast(`✓ Stock forecast projection for "${selectedProduct}" updated!`)
     }, 300)
   }
 
@@ -285,7 +285,7 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
             type="button"
             className="fg-inv-notify-btn"
             aria-label="Notifications"
-            onClick={() => showToast('🔔 Model Prediksi AI aktif · Terkoneksi stok gudang')}
+            onClick={() => showToast('🔔 AI Demand Model active · Connected to store telemetry')}
           >
             <span className="fg-inv-notify-dot"></span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -307,9 +307,9 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
       {/* Integrated Header: Title on Left, Product Selector & Action on Right */}
       <div className="fg-inv-header" style={{ marginBottom: '1.4rem' }}>
         <div>
-          <h1 className="fg-inv-title">Prediksi Kebutuhan Stok</h1>
+          <h1 className="fg-inv-title">Demand Forecasting & Replenishment</h1>
           <p className="fg-inv-subtitle">
-            Perkiraan kebutuhan stok 3 hari ke depan berdasarkan pola penjualan. Klik titik di grafik untuk rincian per hari.
+            Projected stock demand over the next 3 days based on sell-through patterns. Click any point for day details.
           </p>
         </div>
 
@@ -321,7 +321,7 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
                 setSelectedProduct(e.target.value)
                 setSelectedDayIdx(0)
               }}
-              aria-label="Pilih produk"
+              aria-label="Select product"
               style={{
                 width: '100%',
                 padding: '0.45rem 1.8rem 0.45rem 0.95rem',
@@ -340,7 +340,7 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
             >
               {productKeys.map(prod => (
                 <option key={prod} value={prod}>
-                  {prod} — stok {FORECAST_DATABASE[prod]?.currentStock} {FORECAST_DATABASE[prod]?.unit}
+                  {prod} — stock {FORECAST_DATABASE[prod]?.currentStock} {FORECAST_DATABASE[prod]?.unit}
                 </option>
               ))}
             </select>
@@ -362,13 +362,13 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
             }}
           >
             {isLoading ? (
-              <span>Menghitung...</span>
+              <span>Calculating...</span>
             ) : (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
-                <span>Hitung Ulang</span>
+                <span>Recalculate</span>
               </>
             )}
           </button>
@@ -383,37 +383,37 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
             {/* Current Stock Available Now */}
             <div className="fg-kpi-card">
               <div className="fg-kpi-card__header">
-                <span className="fg-kpi-card__label">Stok Saat Ini</span>
-                <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--neutral">Tersedia</span>
+                <span className="fg-kpi-card__label">Current Stock</span>
+                <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--neutral">Available</span>
               </div>
               <div className="fg-kpi-card__main">
                 <span className="fg-kpi-card__value">
                   <AnimatedNumber value={data.currentStock} decimals={0} /> <small style={{ fontSize: '0.85rem', fontWeight: 600, color: '#688975' }}>{data.unit}</small>
                 </span>
-                <span className="fg-kpi-card__subtext">Jumlah stok yang siap dijual sekarang</span>
+                <span className="fg-kpi-card__subtext">Units on floor and ready for sale</span>
               </div>
             </div>
 
             {/* Total 3-Day Demand */}
             <div className="fg-kpi-card">
               <div className="fg-kpi-card__header">
-                <span className="fg-kpi-card__label">Total Kebutuhan (3 Hari)</span>
-                <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--info">Perkiraan Jual</span>
+                <span className="fg-kpi-card__label">Total 3-Day Demand</span>
+                <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--info">Forecast Sales</span>
               </div>
               <div className="fg-kpi-card__main">
                 <span className="fg-kpi-card__value" style={{ color: '#1d4ed8' }}>
                   <AnimatedNumber value={data.totalDemand} decimals={0} /> <small style={{ fontSize: '0.85rem', fontWeight: 600, color: '#688975' }}>{data.unit}</small>
                 </span>
-                <span className="fg-kpi-card__subtext">Total yang diperkirakan terjual dalam 3 hari</span>
+                <span className="fg-kpi-card__subtext">Estimated cumulative customer demand over 3 days</span>
               </div>
             </div>
 
-            {/* Stock Decision: Perlu Tambah atau Tidak */}
+            {/* Stock Decision: Reorder Needed or Safe */}
             <div className="fg-kpi-card">
               <div className="fg-kpi-card__header">
-                <span className="fg-kpi-card__label">Keputusan Pengadaan</span>
+                <span className="fg-kpi-card__label">Replenishment Decision</span>
                 <span className={`fg-kpi-card__delta-tag ${data.reorderNeeded ? 'fg-kpi-card__delta-tag--danger' : 'fg-kpi-card__delta-tag--success'}`}>
-                  {data.reorderNeeded ? 'Perlu Tambah Stok' : 'Stok Aman'}
+                  {data.reorderNeeded ? 'Reorder Needed' : 'Stock Safe'}
                 </span>
               </div>
               <div className="fg-kpi-card__main">
@@ -423,13 +423,13 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
                       +<AnimatedNumber value={data.reorderQty} decimals={0} /> {data.unit}
                     </>
                   ) : (
-                    'Cukup Aman'
+                    'Adequate'
                   )}
                 </span>
                 <span className="fg-kpi-card__subtext">
                   {data.reorderNeeded
-                    ? `Stok habis di ${stockoutDayLabel || 'hari ke-3'}. Tambah ${data.reorderQty} ${data.unit} sebelum besok.`
-                    : 'Stok cukup untuk 3 hari ke depan. Tidak perlu pengadaan.'}
+                    ? `Depleted on ${stockoutDayLabel || 'Day 3'}. Order ${data.reorderQty} ${data.unit} before tomorrow.`
+                    : 'Sufficient inventory for 3 days. No replenishment required.'}
                 </span>
               </div>
             </div>
@@ -487,10 +487,10 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
                       letterSpacing: '-0.01em'
                     }}
                   >
-                    Stok vs. Perkiraan Kebutuhan 3 Hari
+                    Stock Level vs. 3-Day Projected Demand
                   </h2>
                   <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                    Klik titik atau label hari untuk lihat rincian
+                    Click any point or day badge for breakdown
                   </span>
                 </div>
               </div>
@@ -499,11 +499,11 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.78rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#1b9b55' }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#1b9b55', display: 'inline-block' }} />
-                  <span>Sisa Stok</span>
+                  <span>Remaining Stock</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#2563eb' }}>
                   <span style={{ width: 16, height: 0, borderTop: '2.5px dashed #2563eb', display: 'inline-block' }} />
-                  <span>Perkiraan Terjual</span>
+                  <span>Projected Sales</span>
                 </div>
               </div>
             </div>
@@ -718,16 +718,16 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
                 >
                   {/* Day badge */}
                   <div style={{ display: 'flex', flexDirection: 'column', minWidth: 72 }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Hari</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Day</span>
                     <span style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>{p.label}</span>
                     <span style={{ fontSize: '0.68rem', color: '#64748b' }}>{p.date}</span>
                   </div>
 
                   <div style={{ width: 1, height: 42, background: statusBorder, flexShrink: 0 }} />
 
-                  {/* Sisa Stok */}
+                  {/* Stock Left */}
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Sisa Stok</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Stock Left</span>
                     <span style={{ fontSize: '1.1rem', fontWeight: 800, color: statusColor }}>
                       {p.stockRemaining} <span style={{ fontSize: '0.74rem', fontWeight: 600 }}>{data.unit}</span>
                     </span>
@@ -735,9 +735,9 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
 
                   <div style={{ width: 1, height: 42, background: statusBorder, flexShrink: 0 }} />
 
-                  {/* Est. Terjual */}
+                  {/* Est. Sales */}
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Est. Terjual</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Est. Sales</span>
                     <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#2563eb' }}>
                       {p.demand} <span style={{ fontSize: '0.74rem', fontWeight: 600 }}>{data.unit}</span>
                     </span>
@@ -770,7 +770,7 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
                     <>
                       <div style={{ width: 1, height: 42, background: statusBorder, flexShrink: 0 }} />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Kekurangan</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Deficit</span>
                         <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#dc2626' }}>
                           -{p.stockDeficit} <span style={{ fontSize: '0.74rem', fontWeight: 600 }}>{data.unit}</span>
                         </span>

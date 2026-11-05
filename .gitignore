@@ -30,7 +30,8 @@ ENV/
 .env.*.local
 *.pem
 *.key
-
+.agents
+.impeccable
 # Jupyter Notebook Checkpoints
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

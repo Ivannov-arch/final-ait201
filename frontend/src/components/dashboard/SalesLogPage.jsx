@@ -252,10 +252,10 @@ export default function SalesLogPage({
     const statusLabels = {
       paid: 'Paid (Lunas)',
       pending: 'Pending (Menunggu)',
-      refunded: 'Refunded (Retur)',
+      refunded: 'Refunded',
       void: 'Void'
     }
-    showToast(`✓ Status ${txnId} diubah menjadi "${statusLabels[newStatus] || newStatus}"`)
+    showToast(`✓ Status for ${txnId} changed to "${statusLabels[newStatus] || newStatus}"`)
   }
 
   const handleSaveEditSale = (e) => {
@@ -281,13 +281,13 @@ export default function SalesLogPage({
 
     setSales(prev => prev.map(s => s.id === updated.id ? updated : s))
     setEditingSale(null)
-    showToast(`✓ Seluruh data transaksi ${updated.id} berhasil diperbarui!`)
+    showToast(`✓ Transaction ${updated.id} successfully updated!`)
   }
 
   const handleDeleteSale = (txnId) => {
     setSales(prev => prev.filter(s => s.id !== txnId))
     setEditingSale(null)
-    showToast(`🗑 Transaksi ${txnId} telah dihapus`)
+    showToast(`🗑 Transaction ${txnId} deleted`)
   }
 
   const handleOpenPOS = () => {
@@ -305,7 +305,7 @@ export default function SalesLogPage({
     e.preventDefault()
     if (!selectedBatch) return
     if (saleQty <= 0) {
-      showToast('⚠️ Jumlah pembelian harus lebih dari 0')
+      showToast('⚠️ Purchase quantity must be greater than 0')
       return
     }
 
@@ -356,7 +356,7 @@ export default function SalesLogPage({
     }
 
     setShowPOSModal(false)
-    showToast(`✓ Transaksi ${txnId} berhasil disimpan! Stok ${selectedBatch.product} berkurang ${saleQty} ${unit}`)
+    showToast(`✓ Transaction ${txnId} saved! Stock for ${selectedBatch.product} reduced by ${saleQty} ${unit}`)
   }
 
   // Group volume by unit (e.g. { kg: { totalQty: 9, items: [...] }, pack: { totalQty: 8, items: [...] } })
@@ -518,7 +518,7 @@ export default function SalesLogPage({
                 type="button"
                 onClick={() => setSelectedUnitFilter('all')}
                 className={selectedUnitFilter === 'all' ? 'is-active' : ''}
-                title="Tampilkan semua unit"
+                title="Show all units"
               >
                 All
               </button>
@@ -528,7 +528,7 @@ export default function SalesLogPage({
                   type="button"
                   onClick={() => setSelectedUnitFilter(u)}
                   className={selectedUnitFilter === u ? 'is-active' : ''}
-                  title={`Filter unit ${u}`}
+                  title={`Filter by ${u}`}
                 >
                   {u}
                 </button>
@@ -550,7 +550,7 @@ export default function SalesLogPage({
                       key={u}
                       onClick={() => setSelectedUnitFilter(u)}
                       className="fg-sales-unit-pill"
-                      title={`Klik untuk rincian ${u}`}
+                      title={`Click for ${u} breakdown`}
                     >
                       {unitBreakdown[u].totalQty} {u} →
                     </span>
@@ -601,19 +601,6 @@ export default function SalesLogPage({
             <span className="fg-kpi-card__subtext">All recorded sales and clearance entries</span>
           </div>
         </div>
-
-        <div className="fg-kpi-card">
-          <div className="fg-kpi-card__header">
-            <span className="fg-kpi-card__label">Average Sale Value</span>
-            <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--neutral">Avg</span>
-          </div>
-          <div className="fg-kpi-card__main">
-            <span className="fg-kpi-card__value" style={{ color: '#195038' }}>
-              <AnimatedNumber value={averageSaleValue} prefix="RM " decimals={2} />
-            </span>
-            <span className="fg-kpi-card__subtext">Average value per paid receipt</span>
-          </div>
-        </div>
       </div>
 
       {/* Table Card (Identical Structure to Inventory & Recent Activities) */}
@@ -659,7 +646,7 @@ export default function SalesLogPage({
                     padding: '0 2px',
                     lineHeight: 1
                   }}
-                  title="Hapus filter unit"
+                  title="Clear unit filter"
                 >
                   ✕
                 </button>
@@ -943,15 +930,15 @@ export default function SalesLogPage({
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: '0.85rem' }}>
-                    <span style={{ color: '#6b8f78' }}>Produk:</span>
+                    <span style={{ color: '#6b8f78' }}>Product:</span>
                     <strong>{selectedBatch.product} ({selectedBatch.category})</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: '0.85rem' }}>
-                    <span style={{ color: '#6b8f78' }}>Harga Jual / Unit:</span>
+                    <span style={{ color: '#6b8f78' }}>Selling Price / Unit:</span>
                     <strong style={{ color: '#1b9b55' }}>RM {unitPrice.toFixed(2)} / {unit}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                    <span style={{ color: '#6b8f78' }}>Stok Tersedia:</span>
+                    <span style={{ color: '#6b8f78' }}>Available Stock:</span>
                     <strong>{selectedBatch.qty}</strong>
                   </div>
                 </div>
@@ -959,7 +946,7 @@ export default function SalesLogPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Jumlah Beli ({unit})</label>
+                  <label>Quantity ({unit})</label>
                   <input
                     type="number"
                     min="1"
@@ -970,7 +957,7 @@ export default function SalesLogPage({
                   />
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Diskon Promo (%)</label>
+                  <label>Promo Discount (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -982,9 +969,9 @@ export default function SalesLogPage({
               </div>
 
               <div className="fg-inv-form-field">
-                <label>Metode Pembayaran</label>
+                <label>Payment Method</label>
                 <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
-                  <option value="Cash">Cash (Tunai)</option>
+                  <option value="Cash">Cash</option>
                   <option value="QR / e-Wallet">QR / DuitNow / TNG</option>
                   <option value="Card">Debit / Credit Card</option>
                 </select>
@@ -1007,12 +994,12 @@ export default function SalesLogPage({
                 </div>
                 {discount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#e07b3a', marginBottom: 3 }}>
-                    <span>Diskon ({discount}%):</span>
+                    <span>Discount ({discount}%):</span>
                     <span>- RM {discountAmt.toFixed(2)}</span>
                   </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', fontWeight: 800, color: '#1b9b55', borderTop: '1px solid #c7e6d4', paddingTop: 6, marginTop: 4 }}>
-                  <span>Total Bayar:</span>
+                  <span>Total Payable:</span>
                   <span>RM {total.toFixed(2)}</span>
                 </div>
               </div>
@@ -1023,26 +1010,26 @@ export default function SalesLogPage({
                   className="fg-inv-btn-outline"
                   onClick={() => setShowPOSModal(false)}
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="fg-inv-btn-primary"
                 >
-                  ✓ Konfirmasi Penjualan
+                  ✓ Confirm Sale
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* Modal: Edit Detail Transaksi Kasir */}
+      {/* Modal: Edit Cashier Transaction Details */}
       {editingSale && (
         <div className="fg-inv-modal-backdrop" ref={editModalRef} onClick={() => setEditingSale(null)}>
           <div className="fg-inv-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 580 }}>
             <div className="fg-inv-modal-header">
               <div>
-                <h3 style={{ margin: 0 }}>Edit Transaksi {editingSale.id}</h3>
+                <h3 style={{ margin: 0 }}>Edit Transaction {editingSale.id}</h3>
                 <p style={{ fontSize: '0.8rem', color: '#6b8f78', margin: '3px 0 0' }}>
                   Correct product details, price, discount, or payment method if the cashier made an input error.
                 </p>
@@ -1216,7 +1203,7 @@ export default function SalesLogPage({
                   onClick={() => handleDeleteSale(editingSale.id)}
                   style={{ color: '#d94040', borderColor: '#f8c8c4' }}
                 >
-                  🗑 Hapus Transaksi
+                  🗑 Delete Transaction
                 </button>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1225,13 +1212,13 @@ export default function SalesLogPage({
                     className="fg-inv-btn-outline"
                     onClick={() => setEditingSale(null)}
                   >
-                    Batal
+                    Cancel
                   </button>
                   <button
                     type="submit"
                     className="fg-inv-btn-primary"
                   >
-                    Simpan Perubahan
+                    Save Changes
                   </button>
                 </div>
               </div>

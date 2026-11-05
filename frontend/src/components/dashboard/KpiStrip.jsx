@@ -89,21 +89,21 @@ export default function KpiStrip({
       {/* 1. Total Assets */}
       <div className="fg-kpi-card">
         <div className="fg-kpi-card__header">
-          <span className="fg-kpi-card__label">Total Nilai Aset</span>
+          <span className="fg-kpi-card__label">Total Asset Value</span>
           <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--neutral">Active Stock</span>
         </div>
         <div className="fg-kpi-card__main">
           <span className="fg-kpi-card__value">
             <AnimatedNumber value={totalAssets} prefix="RM " decimals={2} />
           </span>
-          <span className="fg-kpi-card__subtext">Nilai total inventori produk aktif saat ini</span>
+          <span className="fg-kpi-card__subtext">Total active inventory valuation across all batches</span>
         </div>
       </div>
 
       {/* 2. Profit */}
       <div className="fg-kpi-card">
         <div className="fg-kpi-card__header">
-          <span className="fg-kpi-card__label">Profit Terealisasi</span>
+          <span className="fg-kpi-card__label">Realized Profit</span>
           <span className={`fg-kpi-card__delta-tag fg-kpi-card__delta-tag--${isPositiveProfit ? 'success' : isNegativeProfit ? 'danger' : 'neutral'}`}>
             {profitDelta}
           </span>
@@ -112,7 +112,7 @@ export default function KpiStrip({
           <span className="fg-kpi-card__value" style={{ color: isPositiveProfit ? '#147b43' : isNegativeProfit ? '#c53030' : undefined }}>
             <AnimatedNumber value={profit} prefix="RM " decimals={2} />
           </span>
-          <span className="fg-kpi-card__subtext">Keuntungan bersih dari kasir & clearance POS</span>
+          <span className="fg-kpi-card__subtext">Net margin from cashier sales & clearance POS</span>
         </div>
       </div>
 
@@ -121,17 +121,17 @@ export default function KpiStrip({
         className="fg-kpi-card is-clickable"
         onClick={onNavigateInventory}
         style={{ cursor: 'pointer' }}
-        title="Buka Stock Inventory"
+        title="Open Stock Inventory"
       >
         <div className="fg-kpi-card__header">
-          <span className="fg-kpi-card__label">Batch Aktif (FEFO)</span>
+          <span className="fg-kpi-card__label">Active Batches (FEFO)</span>
           <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--info">100% Monitored</span>
         </div>
         <div className="fg-kpi-card__main">
           <span className="fg-kpi-card__value">
             <AnimatedNumber value={activeBatchesCount} suffix=" Lots" decimals={0} />
           </span>
-          <span className="fg-kpi-card__subtext">Kelola stok di Stock Inventory →</span>
+          <span className="fg-kpi-card__subtext">Manage lots in Stock Inventory →</span>
         </div>
       </div>
     </div>

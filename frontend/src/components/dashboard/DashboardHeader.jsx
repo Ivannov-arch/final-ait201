@@ -60,7 +60,7 @@ export default function DashboardHeader({ onToggleSidebar }) {
           </div>
         </div>
         <p className="fg-header__subtitle">
-          Ringkasan inventori, profit penjualan kasir, dan distribusi food bank.
+          Real-time inventory valuation, cashier profit, and food bank redistribution.
         </p>
       </div>
 

@@ -12,14 +12,14 @@ export default function ReasonForRecoveryChart() {
       percent: 65,
       color: '#1b9b55',
       weight: '806 kg',
-      description: 'Dynamic Markdown & Penjualan Kasir'
+      description: 'Dynamic Markdown & Cashier Sales'
     },
     {
       label: 'Food Bank',
       percent: 35,
       color: '#3b82f6',
       weight: '434 kg',
-      description: 'Penyaluran Donasi NGO Food Bank'
+      description: 'Food Bank NGO Redistribution'
     }
   ]
 
@@ -99,10 +99,10 @@ export default function ReasonForRecoveryChart() {
       <div className="fg-card__header">
         <div>
           <h2 className="fg-card__title">Channel Action Breakdown</h2>
-          <p className="fg-card__subtitle">Distribusi penanganan produk: Sales vs. Food Bank</p>
+          <p className="fg-card__subtitle">Product salvage distribution: Sales vs. Food Bank</p>
         </div>
         <span className="fg-card__badge" style={{ background: '#eaf7ee', color: '#1b9b55' }}>
-          2 Saluran Aktif
+          2 Active Channels
         </span>
       </div>
 
@@ -174,7 +174,7 @@ export default function ReasonForRecoveryChart() {
               <span className="fg-donut-center-unit">kg</span>
             </div>
             <span className="fg-donut-center-label">
-              {hoveredIdx !== null ? `${items[hoveredIdx].label} · ${items[hoveredIdx].percent}%` : 'Total Terkelola'}
+              {hoveredIdx !== null ? `${items[hoveredIdx].label} · ${items[hoveredIdx].percent}%` : 'Total Salvaged'}
             </span>
           </div>
         </div>

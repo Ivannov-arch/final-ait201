@@ -41,7 +41,7 @@ export const INITIAL_ACTIVITIES = [
     product: 'Roma Vine Tomatoes',
     category: 'Produce',
     image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=80&auto=format&fit=crop&q=80',
-    action: 'Sales · Kasir POS',
+    action: 'Sales · Cashier POS',
     quantity: '45 kg',
     status: 'Sold',
     statusType: 'completed',

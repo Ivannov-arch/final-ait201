@@ -149,7 +149,7 @@ export default function DashboardPage({ onNavigateHome }) {
       product: sale.product,
       category: sale.category,
       image: sale.image || 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=80&auto=format&fit=crop&q=80',
-      action: `Sales · Kasir POS (${sale.payMethod})`,
+      action: `Sales · Cashier POS (${sale.payMethod})`,
       quantity: `${sale.qty} ${sale.unit}`,
       status: 'Sold',
       statusType: 'completed',

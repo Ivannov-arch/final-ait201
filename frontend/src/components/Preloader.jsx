@@ -1,152 +1,127 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from "react";
 
-const TOTAL_FRAMES = 30
-const FPS = 10
-const MS_PER_FRAME = 1000 / FPS
+const dashboardPreloaderGif = `${import.meta.env.BASE_URL}preeloader-video/dashboard_preloader.gif`;
 
 const phases = [
-  { at: 15, text: 'Dispatching inventory route...' },
-  { at: 45, text: 'Prioritizing FEFO stock batches...' },
-  { at: 75, text: 'Syncing store telemetry...' },
-  { at: 100, text: 'Arrived at hub.' },
-]
+  { at: 15, text: "Dispatching inventory route..." },
+  { at: 45, text: "Prioritizing FEFO stock batches..." },
+  { at: 75, text: "Syncing store telemetry..." },
+  { at: 100, text: "Arrived at hub." },
+];
 
-export default function Preloader() {
-  const [progress, setProgress] = useState(0)
-  const [status, setStatus] = useState('Dispatching inventory route...')
-  const [frame, setFrame] = useState(1)
-  const [isHidden, setIsHidden] = useState(false)
-  const [isMounted, setIsMounted] = useState(true)
+export default function Preloader({
+  label = "Preparing FreshGuard dashboard...",
+  onComplete,
+}) {
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState(label);
+  const [isHidden, setIsHidden] = useState(false);
+  const [isMounted, setIsMounted] = useState(true);
 
-  const isDismissedRef = useRef(false)
-  const rafRef = useRef(null)
-  const intervalRef = useRef(null)
+  const isDismissedRef = useRef(false);
+  const intervalRef = useRef(null);
+  const progressRef = useRef(0); // track real progress outside React state
 
   useEffect(() => {
-    // Check reduced motion
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const triggerHeroStagger = () => window.dispatchEvent(new Event('fg:preloader-done'))
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const triggerHeroStagger = () =>
+      window.dispatchEvent(new Event("fg:preloader-done"));
 
     if (reduced) {
-      setIsHidden(true)
-      setIsMounted(false)
-      triggerHeroStagger()
-      return
+      setIsHidden(true);
+      setIsMounted(false);
+      triggerHeroStagger();
+      if (onComplete) onComplete();
+      return;
     }
 
-    // Check if user visited in this session (can be bypassed for testing by clearing or ?preview)
-    const isSessionVisited = sessionStorage.getItem('fg_visited')
-    if (isSessionVisited) {
-      setIsHidden(true)
-      setIsMounted(false)
-      triggerHeroStagger()
-      return
+    const isSessionVisited = sessionStorage.getItem("fg_visited");
+    if (isSessionVisited && !label.includes("dashboard")) {
+      setIsHidden(true);
+      setIsMounted(false);
+      triggerHeroStagger();
+      if (onComplete) onComplete();
+      return;
     }
 
-    document.body.style.overflow = 'hidden'
+    document.body.style.overflow = "hidden";
 
-    // 1. Sprite animation loop
-    let currentFrame = 0
-    let lastTime = performance.now()
+    // Reset progress ref on each fresh mount
+    progressRef.current = 0;
+    isDismissedRef.current = false;
 
-    const animateSprite = (now) => {
-      if (now - lastTime >= MS_PER_FRAME) {
-        currentFrame = (currentFrame + 1) % TOTAL_FRAMES
-        setFrame(currentFrame + 1)
-        lastTime = now
-      }
-      if (!isDismissedRef.current) {
-        rafRef.current = requestAnimationFrame(animateSprite)
-      }
-    }
-    rafRef.current = requestAnimationFrame(animateSprite)
-
-    // 2. Dismiss handler
     const dismiss = () => {
-      if (isDismissedRef.current) return
-      isDismissedRef.current = true
+      if (isDismissedRef.current) return;
+      isDismissedRef.current = true;
 
-      clearInterval(intervalRef.current)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-
-      setIsHidden(true)
-      triggerHeroStagger()
-      sessionStorage.setItem('fg_visited', '1')
+      clearInterval(intervalRef.current);
+      setIsHidden(true);
+      triggerHeroStagger();
+      if (!label.includes("dashboard")) {
+        sessionStorage.setItem("fg_visited", "1");
+      }
 
       setTimeout(() => {
-        document.body.style.overflow = ''
-        setIsMounted(false)
-      }, 1100)
-    }
+        document.body.style.overflow = "";
+        setIsMounted(false);
+        if (onComplete) onComplete();
+      }, 850);
+    };
 
-    // 3. Progress loop
-    let currentProgress = 0
+    let currentProgress = 0;
     intervalRef.current = setInterval(() => {
-      if (isDismissedRef.current) return
+      if (isDismissedRef.current) return;
 
-      const delta = currentProgress < 85 ? (Math.random() < 0.65 ? 1 : 2) : 1
-      currentProgress = Math.min(100, currentProgress + delta)
-      setProgress(currentProgress)
+      // slower ramp: max +1 per tick, slight stall near 90
+      const delta = currentProgress < 90 ? 1 : Math.random() < 0.4 ? 1 : 0;
+      currentProgress = Math.min(100, currentProgress + delta);
+      progressRef.current = currentProgress;
+      setProgress(currentProgress);
 
       for (const p of phases) {
         if (currentProgress >= p.at) {
-          setStatus(p.text)
+          setStatus(p.text);
         }
       }
 
       if (currentProgress >= 100) {
-        clearInterval(intervalRef.current)
-        setTimeout(() => {
-          dismiss()
-        }, 500)
+        clearInterval(intervalRef.current);
+        setStatus("Welcome to FreshGuard Hub!");
+        setTimeout(() => dismiss(), 500);
       }
-    }, 28)
+    }, 50);
 
-    // Dismiss on click or Escape/Space key
     const onKeyDown = (e) => {
-      if (e.key === 'Escape' || e.key === ' ') {
-        dismiss()
+      if (e.key === "Escape") {
+        dismiss();
       }
-    }
-    window.addEventListener('keydown', onKeyDown)
+    };
+    window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      clearInterval(intervalRef.current)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = ''
-    }
-  }, [])
+      clearInterval(intervalRef.current);
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [label]);
 
-  if (!isMounted) return null
-
-  const paddedFrame = String(frame).padStart(2, '0')
+  if (!isMounted) return null;
 
   return (
     <div
       id="preloader"
-      className={`preloader${isHidden ? ' is-hidden' : ''}`}
+      className={`preloader${isHidden ? " is-hidden" : ""}`}
       aria-hidden={isHidden}
-      onClick={() => {
-        if (!isDismissedRef.current) {
-          isDismissedRef.current = true
-          setIsHidden(true)
-          window.dispatchEvent(new Event('fg:preloader-done'))
-          sessionStorage.setItem('fg_visited', '1')
-          setTimeout(() => {
-            document.body.style.overflow = ''
-            setIsMounted(false)
-          }, 600)
-        }
-      }}
     >
       <div className="preloader__ambient"></div>
       <div className="preloader__content">
         <div className="preloader__sprite-wrap" aria-hidden="true">
           <img
             id="preloader-sprite"
-            className="preloader__sprite"
-            src={`/sprite/sprite_${paddedFrame}.png`}
+            className="preloader__sprite preloader__gif"
+            src={dashboardPreloaderGif}
             alt=""
           />
         </div>
@@ -165,5 +140,5 @@ export default function Preloader() {
         </div>
       </div>
     </div>
-  )
+  );
 }

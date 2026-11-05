@@ -1427,7 +1427,7 @@ export default function InventoryFefoRiskPage({
                   className="fg-inv-btn-outline"
                   onClick={() => setBatchToDelete(null)}
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="button"

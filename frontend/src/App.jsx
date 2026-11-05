@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Preloader from './components/Preloader'
 import Nav from './components/Nav'
 import Hero from './components/Hero'
@@ -10,7 +10,7 @@ import CtaSection from './components/CtaSection'
 import Footer from './components/Footer'
 import DashboardPage from './components/dashboard/DashboardPage'
 
-const ENABLE_PRELOADER = false
+const ENABLE_PRELOADER = true
 
 function checkIsDashboard() {
   if (typeof window === 'undefined') return false
@@ -23,14 +23,25 @@ function checkIsDashboard() {
 
 export default function App() {
   const [view, setView] = useState(() => (checkIsDashboard() ? 'dashboard' : 'landing'))
+  const [isTransitioningToDashboard, setIsTransitioningToDashboard] = useState(false)
+  const transitionTimerRef = useRef(null)
 
-  // Listen to hash changes (back/forward browser buttons or direct links)
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current) {
+        window.clearTimeout(transitionTimerRef.current)
+      }
+    }
+  }, [])
+
   useEffect(() => {
     const handleHashChange = () => {
       if (checkIsDashboard()) {
         setView('dashboard')
+        setIsTransitioningToDashboard(false)
       } else if (window.location.hash === '' || window.location.hash === '#') {
         setView('landing')
+        setIsTransitioningToDashboard(false)
       }
     }
 
@@ -42,7 +53,6 @@ export default function App() {
     }
   }, [])
 
-  // Toggle body class so CSS can lock scroll only on dashboard view
   useEffect(() => {
     if (view === 'dashboard') {
       document.body.classList.add('is-dashboard')
@@ -53,7 +63,6 @@ export default function App() {
     }
   }, [view])
 
-  // Intersection observer for landing page reveal animations
   useEffect(() => {
     if (view !== 'landing') return
 
@@ -72,35 +81,68 @@ export default function App() {
     return () => io.disconnect()
   }, [view])
 
-  const navigateToDashboard = (e) => {
+  const beginTransitionToDashboard = (e) => {
     if (e && e.preventDefault) e.preventDefault()
-    window.location.hash = 'dashboard'
-    setView('dashboard')
+
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current)
+    }
+
+    if (ENABLE_PRELOADER) {
+      // Show preloader first — it fires 'fg:preloader-done' when finished
+      setIsTransitioningToDashboard(true)
+
+      const onDone = () => {
+        window.removeEventListener('fg:preloader-done', onDone)
+        // Smoothly mount Dashboard underneath the dissolving preloader
+        setView('dashboard')
+        window.location.hash = 'dashboard'
+      }
+      window.addEventListener('fg:preloader-done', onDone)
+    } else {
+      setView('dashboard')
+      window.location.hash = 'dashboard'
+    }
   }
 
   const navigateToLanding = (e) => {
     if (e && e.preventDefault) e.preventDefault()
-    window.location.hash = ''
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current)
+    }
+    setIsTransitioningToDashboard(false)
     setView('landing')
-  }
-
-  if (view === 'dashboard') {
-    return <DashboardPage onNavigateHome={navigateToLanding} />
+    window.location.hash = ''
   }
 
   return (
     <>
-      {ENABLE_PRELOADER && <Preloader />}
-      <Nav onGetEarlyAccess={navigateToDashboard} />
-      <main>
-        <Hero onGetEarlyAccess={navigateToDashboard} />
-        <Logos />
-        <Features />
-        <TrustBar />
-        <HowItWorks />
-        <CtaSection onGetEarlyAccess={navigateToDashboard} />
-      </main>
-      <Footer />
+      {view === 'dashboard' ? (
+        <DashboardPage onNavigateHome={navigateToLanding} />
+      ) : (
+        <>
+          <Nav onGetEarlyAccess={beginTransitionToDashboard} />
+          <main>
+            <Hero onGetEarlyAccess={beginTransitionToDashboard} />
+            <Logos />
+            <Features />
+            <TrustBar />
+            <HowItWorks />
+            <CtaSection onGetEarlyAccess={beginTransitionToDashboard} />
+          </main>
+          <Footer />
+        </>
+      )}
+
+      {/* Global Preloader — Stays on top of whichever view is active until exit dissolve completes */}
+      {ENABLE_PRELOADER && isTransitioningToDashboard && (
+        <Preloader
+          label="Preparing FreshGuard dashboard..."
+          onComplete={() => {
+            setIsTransitioningToDashboard(false)
+          }}
+        />
+      )}
     </>
   )
 }
