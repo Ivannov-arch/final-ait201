@@ -9,6 +9,7 @@ import { INITIAL_ACTIVITIES } from './activitiesData'
 import SalesLogPage from './SalesLogPage'
 import DemandForecastingPage from './DemandForecastingPage'
 import InventoryFefoRiskPage from './InventoryFefoRiskPage'
+import DispatchPage from './DispatchPage'
 import { INITIAL_BATCHES } from './inventoryData'
 import './dashboard.css'
 
@@ -55,6 +56,12 @@ export default function DashboardPage({ onNavigateHome }) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
     document.title = activeNav === 'inventory-risk'
       ? 'FreshGuard — Stock Inventory (FEFO)'
+      : activeNav === 'dispatch'
+      ? 'FreshGuard — Waste-Risk & Smart Dispatch'
+      : activeNav === 'demand-forecasting'
+      ? 'FreshGuard — Demand Forecasting'
+      : activeNav === 'sales-log'
+      ? 'FreshGuard — Sales Log'
       : 'FreshGuard — Operations Dashboard'
     return () => {
       document.title = 'FreshGuard — Stop Spoilage Before It Starts'
@@ -226,6 +233,13 @@ export default function DashboardPage({ onNavigateHome }) {
         ) : activeNav === 'demand-forecasting' ? (
           <DemandForecastingPage
             batches={batches}
+            onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+          />
+        ) : activeNav === 'dispatch' ? (
+          <DispatchPage
+            batches={batches}
+            onUpdateBatches={setBatches}
+            onApplyAction={handleApplyActionDecision}
             onToggleSidebar={() => setSidebarOpen(prev => !prev)}
           />
         ) : (
