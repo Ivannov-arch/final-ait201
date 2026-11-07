@@ -313,9 +313,24 @@
 }
 
 .fg-dispatch-metric-card--lead {
-  background-color: #0c1f15;
+  background: radial-gradient(circle at 85% 20%, oklch(35% 0.12 142 / 0.35), transparent 70%), #0c1f15;
   color: #ffffff;
   border-color: #0c1f15;
+  box-shadow: 0 10px 24px -8px oklch(12% 0.05 148 / 0.45);
+}
+
+.fg-dispatch-metric-card--capacity {
+  background: radial-gradient(circle at 85% 15%, oklch(75% 0.1 230 / 0.25), transparent 65%), linear-gradient(180deg, #ffffff 0%, #f4f9fc 100%);
+  border-color: oklch(62% 0.12 230 / 0.22);
+}
+
+.fg-dispatch-metric-card__icon--sky {
+  background-color: #e8f4fa;
+  color: #2f97c1;
+}
+
+.fg-dispatch-metric-card__trend--sky {
+  color: #2f97c1;
 }
 
 .fg-dispatch-metric-card__header {
@@ -450,8 +465,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.85rem;
   flex-wrap: wrap;
+}
+
+.fg-dispatch-controls__top .fg-dispatch-search {
+  max-width: 300px;
+  flex: 1;
+  min-width: 220px;
 }
 
 .fg-dispatch-search-row {
@@ -580,10 +601,141 @@
   color: #ffffff;
 }
 
+.fg-dispatch-tab--critical.is-active {
+  background-color: #c82d32;
+  color: #ffffff;
+}
+
+.fg-dispatch-tab--elevated.is-active {
+  background-color: #d66224;
+  color: #ffffff;
+}
+
+.fg-dispatch-tab--dispatched.is-active {
+  background-color: #0c1f15;
+  color: #ffffff;
+}
+
 .fg-dispatch-tab__count {
   margin-left: 0.3rem;
   font-size: 0.7rem;
   opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------------
+   Bulk Selection Quick-Actions Bar & Checkbox
+   -------------------------------------------------------------------------- */
+.fg-dispatch-bulk-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  background-color: #fafcfb;
+  border: 1px solid oklch(15% 0.02 148 / 0.08);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
+.fg-dispatch-bulk-shortcuts {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.fg-dispatch-btn-text {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #147b43;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  transition: all 0.12s ease;
+}
+
+.fg-dispatch-btn-text:hover {
+  background-color: #edf8f1;
+}
+
+.fg-dispatch-btn-text--critical {
+  color: #c82d32;
+}
+
+.fg-dispatch-btn-text--critical:hover {
+  background-color: oklch(56% 0.175 25 / 0.08);
+}
+
+.fg-dispatch-btn-text--muted {
+  color: #496354;
+}
+
+.fg-dispatch-btn-text--muted:hover {
+  background-color: oklch(15% 0.02 148 / 0.06);
+}
+
+.fg-dispatch-bulk-selected-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: #0c1f15;
+}
+
+.fg-dispatch-card__select-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 0.25rem;
+  user-select: none;
+}
+
+.fg-dispatch-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid oklch(15% 0.02 148 / 0.25);
+  border-radius: 5px;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition: all 0.15s ease;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.fg-dispatch-checkbox:hover {
+  border-color: #1b9b55;
+  background-color: #edf8f1;
+}
+
+.fg-dispatch-checkbox:checked {
+  background-color: #1b9b55;
+  border-color: #1b9b55;
+}
+
+.fg-dispatch-checkbox:checked::before {
+  content: "";
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.fg-dispatch-checkbox:focus-visible {
+  outline: 2px solid #1b9b55;
+  outline-offset: 2px;
 }
 
 /* Batch Items List with Scroll Bounding */
@@ -613,200 +765,6 @@
 
 .fg-dispatch-list::-webkit-scrollbar-thumb:hover {
   background: #1b9b55;
-}
-
-/* --------------------------------------------------------------------------
-   Compact Tabular Row Layout (High Density)
-   Solves "user needs to scroll down a lot" in All Lots view!
-   -------------------------------------------------------------------------- */
-.fg-dispatch-row {
-  display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) minmax(160px, 1.2fr) minmax(160px, 1.1fr) auto;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.65rem 0.85rem;
-  background-color: #ffffff;
-  border: 1px solid oklch(15% 0.02 148 / 0.08);
-  border-radius: 10px;
-  transition: all 0.15s ease;
-}
-
-.fg-dispatch-row:hover {
-  background-color: #fafcfb;
-  border-color: oklch(15% 0.02 148 / 0.18);
-  box-shadow: 0 2px 8px -2px oklch(15% 0.02 148 / 0.06);
-}
-
-.fg-dispatch-row--critical {
-  background-color: oklch(56% 0.175 25 / 0.02);
-  border-color: oklch(56% 0.175 25 / 0.2);
-}
-
-.fg-dispatch-row__main {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
-}
-
-.fg-dispatch-row__thumb {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid oklch(15% 0.02 148 / 0.08);
-  background-color: #edf8f1;
-}
-
-.fg-dispatch-row__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.fg-dispatch-row__name-line {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-.fg-dispatch-row__name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #0c1f15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fg-dispatch-row__batch {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #496354;
-  background-color: #fafcfb;
-  border: 1px solid oklch(15% 0.02 148 / 0.1);
-  padding: 0.05rem 0.35rem;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.fg-dispatch-row__meta {
-  font-size: 0.74rem;
-  color: #496354;
-}
-
-/* Compact Risk Meter */
-.fg-dispatch-row__risk {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 140px;
-}
-
-.fg-dispatch-row__risk-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.74rem;
-}
-
-.fg-dispatch-row__risk-pct {
-  font-weight: 800;
-}
-
-.fg-dispatch-row__risk-pct--high {
-  color: #c82d32;
-}
-
-.fg-dispatch-row__risk-pct--med {
-  color: #d66224;
-}
-
-.fg-dispatch-row__risk-pct--low {
-  color: #2eb872;
-}
-
-.fg-dispatch-row__time {
-  font-size: 0.7rem;
-  color: #496354;
-}
-
-.fg-dispatch-row__mini-track {
-  width: 100%;
-  height: 4px;
-  background-color: oklch(15% 0.02 148 / 0.08);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.fg-dispatch-row__mini-fill {
-  height: 100%;
-  border-radius: 999px;
-}
-
-.fg-dispatch-row__mini-fill--high {
-  background-color: #c82d32;
-}
-
-.fg-dispatch-row__mini-fill--med {
-  background-color: #d66224;
-}
-
-.fg-dispatch-row__mini-fill--low {
-  background-color: #2eb872;
-}
-
-/* Compact Partner Snippet */
-.fg-dispatch-row__partner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.fg-dispatch-row__partner-name {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #0c1f15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.fg-dispatch-row__partner-eta {
-  font-size: 0.72rem;
-  color: #147b43;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.fg-dispatch-row__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  justify-content: flex-end;
-}
-
-.fg-dispatch-badge--done {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #147b43;
-  background-color: #edf8f1;
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
-}
-
-@media (max-width: 768px) {
-  .fg-dispatch-row {
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
-  }
-  .fg-dispatch-row__actions {
-    justify-content: flex-start;
-  }
 }
 
 /* --------------------------------------------------------------------------
@@ -866,20 +824,28 @@
   border-color: #1b9b55;
 }
 
+/* --------------------------------------------------------------------------
+   Structured 3-Column Clearinghouse Card
+   [Col 1: Batch Profile] -> [Col 2: ML Risk Telemetry] -> [Col 3: Logistics Destination & Action]
+   -------------------------------------------------------------------------- */
 .fg-dispatch-card {
   border: 1px solid oklch(15% 0.02 148 / 0.08);
   border-radius: 14px;
-  padding: 1rem 1.15rem;
+  padding: 0.85rem 1.15rem;
   background-color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  display: grid;
+  grid-template-columns: minmax(270px, 1.55fr) minmax(210px, 1.25fr) minmax(230px, 1.35fr);
+  align-items: center;
+  gap: 1.15rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
 }
 
 .fg-dispatch-card:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
   border-color: oklch(15% 0.02 148 / 0.18);
-  box-shadow: 0 4px 14px -4px oklch(15% 0.02 148 / 0.06);
+  box-shadow: 0 8px 22px -6px oklch(15% 0.02 148 / 0.08);
 }
 
 .fg-dispatch-card--critical {
@@ -887,18 +853,21 @@
   border-color: oklch(56% 0.175 25 / 0.22);
 }
 
-.fg-dispatch-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+.fg-dispatch-card.is-selected {
+  border-color: #1b9b55;
+  background-color: oklch(56% 0.175 142 / 0.035);
+  box-shadow: 0 0 0 1.5px #1b9b55;
 }
 
-.fg-dispatch-card__product {
+/* Col 1: Product & Batch Profile */
+.fg-dispatch-card__col-product {
+  min-width: 0;
+}
+
+.fg-dispatch-card__product-wrap {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   min-width: 0;
 }
 
@@ -915,59 +884,102 @@
 .fg-dispatch-card__meta {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.15rem;
   min-width: 0;
 }
 
 .fg-dispatch-card__title-line {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .fg-dispatch-card__title {
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: 800;
   color: #0c1f15;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
 }
 
 .fg-dispatch-card__id {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: #496354;
   background-color: #fafcfb;
   border: 1px solid oklch(15% 0.02 148 / 0.1);
-  padding: 0.1rem 0.4rem;
+  padding: 0.05rem 0.35rem;
   border-radius: 4px;
 }
 
 .fg-dispatch-card__category {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #147b43;
   background-color: #edf8f1;
-  padding: 0.1rem 0.45rem;
+  padding: 0.05rem 0.45rem;
   border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.fg-dispatch-card__category--produce {
+  background-color: #edf8f1;
+  color: #147b43;
+  border-color: oklch(56% 0.175 142 / 0.18);
+}
+
+.fg-dispatch-card__category--dairy {
+  background-color: #e8f4fa;
+  color: #207598;
+  border-color: oklch(62% 0.12 230 / 0.22);
+}
+
+.fg-dispatch-card__category--bakery {
+  background-color: oklch(75% 0.12 65 / 0.12);
+  color: #925310;
+  border-color: oklch(75% 0.12 65 / 0.24);
+}
+
+.fg-dispatch-card__category--meat {
+  background-color: oklch(56% 0.175 25 / 0.08);
+  color: #ad2025;
+  border-color: oklch(56% 0.175 25 / 0.2);
 }
 
 .fg-dispatch-card__sub {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: #496354;
+  white-space: nowrap;
 }
 
-.fg-dispatch-card__badge-wrap {
+/* Col 2: Machine Learning Risk & Telemetry */
+.fg-dispatch-card__col-risk {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0 0.5rem;
+  border-left: 1px dashed oklch(15% 0.02 148 / 0.08);
+  border-right: 1px dashed oklch(15% 0.02 148 / 0.08);
+}
+
+.fg-dispatch-card__risk-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .fg-dispatch-risk-pill {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 0.25rem 0.65rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -992,23 +1004,26 @@
 }
 
 .fg-dispatch-badge--urgent {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: #c82d32;
   background-color: oklch(56% 0.175 25 / 0.08);
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
 }
 
-.fg-dispatch-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.fg-dispatch-badge--done {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #147b43;
+  background-color: #edf8f1;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
 }
 
 .fg-dispatch-card__track {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background-color: oklch(15% 0.02 148 / 0.08);
   border-radius: 999px;
   overflow: hidden;
@@ -1017,7 +1032,24 @@
 .fg-dispatch-card__fill {
   height: 100%;
   border-radius: 999px;
-  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.fg-dispatch-card__fill--high::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: fg-shimmer 2.2s infinite ease-in-out;
+}
+
+@keyframes fg-shimmer {
+  0% { left: -100%; }
+  100% { left: 150%; }
 }
 
 .fg-dispatch-card__fill--high {
@@ -1035,54 +1067,103 @@
 .fg-dispatch-card__telemetry {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  font-size: 0.78rem;
+  gap: 0.5rem;
+  font-size: 0.72rem;
   color: #496354;
   flex-wrap: wrap;
 }
 
-.fg-dispatch-card__telemetry span strong {
+.fg-dispatch-telemetry-chip {
+  padding: 0.1rem 0.38rem;
+  border-radius: 4px;
+  background-color: #fafcfb;
+  border: 1px solid oklch(15% 0.02 148 / 0.08);
+  transition: all 0.15s ease;
+}
+
+.fg-dispatch-telemetry-chip strong {
   color: #0c1f15;
 }
 
-.fg-dispatch-card__footer {
+.fg-dispatch-telemetry-chip--warning {
+  background-color: oklch(65% 0.16 55 / 0.08);
+  border-color: oklch(65% 0.16 55 / 0.22);
+  color: #9c4515;
+}
+
+.fg-dispatch-telemetry-chip--warning strong {
+  color: #d66224 !important;
+}
+
+.fg-dispatch-telemetry-chip--critical {
+  background-color: oklch(56% 0.175 25 / 0.08);
+  border-color: oklch(56% 0.175 25 / 0.22);
+  color: #9a1f23;
+}
+
+.fg-dispatch-telemetry-chip--critical strong {
+  color: #c82d32 !important;
+}
+
+/* Col 3: Logistics Destination & Dispatch Action */
+.fg-dispatch-card__col-logistics {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.fg-dispatch-card__dispatch-block {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding-top: 0.75rem;
-  border-top: 1px dashed oklch(15% 0.02 148 / 0.1);
+  gap: 0.85rem;
+  width: 100%;
 }
 
-.fg-dispatch-card__partner {
+.fg-dispatch-card__partner-mini {
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.82rem;
-  color: #0c1f15;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
-.fg-dispatch-card__partner svg {
+.fg-dispatch-card__partner-mini svg {
   color: #1b9b55;
-  flex-shrink: 0;
+  display: none;
+}
+
+.fg-dispatch-card__partner-name {
+  font-size: 0.8rem;
+  color: #0c1f15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.fg-dispatch-card__partner-eta {
+  font-size: 0.72rem;
+  color: #147b43;
+  font-weight: 700;
 }
 
 .fg-dispatch-card__actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .fg-dispatch-card__status-safe {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
+  gap: 0.45rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #147b43;
   background-color: #edf8f1;
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   border-radius: 8px;
   width: 100%;
 }
@@ -1095,15 +1176,26 @@
 .fg-dispatch-card__status-success {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-  font-size: 0.82rem;
+  gap: 0.55rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #147b43;
   background-color: #edf8f1;
-  padding: 0.55rem 0.85rem;
-  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
   width: 100%;
+  animation: fg-status-reveal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fg-status-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .fg-dispatch-card__status-success svg {
@@ -1114,6 +1206,36 @@
 .fg-dispatch-card__status-success span {
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive: Collapse into Clean Stack on Screens < 980px */
+@media (max-width: 980px) {
+  .fg-dispatch-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+    padding: 1rem 1.15rem;
+  }
+
+  .fg-dispatch-card__col-risk {
+    border-left: none;
+    border-right: none;
+    padding: 0.5rem 0;
+    border-top: 1px dashed oklch(15% 0.02 148 / 0.08);
+    border-bottom: 1px dashed oklch(15% 0.02 148 / 0.08);
+  }
+
+  .fg-dispatch-card__title {
+    max-width: none;
+  }
+
+  .fg-dispatch-card__partner-name {
+    max-width: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1242,4 +1364,91 @@
   gap: 0.65rem;
   border-top: 1px solid oklch(15% 0.02 148 / 0.08);
   background-color: #fafcfb;
+}
+
+/* --------------------------------------------------------------------------
+   Sticky Floating Action Bar for Bulk Selection
+   -------------------------------------------------------------------------- */
+.fg-dispatch-floating-bar {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  background-color: #0c1f15;
+  color: #ffffff;
+  border: 1px solid oklch(56% 0.175 142 / 0.35);
+  border-radius: 999px;
+  box-shadow: 0 16px 36px -8px oklch(0% 0 0 / 0.55), 0 0 24px -4px oklch(56% 0.175 142 / 0.25);
+  padding: 0.6rem 1.15rem 0.6rem 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  animation: fg-floating-bar-slide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-width: 92vw;
+  flex-wrap: wrap;
+}
+
+@keyframes fg-floating-bar-slide {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-dispatch-floating-bar {
+    animation: none;
+  }
+}
+
+.fg-dispatch-floating-bar__info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+}
+
+.fg-dispatch-floating-bar__badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: "Nunito", sans-serif;
+}
+
+.fg-dispatch-floating-bar__badge svg {
+  color: #7ae053;
+}
+
+.fg-dispatch-floating-bar__divider {
+  color: oklch(100% 0 0 / 0.3);
+}
+
+.fg-dispatch-floating-bar__weight {
+  font-weight: 700;
+  color: #7ae053;
+  font-feature-settings: "tnum";
+}
+
+.fg-dispatch-floating-bar__warning {
+  background-color: oklch(65% 0.16 55 / 0.25);
+  color: #ffb86c;
+  border: 1px solid oklch(65% 0.16 55 / 0.4);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.fg-dispatch-floating-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
 }
