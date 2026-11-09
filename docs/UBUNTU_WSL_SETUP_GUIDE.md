@@ -119,3 +119,4 @@ Agar editor VS Code langsung menggunakan environment Ubuntu WSL ini:
 | **Mengaktifkan venv kembali** | `source ~/.venv/bin/activate` |
 | **Bebaskan RAM WSL ke Windows** | Buka PowerShell Windows, jalankan: `wsl --shutdown` |
 | **Retrain Model Baru** | Cukup simpan file baru ke `models/spoilage_classifier.pkl`, lalu jalankan `python src/ml/spoilage.py`. |
+
