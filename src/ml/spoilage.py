@@ -101,7 +101,7 @@ def sort_by_fefo(batch_list: list[dict]) -> list[dict]:
         return []
     return sorted(batch_list, key=lambda x: pd.to_datetime(x.get('expiry_date', '9999-12-31'), errors='coerce'))
 
-# ── Demo Penggunaan Mandiri (Akan memicu Heuristic Fallback karena file pkl belum dipindahkan) ──
+# ── Demo Penggunaan Mandiri (Inferensi Model ML / Fallback Heuristik) ──
 sample_lot = {
     'turnover_ratio': 3.5,
     'stock_pressure': 0.8,
@@ -112,4 +112,4 @@ sample_lot = {
 }
 
 result = predict_spoilage_risk(sample_lot)
-print(f"✅ Pengujian independen (Fallback Terbuka): {result}")
+print(f"✅ Pengujian independen model: {result}")
