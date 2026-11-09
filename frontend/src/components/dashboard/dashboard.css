@@ -7533,3 +7533,10 @@ button {
     animation: none !important;
   }
 }
+
+.fg-header__actions-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
