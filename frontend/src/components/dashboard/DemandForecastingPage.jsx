@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import gsap from 'gsap'
+import DashboardHeader from './DashboardHeader'
 
 function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
   const nodeRef = useRef(null)
@@ -263,117 +264,62 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
         </div>
       )}
 
-      {/* Top Utility Bar */}
-      <div className="fg-inv-topbar">
-        {onToggleSidebar && (
-          <button
-            type="button"
-            className="fg-header__mobile-menu-btn fg-inv-mobile-menu-btn"
-            onClick={onToggleSidebar}
-            aria-label="Toggle Navigation Menu"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-        )}
-
-        <div className="fg-inv-topbar-right" style={{ marginLeft: 'auto' }}>
-          <button
-            type="button"
-            className="fg-inv-notify-btn"
-            aria-label="Notifications"
-            onClick={() => showToast('🔔 AI Demand Model active · Connected to store telemetry')}
-          >
-            <span className="fg-inv-notify-dot"></span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
-
-          <div className="fg-inv-user-chip" title="John Doe — Operations Lead">
-            <div className="fg-inv-avatar-initials">JD</div>
-            <span className="fg-inv-user-name">John Doe</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Integrated Header: Title on Left, Product Selector & Action on Right */}
-      <div className="fg-inv-header" style={{ marginBottom: '1.4rem' }}>
-        <div>
-          <h1 className="fg-inv-title">Demand Forecasting & Replenishment</h1>
-          <p className="fg-inv-subtitle">
-            Projected stock demand over the next 3 days based on sell-through patterns. Click any point for day details.
-          </p>
-        </div>
-
-        <div className="fg-inv-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', minWidth: '240px' }}>
-            <select
-              value={selectedProduct}
-              onChange={(e) => {
-                setSelectedProduct(e.target.value)
-                setSelectedDayIdx(0)
-              }}
-              aria-label="Select product"
-              style={{
-                width: '100%',
-                padding: '0.45rem 1.8rem 0.45rem 0.95rem',
-                borderRadius: '999px',
-                border: '1px solid #d5e5db',
-                fontSize: '0.82rem',
-                fontFamily: 'inherit',
-                color: '#195038',
-                background: '#ffffff',
-                outline: 'none',
-                fontWeight: 700,
-                cursor: 'pointer',
-                minHeight: '38px',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.03)'
-              }}
+      {/* Unified Action Header */}
+      <DashboardHeader
+        title="Demand Forecasting & Replenishment"
+        badge="ML Projection"
+        badgePulse={true}
+        subtitle="Projected stock demand over the next 3 days based on sell-through patterns. Click any point for day details."
+        onToggleSidebar={onToggleSidebar}
+        actions={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', minWidth: '220px' }}>
+              <select
+                value={selectedProduct}
+                onChange={(e) => {
+                  setSelectedProduct(e.target.value)
+                  setSelectedDayIdx(0)
+                }}
+                aria-label="Select product"
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 1.8rem 0.45rem 0.95rem',
+                  borderRadius: '999px',
+                  border: '1px solid #d5e5db',
+                  fontSize: '0.82rem',
+                  fontFamily: 'inherit',
+                  color: '#195038',
+                  background: '#ffffff',
+                  outline: 'none',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  minHeight: '38px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)'
+                }}
+              >
+                {productKeys.map(prod => (
+                  <option key={prod} value={prod}>
+                    {prod} — stock {FORECAST_DATABASE[prod]?.currentStock} {FORECAST_DATABASE[prod]?.unit}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              className="fg-inv-btn-primary"
+              onClick={handlePredict}
+              disabled={isLoading}
+              style={{ minHeight: '38px', padding: '0.45rem 1.15rem' }}
             >
-              {productKeys.map(prod => (
-                <option key={prod} value={prod}>
-                  {prod} — stock {FORECAST_DATABASE[prod]?.currentStock} {FORECAST_DATABASE[prod]?.unit}
-                </option>
-              ))}
-            </select>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                <polyline points="17 6 23 6 23 12" />
+              </svg>
+              <span>{isLoading ? 'Predicting...' : 'Predict Demand'}</span>
+            </button>
           </div>
-
-          <button
-            type="button"
-            className="fg-inv-btn-primary"
-            onClick={handlePredict}
-            disabled={isLoading}
-            style={{
-              minHeight: '38px',
-              padding: '0.4rem 1.15rem',
-              fontSize: '0.82rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              borderRadius: '999px'
-            }}
-          >
-            {isLoading ? (
-              <span>Calculating...</span>
-            ) : (
-              <>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-                <span>Recalculate</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Content Area */}
       {hasPredicted && (

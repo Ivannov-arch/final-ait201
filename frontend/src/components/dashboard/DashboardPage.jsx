@@ -184,6 +184,11 @@ export default function DashboardPage({ onNavigateHome }) {
         {/* Render DashboardHeader ONLY when on Dashboard/Operations view to avoid duplicate headers! */}
         {isMainView && (
           <DashboardHeader
+            title="Operations Dashboard"
+            badge="Live Sync"
+            badgePulse={true}
+            subtitle="Real-time inventory valuation, cashier profit, and food bank redistribution."
+            showDateSelector={true}
             onToggleSidebar={() => setSidebarOpen(prev => !prev)}
           />
         )}

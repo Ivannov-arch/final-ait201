@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import DashboardHeader from './DashboardHeader'
 import gsap from 'gsap'
 import { INITIAL_BATCHES, computeDteAndRisk, parseDateToDays } from './inventoryData'
 
@@ -466,61 +467,42 @@ export default function InventoryFefoRiskPage({
         </div>
       )}
 
-      {/* Unified Action Header (Distilled) */}
-      <div className="fg-inv-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {onToggleSidebar && (
+      {/* Unified Action Header */}
+      <DashboardHeader
+        title="Inventory"
+        badge={`${batches.length} Batches Registered`}
+        badgePulse={false}
+        subtitle="FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation."
+        onToggleSidebar={onToggleSidebar}
+        actions={
+          <>
             <button
               type="button"
-              className="fg-header__mobile-menu-btn fg-inv-mobile-menu-btn"
-              onClick={onToggleSidebar}
-              aria-label="Toggle Navigation Menu"
+              className="fg-inv-btn-outline"
+              onClick={() => setShowUploadModal(true)}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
+              <span>Upload CSV</span>
             </button>
-          )}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-              <h1 className="fg-inv-title">Inventory</h1>
-              <span className="fg-inv-header-count">{batches.length} Batches Registered</span>
-            </div>
-            <p className="fg-inv-subtitle">
-              FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation.
-            </p>
-          </div>
-        </div>
 
-        <div className="fg-inv-header-actions">
-          <button
-            type="button"
-            className="fg-inv-btn-outline"
-            onClick={() => setShowUploadModal(true)}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <span>Upload CSV</span>
-          </button>
-
-          <button
-            type="button"
-            className="fg-inv-btn-primary"
-            onClick={() => setShowAddModal(true)}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>Add Batch</span>
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              className="fg-inv-btn-primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add Batch</span>
+            </button>
+          </>
+        }
+      />
 
       <div className="fg-inv-toolbar" role="tablist" aria-label="Filter risk status">
         <div className="fg-search">
