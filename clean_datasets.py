@@ -21,6 +21,30 @@ df['Unit_Price'] = pd.to_numeric(df['Unit_Price'], errors='coerce')
 df['percentage'] = df['percentage'].astype(str).str.replace('%', '', regex=False).str.strip()
 df['percentage'] = pd.to_numeric(df['percentage'], errors='coerce') / 100
 
+# Parse dates and compute days_until_expiry
+df['Date_Received']   = pd.to_datetime(df['Date_Received'],   errors='coerce')
+df['Expiration_Date'] = pd.to_datetime(df['Expiration_Date'], errors='coerce')
+df['days_until_expiry'] = (df['Expiration_Date'] - df['Date_Received']).dt.days
+
+# ── FIX 1 (2026-11-13): Repair broken expiry rows ──────────────────────────
+# Rows where Expiration_Date < Date_Received produce negative days_until_expiry.
+# These were caused by upstream data-entry errors (expiry logged before receipt).
+# Strategy: replace each broken row's Expiration_Date with
+#   Date_Received + median shelf-life of VALID rows in the same Category.
+valid_mask   = df['days_until_expiry'] >= 0
+median_shelf = df[valid_mask].groupby('Category')['days_until_expiry'].median()
+broken_mask  = df['days_until_expiry'] < 0
+n_broken     = int(broken_mask.sum())
+
+for idx in df[broken_mask].index:
+    cat = df.at[idx, 'Category']
+    med = median_shelf.get(cat, median_shelf.median())
+    df.at[idx, 'Expiration_Date'] = df.at[idx, 'Date_Received'] + pd.Timedelta(days=int(med))
+
+df['days_until_expiry'] = (df['Expiration_Date'] - df['Date_Received']).dt.days
+print(f'  FIX 1: Repaired {n_broken} broken expiry rows using category-level median shelf life')
+# ───────────────────────────────────────────────────────────────────────────
+
 print(f'  Rows: {len(df)} | Nulls: {df.isnull().sum().sum()} | Dupes: {df.duplicated().sum()}')
 df.to_csv(OUT + '7_grocery_inventory_cleaned.csv', index=False)
 print('  -> Saved: 7_grocery_inventory_cleaned.csv')
@@ -156,5 +180,6 @@ print('  -> Saved: 11_pricecatcher_cleaned.csv')
 print('\n=== ALL DONE ===')
 print('Files in data/processed/:')
 for f in sorted(os.listdir(OUT)):
-    size = os.path.getsize(OUT + f) / 1024 / 1024
-    print(f'  {f}  ({size:.1f} MB)')
+    if os.path.isfile(OUT + f):
+        size = os.path.getsize(OUT + f) / 1024 / 1024
+        print(f'  {f}  ({size:.1f} MB)')

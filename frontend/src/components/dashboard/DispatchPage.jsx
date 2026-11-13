@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
+import DashboardHeader from './DashboardHeader'
 import './dispatchPage.css'
 
 const UNDO_WINDOW_MS = 10000 // 10-second undo window
@@ -106,7 +107,8 @@ function GsapCounter({ value, prefix = '', suffix = '', decimals = 0 }) {
 export default function DispatchPage({
   batches: externalBatches = [],
   onUpdateBatches,
-  onApplyAction
+  onApplyAction,
+  onToggleSidebar
 }) {
   const [filterTab, setFilterTab] = useState('all') // 'all' | 'critical' | 'elevated' | 'dispatched'
   const [searchQuery, setSearchQuery] = useState('')
@@ -545,23 +547,15 @@ export default function DispatchPage({
   return (
     <div className="fg-dispatch-root">
       {/* --------------------------------------------------------------------
-          Header Section
+          Unified Header Section
           -------------------------------------------------------------------- */}
-      <header className="fg-dispatch-header">
-        <div className="fg-dispatch-header__titles">
-          <div className="fg-dispatch-header__eyebrow">
-            <span className="fg-dispatch-header__eyebrow-badge">Step 11 & Step 13</span>
-            <span>AIT-201 · Dynamic Food Clearing House</span>
-          </div>
-          <h1 className="fg-dispatch-header__title">
-            Waste-Risk Intelligence & Smart Dispatch
-          </h1>
-          <p className="fg-dispatch-header__desc">
-            Supervised waste-risk scoring model (trained on 8,000 retail records) paired with automated OSRM route matching to verified Lembah Klang food banks.
-          </p>
-        </div>
-
-        <div className="fg-dispatch-header__actions">
+      <DashboardHeader
+        title="Waste-Risk Intelligence & Smart Dispatch"
+        badge="AIT-201 · Step 11 & 13"
+        badgePulse={false}
+        subtitle="Supervised waste-risk scoring model (trained on 8,000 retail records) paired with automated OSRM route matching to verified Lembah Klang food banks."
+        onToggleSidebar={onToggleSidebar}
+        actions={
           <button
             type="button"
             className="fg-dispatch-btn fg-dispatch-btn--primary"
@@ -575,8 +569,8 @@ export default function DispatchPage({
             </svg>
             <span>Preview Top Dispatch</span>
           </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* --------------------------------------------------------------------
           Undo Dispatch Toast Stack (fixed bottom-right, one per pending dispatch or consolidated bulk)

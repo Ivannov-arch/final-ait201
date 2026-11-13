@@ -1,4 +1,4 @@
-﻿# PEMBAGIAN TUGAS KELOMPOK — DYNAMIC FOOD CLEARING HOUSE
+# PEMBAGIAN TUGAS KELOMPOK — DYNAMIC FOOD CLEARING HOUSE
 
 > **Struktur Tim (Total 7 Anggota):**  
 > • **1 Orang Dedicated:** Dataset Quality & Localization Specialist (Person 0)  
@@ -12,12 +12,12 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 
 ```
 ╔════════════════════════════════════════════════════════════════════════════╗
-║  🏗️  BASE (Fase 1: Prioritas Utama — Demo Solid, Lengkap, & Berbobot)       ║
+║  🏗️  BASE (Fase 1: Prioritas Utama — Demo Solid, Lengkap, & Berbobot)     ║
 ║  Sistem Toko 6-Langkah Sesuai PDF + Data Riil Malaysia + Visualisasi GIS   ║
 ║  → FEFO, Spoilage ML, Forecast Libur MY, Dynamic Markdown DOSM,            ║
 ║    Waste-Risk ML, OSRM Smart Dispatch, Peta Rute Interaktif (Leaflet JS)   ║
 ╠════════════════════════════════════════════════════════════════════════════╣
-║  🚀  UPGRADE & 💡 OPSIONAL (Fase 2: Ekspansi Skala — Multi-Toko & BI)      ║
+║  🚀  UPGRADE & 💡 OPSIONAL (Fase 2: Ekspansi Skala — Multi-Toko & BI)     ║
 ║  Ekspansi dari 1 Toko menjadi Jaringan Multi-Cabang & Analitik Makro       ║
 ║  → Simulator Multi-Toko (Event Stream), ReFED 10-Jalur Penuh,              ║
 ║    K-Means Clustering Toko & Deteksi Anomali Pemborosan                    ║
@@ -101,10 +101,10 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 3 — Data Architect & Pipeline
-- [ ] Tetapkan format kolom standar untuk `lots_base.csv`: `lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `unit_price_myr` *(hanya untuk 1 dataset ini — Canonical Schema multi-dataset adalah UPGRADE)*.
-- [ ] Tulis script ETL Python (`etl/process_store_inventory.py`) untuk membersihkan dan menstandarisasi inventaris toko.
-- [ ] Ekspor file `lots_base.csv` yang terkalibrasi dan siap di-load oleh Supabase.
-- [ ] Buat script validasi integritas data (tidak ada tanggal kadaluarsa negatif, tidak ada kuantitas null).
+- [x] Tetapkan format kolom standar untuk `lots_base.csv`: `lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `unit_price_myr` *(hanya untuk 1 dataset ini — Canonical Schema multi-dataset adalah UPGRADE)*.
+- [x] Tulis script ETL Python (`src/etl/process_store_inventory.py`) untuk membersihkan dan menstandarisasi inventaris toko.
+- [x] Ekspor file `lots_base.csv` yang terkalibrasi dan siap di-load oleh Supabase.
+- [x] Buat script validasi integritas data (tidak ada tanggal kadaluarsa negatif, tidak ada kuantitas null).
 
 ---
 

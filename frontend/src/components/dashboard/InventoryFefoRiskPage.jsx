@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import DashboardHeader from './DashboardHeader'
 import gsap from 'gsap'
 import { INITIAL_BATCHES, computeDteAndRisk, parseDateToDays } from './inventoryData'
 
@@ -67,7 +68,9 @@ export default function InventoryFefoRiskPage({
   const [showAddModal, setShowAddModal] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [isPriorityStripCollapsed, setIsPriorityStripCollapsed] = useState(false)
   const [toastMessage, setToastMessage] = useState(null)
+  const [undoAction, setUndoAction] = useState(null)
 
   // Controlled form state for Add Batch
   const [newBatchForm, setNewBatchForm] = useState(() => {
@@ -77,10 +80,11 @@ export default function InventoryFefoRiskPage({
     const expStr = fromInputDate(exp.toISOString().slice(0, 10))
     return {
       product: '',
-      category: 'Vegetables',
-      costPrice: 'RM 6.50/kg',
-      sellPrice: 'RM 8.00/kg',
-      qty: '15 kg',
+      category: 'Fruits & Vegetables',
+      unitPrice: '',
+      stockQty: '',
+      reorderLevel: '',
+      turnoverRatio: '',
       dateIn: today,
       expiryDate: expStr
     }
@@ -296,13 +300,27 @@ export default function InventoryFefoRiskPage({
     return 'Standard retail cycle'
   }
 
-  const priorityBatches = filteredBatches.filter(batch => batch.riskType !== 'low').slice(0, 3)
+  // Strictly filter for urgent critical clearance items (DTE <= 2 days, max 3 items)
+  const priorityBatches = useMemo(() => {
+    return filteredBatches
+      .filter(batch => {
+        const dteVal = batch.dteNum !== undefined ? batch.dteNum : parseDateToDays(batch.expiryDate)
+        return (batch.riskType === 'high' || dteVal <= 2) && dteVal <= 2
+      })
+      .slice(0, 3)
+  }, [filteredBatches])
 
-  const showToast = (msg) => {
+  const showToast = (msg, undoPayload = null) => {
     setToastMessage(msg)
+    if (undoPayload) {
+      setUndoAction(undoPayload)
+    } else {
+      setUndoAction(null)
+    }
     setTimeout(() => {
       setToastMessage(null)
-    }, 3800)
+      setUndoAction(null)
+    }, 4800)
   }
 
   // Handle Action decision apply from the Pop-up
@@ -325,11 +343,22 @@ export default function InventoryFefoRiskPage({
       text = `Donation shipment arranged for Batch ${batch.id} to Food Bank.`
     }
 
+    const previousAction = batch.appliedAction || null
+
     // Persist appliedAction on the batch item
     setBatches(prev => prev.map(b => (b.id === batch.id ? { ...b, appliedAction: actionType } : b)))
 
     setSelectedBatchForAction(null)
-    showToast(text)
+    showToast(text, { batchId: batch.id, previousAction, productName: batch.product })
+  }
+
+  // Undo the last applied action
+  const handleUndoAction = () => {
+    if (!undoAction) return
+    const { batchId, previousAction } = undoAction
+    setBatches(prev => prev.map(b => (b.id === batchId ? { ...b, appliedAction: previousAction } : b)))
+    setToastMessage(`✓ Reverted action for Batch ${batchId}`)
+    setUndoAction(null)
   }
 
   // Delete batch handler
@@ -359,7 +388,32 @@ export default function InventoryFefoRiskPage({
   const handleSaveEdit = (e) => {
     e.preventDefault()
     if (!editBatch) return
-    setBatches(prev => prev.map(b => (b.id === editBatch.id ? editBatch : b)))
+
+    const stockQty = parseFloat(editBatch.stockQty) || parseFloat(String(editBatch.qty || '').replace(/[^0-9.]/g, '')) || 10
+    const reorderLevel = parseFloat(editBatch.reorderLevel) || 10
+    const unitPrice = parseFloat(editBatch.unitPrice) || parseFloat(String(editBatch.sellPrice || editBatch.costPrice || '').replace(/[^0-9.]/g, '')) || 5.00
+    const turnoverRatio = parseFloat(editBatch.turnoverRatio) || 1.5
+    const { dte, dteNum, risk, riskType } = computeDteAndRisk(editBatch.expiryDate)
+
+    const updatedBatch = {
+      ...editBatch,
+      product: editBatch.product.trim(),
+      category: editBatch.category,
+      unitPrice,
+      stockQty,
+      reorderLevel,
+      turnoverRatio,
+      qty: `${stockQty} units`,
+      costPrice: `RM ${unitPrice.toFixed(2)}/unit`,
+      sellPrice: `RM ${unitPrice.toFixed(2)}/unit`,
+      dte,
+      dteNum,
+      risk,
+      riskType,
+      recommended: riskType === 'high' ? 'Donate to Food Bank' : riskType === 'med' ? 'Dynamic Markdown' : 'Normal Sale'
+    }
+
+    setBatches(prev => prev.map(b => (b.id === editBatch.id ? updatedBatch : b)))
     setEditBatch(null)
     showToast(`Changes saved successfully for Batch ${editBatch.id}`)
   }
@@ -374,14 +428,24 @@ export default function InventoryFefoRiskPage({
 
     const { dte, dteNum, risk, riskType } = computeDteAndRisk(newBatchForm.expiryDate)
     const newId = `B-10${52 + batches.length}`
+    const stockQty = parseFloat(newBatchForm.stockQty) || 10
+    const reorderLevel = parseFloat(newBatchForm.reorderLevel) || 10
+    const unitPrice = parseFloat(newBatchForm.unitPrice) || 5.00
+    const turnoverRatio = parseFloat(newBatchForm.turnoverRatio) || 1.0
+    const qtyDisplay = `${stockQty} units`
+    const priceDisplay = `RM ${unitPrice.toFixed(2)}/unit`
 
     const createdBatch = {
       id: newId,
       product: newBatchForm.product.trim(),
       category: newBatchForm.category,
-      costPrice: newBatchForm.costPrice || 'RM 6.00/kg',
-      sellPrice: newBatchForm.sellPrice || 'RM 7.50/kg',
-      qty: newBatchForm.qty || '10 kg',
+      unitPrice,
+      stockQty,
+      reorderLevel,
+      turnoverRatio,
+      costPrice: priceDisplay,
+      sellPrice: priceDisplay,
+      qty: qtyDisplay,
       dateIn: newBatchForm.dateIn || 'Oct 30, 2026',
       expiryDate: newBatchForm.expiryDate || 'Nov 06, 2026',
       dte,
@@ -401,10 +465,11 @@ export default function InventoryFefoRiskPage({
     setShowAddModal(false)
     setNewBatchForm({
       product: '',
-      category: 'Vegetables',
-      costPrice: 'RM 6.50/kg',
-      sellPrice: 'RM 8.00/kg',
-      qty: '15 kg',
+      category: 'Fruits & Vegetables',
+      unitPrice: '',
+      stockQty: '',
+      reorderLevel: '',
+      turnoverRatio: '',
       dateIn: 'Oct 30, 2026',
       expiryDate: 'Nov 06, 2026'
     })
@@ -455,10 +520,33 @@ export default function InventoryFefoRiskPage({
         <div className="fg-fefo-toast" role="alert" ref={toastRef}>
           <div className="fg-fefo-toast__icon">✓</div>
           <span className="fg-fefo-toast__msg">{toastMessage}</span>
+          {undoAction && (
+            <button
+              type="button"
+              className="fg-fefo-toast__undo"
+              onClick={handleUndoAction}
+              style={{
+                marginLeft: '10px',
+                padding: '2px 9px',
+                background: '#ffffff',
+                border: '1px solid #147b43',
+                color: '#147b43',
+                borderRadius: '5px',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Undo
+            </button>
+          )}
           <button
             type="button"
             className="fg-fefo-toast__close"
-            onClick={() => setToastMessage(null)}
+            onClick={() => {
+              setToastMessage(null)
+              setUndoAction(null)
+            }}
             aria-label="Dismiss"
           >
             ✕
@@ -466,61 +554,42 @@ export default function InventoryFefoRiskPage({
         </div>
       )}
 
-      {/* Unified Action Header (Distilled) */}
-      <div className="fg-inv-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {onToggleSidebar && (
+      {/* Unified Action Header */}
+      <DashboardHeader
+        title="Inventory"
+        badge={`${batches.length} Batches Registered`}
+        badgePulse={false}
+        subtitle="FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation."
+        onToggleSidebar={onToggleSidebar}
+        actions={
+          <>
             <button
               type="button"
-              className="fg-header__mobile-menu-btn fg-inv-mobile-menu-btn"
-              onClick={onToggleSidebar}
-              aria-label="Toggle Navigation Menu"
+              className="fg-inv-btn-outline"
+              onClick={() => setShowUploadModal(true)}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
+              <span>Upload CSV</span>
             </button>
-          )}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-              <h1 className="fg-inv-title">Inventory</h1>
-              <span className="fg-inv-header-count">{batches.length} Batches Registered</span>
-            </div>
-            <p className="fg-inv-subtitle">
-              FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation.
-            </p>
-          </div>
-        </div>
 
-        <div className="fg-inv-header-actions">
-          <button
-            type="button"
-            className="fg-inv-btn-outline"
-            onClick={() => setShowUploadModal(true)}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <span>Upload CSV</span>
-          </button>
-
-          <button
-            type="button"
-            className="fg-inv-btn-primary"
-            onClick={() => setShowAddModal(true)}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>Add Batch</span>
-          </button>
-        </div>
-      </div>
+            <button
+              type="button"
+              className="fg-inv-btn-primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>Add Batch</span>
+            </button>
+          </>
+        }
+      />
 
       <div className="fg-inv-toolbar" role="tablist" aria-label="Filter risk status">
         <div className="fg-search">
@@ -644,27 +713,109 @@ export default function InventoryFefoRiskPage({
       )}
 
       {priorityBatches.length > 0 && (
-        <div className="fg-inv-priority-strip" aria-label="Priority recovery queue">
-          {priorityBatches.map(batch => (
-            <article key={batch.id} className={`fg-inv-priority-card fg-inv-priority-card--${batch.riskType}`}>
-              <div className="fg-inv-priority-head">
-                <span className={`fg-inv-risk-badge fg-inv-risk-badge--${batch.riskType}`}>{batch.risk}</span>
-                <span className="fg-inv-priority-dte">{batch.dte}</span>
-              </div>
-              <h3>{batch.product}</h3>
-              <div className="fg-inv-priority-meta">
-                <span>{batch.id}</span>
-                <span>{batch.category}</span>
-              </div>
-              <p className="fg-inv-priority-label">Recommended action</p>
-              <p className="fg-inv-priority-action">{getRecommendationText(batch)}</p>
-              <p className="fg-inv-priority-context">{getRecoveryContext(batch)}</p>
-              <button type="button" className="fg-inv-priority-button" onClick={() => setSelectedBatchForAction(batch)}>
-                Review action
-              </button>
-            </article>
-          ))}
-        </div>
+        <section className="fg-inv-priority-section" style={{ marginBottom: '1.25rem' }} aria-label="Urgent clearance queue">
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: isPriorityStripCollapsed ? '0' : '0.65rem',
+              padding: '0.45rem 0.75rem',
+              background: '#fff',
+              border: '1px solid #fee2e2',
+              borderRadius: '10px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                width: '18px', 
+                height: '18px', 
+                borderRadius: '50%', 
+                background: '#fee2e2', 
+                color: '#dc2626', 
+                fontSize: '0.72rem', 
+                fontWeight: 800 
+              }}>!</span>
+              <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0c1f15' }}>
+                Urgent Clearance Queue
+              </span>
+              <span style={{ 
+                fontSize: '0.72rem', 
+                color: '#991b1b', 
+                background: '#fee2e2', 
+                padding: '1px 7px', 
+                borderRadius: '999px', 
+                fontWeight: 700 
+              }}>
+                {priorityBatches.length} critical (DTE ≤ 2d)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPriorityStripCollapsed(prev => !prev)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#496354',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 6px',
+                borderRadius: '6px'
+              }}
+              aria-expanded={!isPriorityStripCollapsed}
+              title={isPriorityStripCollapsed ? 'Show priority cards' : 'Collapse priority cards'}
+            >
+              <span>{isPriorityStripCollapsed ? 'Show cards' : 'Hide cards'}</span>
+              <svg 
+                width="14" 
+                height="14" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ 
+                  transform: isPriorityStripCollapsed ? 'rotate(0deg)' : 'rotate(180deg)', 
+                  transition: 'transform 0.2s ease' 
+                }}
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          {!isPriorityStripCollapsed && (
+            <div className="fg-inv-priority-strip" aria-label="Priority recovery cards">
+              {priorityBatches.map(batch => (
+                <article key={batch.id} className={`fg-inv-priority-card fg-inv-priority-card--${batch.riskType}`}>
+                  <div className="fg-inv-priority-head">
+                    <span className={`fg-inv-risk-badge fg-inv-risk-badge--${batch.riskType}`}>{batch.risk}</span>
+                    <span className="fg-inv-priority-dte">{batch.dte}</span>
+                  </div>
+                  <h3>{batch.product}</h3>
+                  <div className="fg-inv-priority-meta">
+                    <span>{batch.id}</span>
+                    <span>{batch.category}</span>
+                  </div>
+                  <p className="fg-inv-priority-label">Recommended action</p>
+                  <p className="fg-inv-priority-action">{getRecommendationText(batch)}</p>
+                  <p className="fg-inv-priority-context">{getRecoveryContext(batch)}</p>
+                  <button type="button" className="fg-inv-priority-button" onClick={() => setSelectedBatchForAction(batch)}>
+                    Review action
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Stock Inventory Table Card */}
@@ -681,18 +832,17 @@ export default function InventoryFefoRiskPage({
           <table className="fg-table fg-inv-table">
             <thead>
               <tr>
-                <th>Product</th>
-                <th>Risk</th>
-                <th>DTE</th>
-                <th>Recommended action</th>
-                <th>Action</th>
+                <th style={{ minWidth: '220px' }}>Product</th>
+                <th style={{ minWidth: '150px' }}>Stock &amp; Value</th>
+                <th style={{ minWidth: '160px' }}>Urgency &amp; ML Risk</th>
+                <th style={{ minWidth: '170px' }}>Recommended Action</th>
                 <th style={{ width: '44px', textAlign: 'center' }}>More</th>
               </tr>
             </thead>
             <tbody>
               {filteredBatches.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
+                  <td colSpan="5" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
                     <div className="fg-inv-empty-state">
                       <div className="fg-inv-empty-icon">
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -727,6 +877,8 @@ export default function InventoryFefoRiskPage({
                       className={`fg-inv-row ${isHighRisk ? 'fg-inv-row--high-risk' : ''} ${isMenuOpen ? 'is-menu-open' : ''}`}
                       style={isMenuOpen ? { position: 'relative', zIndex: 100 } : undefined}
                     >
+                      {/* 1. Product & Category */}
+                      {/* 1. Product Identity */}
                       <td>
                         <div className="fg-inv-product-identity">
                           <img
@@ -738,36 +890,58 @@ export default function InventoryFefoRiskPage({
                           />
                           <div className="fg-inv-product-copy">
                             <div className="fg-product-name">{b.product}</div>
-                            <div className="fg-product-meta">
+                            <div className="fg-product-meta" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                               <span>{b.id}</span>
-                              <span>{b.category}</span>
+                              <span style={{ 
+                                background: '#eef8f2', 
+                                color: '#18794e', 
+                                padding: '1px 6px', 
+                                borderRadius: '4px', 
+                                fontSize: '0.72rem', 
+                                fontWeight: 600 
+                              }}>{b.category}</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
+                      {/* 2. Stock & Footprint (Consolidated Volume + Unit Value) */}
                       <td>
-                        <span className={`fg-inv-risk-badge fg-inv-risk-badge--${b.riskType}`}>
-                          {b.risk}
-                        </span>
-                      </td>
-
-                      <td>
-                        <div className="fg-inv-dte-stack">
-                          <span className="fg-inv-dte-main">{b.dte}</span>
-                          <span className="fg-inv-dte-sub">{b.expiryDate}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontWeight: 700, color: '#0c1f15', fontSize: '0.92rem' }}>
+                            {b.stockQty !== undefined ? `${b.stockQty} units` : (b.qty || '10 units')}
+                          </span>
+                          <span style={{ fontSize: '0.74rem', color: '#627d6e' }}>
+                            {b.unitPrice !== undefined ? `RM ${Number(b.unitPrice).toFixed(2)}` : (b.sellPrice || 'RM 6.00')} • min {b.reorderLevel !== undefined ? b.reorderLevel : 10}
+                          </span>
                         </div>
                       </td>
 
+                      {/* 3. Urgency & ML Risk (Stacked Badge + DTE Countdown) */}
                       <td>
-                        <div className="fg-inv-recommendation">
-                          <span>{getRecommendationText(b)}</span>
-                          <small>{b.qty}</small>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <span className={`fg-inv-risk-badge fg-inv-risk-badge--${b.riskType}`}>
+                            {b.risk}
+                          </span>
+                          <div className="fg-inv-dte-stack" style={{ marginTop: '1px' }}>
+                            <span className={`fg-inv-dte-main ${isHighRisk ? 'is-red' : ''}`} style={{ fontSize: '0.8rem' }}>
+                              {b.dte}
+                            </span>
+                            <span className="fg-inv-dte-sub" style={{ fontSize: '0.72rem' }}>
+                              {b.expiryDate}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
+                      {/* 4. Recommended Action (Integrated Smart Decision CTA) */}
                       <td>
-                        {renderActionButton(b, false)}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#496354', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                            {getRecommendationText(b)}
+                          </span>
+                          {renderActionButton(b, false)}
+                        </div>
                       </td>
 
                       <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative', zIndex: isMenuOpen ? 120 : undefined }}>
@@ -937,26 +1111,34 @@ export default function InventoryFefoRiskPage({
 
                 <div className="fg-inv-mob-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem 0.85rem' }}>
                   <div>
-                    <span className="fg-inv-mob-label">Price (Cost / Sell)</span>
+                    <span className="fg-inv-mob-label">Stock &amp; Min Reorder</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span className="fg-inv-price fg-inv-cost-price">{b.costPrice || 'RM 6.00'}</span>
+                      <span className={`fg-inv-qty ${isHighRisk ? 'is-red' : ''}`}>
+                        {b.stockQty !== undefined ? `${b.stockQty} units` : (b.qty || '10 units')}
+                      </span>
                       <span style={{ color: '#94a3b8' }}>/</span>
-                      <span className="fg-inv-price fg-inv-sell-price">{b.sellPrice || 'RM 7.50'}</span>
+                      <span style={{ fontSize: '0.78rem', color: '#627d6e' }}>
+                        min {b.reorderLevel !== undefined ? b.reorderLevel : 10}
+                      </span>
                     </div>
                   </div>
                   <div>
-                    <span className="fg-inv-mob-label">Qty & Days Left (DTE)</span>
+                    <span className="fg-inv-mob-label">Unit Price &amp; Turnover</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className={`fg-inv-qty ${isHighRisk ? 'is-red' : ''}`}>{b.qty}</span>
+                      <span className="fg-inv-price fg-inv-sell-price">
+                        {b.unitPrice !== undefined ? `RM ${Number(b.unitPrice).toFixed(2)}` : (b.sellPrice || 'RM 6.00')}
+                      </span>
                       <span style={{ color: '#94a3b8' }}>•</span>
-                      <span className={`fg-inv-dte ${isHighRisk ? 'is-red' : ''}`}>{b.dte}</span>
+                      <span style={{ fontSize: '0.8rem', color: '#335043', fontWeight: 600 }}>
+                        {b.turnoverRatio !== undefined ? `${b.turnoverRatio}x` : '1.5x'}
+                      </span>
                     </div>
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
-                    <span className="fg-inv-mob-label">Timeline (Intake → Expiry)</span>
+                    <span className="fg-inv-mob-label">DTE &amp; Expiry Date</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="fg-inv-date">{b.dateIn}</span>
-                      <span style={{ color: '#94a3b8' }}>→</span>
+                      <span className={`fg-inv-dte ${isHighRisk ? 'is-red' : ''}`}>{b.dte}</span>
+                      <span style={{ color: '#94a3b8' }}>•</span>
                       <span className={`fg-inv-date ${isHighRisk ? 'is-red' : ''}`}>{b.expiryDate}</span>
                     </div>
                   </div>
@@ -1032,15 +1214,23 @@ export default function InventoryFefoRiskPage({
                       {selectedBatchForAction.risk}
                     </span>
                     <span className="fg-inv-meta-sep">•</span>
-                    <span className="fg-inv-meta-item">Cost: {selectedBatchForAction.costPrice || selectedBatchForAction.price || 'RM 6.50/kg'}</span>
+                    <span className="fg-inv-meta-item">
+                      Price: RM {selectedBatchForAction.unitPrice !== undefined 
+                        ? Number(selectedBatchForAction.unitPrice).toFixed(2) 
+                        : (parseFloat(String(selectedBatchForAction.sellPrice || selectedBatchForAction.costPrice || '').replace(/[^0-9.]/g, '')) || '6.50')}
+                    </span>
                     <span className="fg-inv-meta-sep">•</span>
-                    <span className="fg-inv-meta-item">Sell: {selectedBatchForAction.sellPrice || 'RM 8.00/kg'}</span>
+                    <span className="fg-inv-meta-item">
+                      Stock: {selectedBatchForAction.stockQty !== undefined ? `${selectedBatchForAction.stockQty} units` : selectedBatchForAction.qty} (min: {selectedBatchForAction.reorderLevel || 10})
+                    </span>
                     <span className="fg-inv-meta-sep">•</span>
-                    <span className="fg-inv-meta-item">Stock: {selectedBatchForAction.qty}</span>
+                    <span className="fg-inv-meta-item">
+                      Turnover: {selectedBatchForAction.turnoverRatio ? `${selectedBatchForAction.turnoverRatio}x` : '1.5x'}
+                    </span>
                     <span className="fg-inv-meta-sep">•</span>
                     <span className="fg-inv-meta-item">Expiry: {selectedBatchForAction.expiryDate}</span>
                     <span className="fg-inv-meta-sep">•</span>
-                    <span className="fg-inv-meta-item" style={{ fontWeight: 700, color: selectedBatchForAction.dteNum <= 2 ? '#dc2626' : '#2c4737' }}>
+                    <span className="fg-inv-meta-item" style={{ fontWeight: 700, color: selectedBatchForAction.dteNum <= 7 ? '#dc2626' : '#2c4737' }}>
                       DTE: {selectedBatchForAction.dte}
                     </span>
                   </div>
@@ -1148,11 +1338,42 @@ export default function InventoryFefoRiskPage({
                 type="button"
                 className="fg-inv-modal-close"
                 onClick={() => setEditBatch(null)}
+                aria-label="Close"
               >
                 ✕
               </button>
             </div>
+            <p className="fg-inv-modal-desc">
+              Perbarui data atribut batch untuk kalkulasi ulang FEFO rotation &amp; ML spoilage risk.
+            </p>
             <form onSubmit={handleSaveEdit} className="fg-inv-modal-form">
+              <div className="fg-inv-form-row">
+                <div className="fg-inv-form-field">
+                  <label>Batch ID</label>
+                  <input
+                    type="text"
+                    value={editBatch.id}
+                    disabled
+                    style={{ background: '#f4f8f5', color: '#496354' }}
+                  />
+                </div>
+                <div className="fg-inv-form-field">
+                  <label>Category</label>
+                  <select
+                    value={editBatch.category}
+                    onChange={(e) => setEditBatch({ ...editBatch, category: e.target.value })}
+                  >
+                    <option value="Bakery">Bakery</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Fruits & Vegetables">Fruits &amp; Vegetables</option>
+                    <option value="Grains & Pulses">Grains &amp; Pulses</option>
+                    <option value="Oils & Fats">Oils &amp; Fats</option>
+                    <option value="Seafood">Seafood</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="fg-inv-form-field">
                 <label>Product Name</label>
                 <input
@@ -1165,25 +1386,26 @@ export default function InventoryFefoRiskPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Category</label>
-                  <select
-                    value={editBatch.category}
-                    onChange={(e) => setEditBatch({ ...editBatch, category: e.target.value })}
-                  >
-                    <option value="Vegetables">Vegetables</option>
-                    <option value="Dairy">Dairy</option>
-                    <option value="Bakery">Bakery</option>
-                    <option value="Meat & Poultry">Meat & Poultry</option>
-                    <option value="Fruit">Fruit</option>
-                  </select>
+                  <label>Unit Price (RM)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 8.50"
+                    value={editBatch.unitPrice !== undefined ? editBatch.unitPrice : (parseFloat(String(editBatch.sellPrice || editBatch.costPrice || '').replace(/[^0-9.]/g, '')) || '')}
+                    onChange={(e) => setEditBatch({ ...editBatch, unitPrice: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Cost Price</label>
+                  <label>Stock Quantity (units)</label>
                   <input
-                    type="text"
-                    value={editBatch.costPrice || ''}
-                    placeholder="e.g. RM 6.50/kg"
-                    onChange={(e) => setEditBatch({ ...editBatch, costPrice: e.target.value })}
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 50"
+                    value={editBatch.stockQty !== undefined ? editBatch.stockQty : (parseFloat(String(editBatch.qty || '').replace(/[^0-9.]/g, '')) || '')}
+                    onChange={(e) => setEditBatch({ ...editBatch, stockQty: e.target.value })}
                     required
                   />
                 </div>
@@ -1191,45 +1413,64 @@ export default function InventoryFefoRiskPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Selling Price</label>
+                  <label>Reorder Level (units)</label>
                   <input
-                    type="text"
-                    value={editBatch.sellPrice || ''}
-                    placeholder="e.g. RM 8.00/kg"
-                    onChange={(e) => setEditBatch({ ...editBatch, sellPrice: e.target.value })}
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g. 20"
+                    value={editBatch.reorderLevel !== undefined ? editBatch.reorderLevel : ''}
+                    onChange={(e) => setEditBatch({ ...editBatch, reorderLevel: e.target.value })}
                     required
                   />
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Quantity</label>
+                  <label>Turnover Ratio</label>
                   <input
-                    type="text"
-                    value={editBatch.qty}
-                    onChange={(e) => setEditBatch({ ...editBatch, qty: e.target.value })}
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="e.g. 2.5"
+                    value={editBatch.turnoverRatio !== undefined ? editBatch.turnoverRatio : ''}
+                    onChange={(e) => setEditBatch({ ...editBatch, turnoverRatio: e.target.value })}
                     required
                   />
                 </div>
               </div>
 
-              <div className="fg-inv-form-field">
-                <label>Expiry Date</label>
-                <input
-                  type="date"
-                  value={toInputDate(editBatch.expiryDate)}
-                  onChange={(e) => handleEditExpiryChange(fromInputDate(e.target.value))}
-                  required
-                />
+              <div className="fg-inv-form-row">
+                <div className="fg-inv-form-field">
+                  <label>Date In</label>
+                  <input
+                    type="date"
+                    value={toInputDate(editBatch.dateIn)}
+                    onChange={(e) => setEditBatch({ ...editBatch, dateIn: fromInputDate(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div className="fg-inv-form-field">
+                  <label>Expiry Date</label>
+                  <input
+                    type="date"
+                    value={toInputDate(editBatch.expiryDate)}
+                    onChange={(e) => handleEditExpiryChange(fromInputDate(e.target.value))}
+                    required
+                  />
+                </div>
               </div>
 
-              {/* DTE (Days to Expiry) - AUTOMATIC SYSTEM VALUE, READ ONLY */}
+              {/* Automatic FEFO & DTE Live Preview */}
               <div className="fg-inv-form-field">
-                <label>Days to Expiry (DTE) & Risk</label>
+                <label>Days to Expiry (DTE) &amp; Risk Preview</label>
                 <div className="fg-inv-dte-readonly-box">
-                  <span className={`fg-inv-dte ${editBatch.dteNum <= 2 ? 'is-red' : ''}`}>
-                    {editBatch.dte}
+                  <span>
+                    DTE: <strong>{computeDteAndRisk(editBatch.expiryDate).dte}</strong>
                   </span>
-                  <span className={`fg-inv-risk-badge fg-inv-risk-badge--${editBatch.riskType}`} style={{ marginLeft: 8 }}>
-                    {editBatch.risk}
+                  <span
+                    className={`fg-inv-risk-badge fg-inv-risk-badge--${computeDteAndRisk(editBatch.expiryDate).riskType}`}
+                    style={{ marginLeft: 8 }}
+                  >
+                    {computeDteAndRisk(editBatch.expiryDate).risk}
                   </span>
                 </div>
               </div>
@@ -1250,7 +1491,6 @@ export default function InventoryFefoRiskPage({
           </div>
         </div>
       )}
-
       {/* POP-UP MODAL: Add Batch */}
       {showAddModal && (
         <div className="fg-inv-modal-backdrop" ref={addModalRef} onClick={() => setShowAddModal(false)}>
@@ -1266,132 +1506,152 @@ export default function InventoryFefoRiskPage({
                 ✕
               </button>
             </div>
-            <p className="fg-inv-modal-desc">
-              Register an intake batch with cost price, selling price, and expiry date for automated FEFO rotation.
-            </p>
-            <form onSubmit={handleAddBatchSubmit} className="fg-inv-modal-form">
-              <div className="fg-inv-form-row">
-                <div className="fg-inv-form-field">
-                  <label>Batch ID</label>
-                  <input
-                    type="text"
-                    value={`B-10${52 + batches.length}`}
-                    disabled
-                    style={{ background: '#f4f8f5', color: '#496354' }}
-                  />
-                </div>
-                <div className="fg-inv-form-field">
-                  <label>Category</label>
-                  <select
-                    value={newBatchForm.category}
-                    onChange={(e) => setNewBatchForm({ ...newBatchForm, category: e.target.value })}
-                  >
-                    <option value="Vegetables">Vegetables</option>
-                    <option value="Dairy">Dairy</option>
-                    <option value="Bakery">Bakery</option>
-                    <option value="Meat & Poultry">Meat & Poultry</option>
-                    <option value="Fruit">Fruit</option>
-                  </select>
-                </div>
-              </div>
+              <p className="fg-inv-modal-desc">
+               Daftarkan batch masuk — semua input digunakan oleh model ML untuk prediksi risiko spoilage.
+             </p>
+             <form onSubmit={handleAddBatchSubmit} className="fg-inv-modal-form">
+               <div className="fg-inv-form-row">
+                 <div className="fg-inv-form-field">
+                   <label>Batch ID</label>
+                   <input
+                     type="text"
+                     value={`B-10${52 + batches.length}`}
+                     disabled
+                     style={{ background: '#f4f8f5', color: '#496354' }}
+                   />
+                 </div>
+                 <div className="fg-inv-form-field">
+                   <label>Category</label>
+                   <select
+                     value={newBatchForm.category}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, category: e.target.value })}
+                   >
+                     <option value="Bakery">Bakery</option>
+                     <option value="Beverages">Beverages</option>
+                     <option value="Dairy">Dairy</option>
+                     <option value="Fruits & Vegetables">Fruits &amp; Vegetables</option>
+                     <option value="Grains & Pulses">Grains &amp; Pulses</option>
+                     <option value="Oils & Fats">Oils &amp; Fats</option>
+                     <option value="Seafood">Seafood</option>
+                   </select>
+                 </div>
+               </div>
 
-              <div className="fg-inv-form-field">
-                <label>Product Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Roma Vine Tomatoes"
-                  value={newBatchForm.product}
-                  onChange={(e) => setNewBatchForm({ ...newBatchForm, product: e.target.value })}
-                  required
-                />
-              </div>
+               <div className="fg-inv-form-field">
+                 <label>Product Name</label>
+                 <input
+                   type="text"
+                   placeholder="e.g. Basmati Rice 5kg"
+                   value={newBatchForm.product}
+                   onChange={(e) => setNewBatchForm({ ...newBatchForm, product: e.target.value })}
+                   required
+                 />
+               </div>
 
-              <div className="fg-inv-form-row">
-                <div className="fg-inv-form-field">
-                  <label>Cost Price</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. RM 8.50/kg"
-                    value={newBatchForm.costPrice}
-                    onChange={(e) => setNewBatchForm({ ...newBatchForm, costPrice: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="fg-inv-form-field">
-                  <label>Selling Price</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. RM 10.00/kg"
-                    value={newBatchForm.sellPrice}
-                    onChange={(e) => setNewBatchForm({ ...newBatchForm, sellPrice: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
+               <div className="fg-inv-form-row">
+                 <div className="fg-inv-form-field">
+                   <label>Unit Price (RM)</label>
+                   <input
+                     type="number"
+                     min="0"
+                     step="0.01"
+                     placeholder="e.g. 8.50"
+                     value={newBatchForm.unitPrice}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, unitPrice: e.target.value })}
+                     required
+                   />
+                 </div>
+                 <div className="fg-inv-form-field">
+                   <label>Stock Quantity (units)</label>
+                   <input
+                     type="number"
+                     min="1"
+                     step="1"
+                     placeholder="e.g. 50"
+                     value={newBatchForm.stockQty}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, stockQty: e.target.value })}
+                     required
+                   />
+                 </div>
+               </div>
 
-              <div className="fg-inv-form-row">
-                <div className="fg-inv-form-field">
-                  <label>Quantity</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 18 kg or 30 pack"
-                    value={newBatchForm.qty}
-                    onChange={(e) => setNewBatchForm({ ...newBatchForm, qty: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="fg-inv-form-field">
-                  <label>Date In</label>
-                  <input
-                    type="date"
-                    value={toInputDate(newBatchForm.dateIn)}
-                    onChange={(e) => setNewBatchForm({ ...newBatchForm, dateIn: fromInputDate(e.target.value) })}
-                    required
-                  />
-                </div>
-              </div>
+               <div className="fg-inv-form-row">
+                 <div className="fg-inv-form-field">
+                   <label>Reorder Level (units)</label>
+                   <input
+                     type="number"
+                     min="0"
+                     step="1"
+                     placeholder="e.g. 20"
+                     value={newBatchForm.reorderLevel}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, reorderLevel: e.target.value })}
+                     required
+                   />
+                 </div>
+                 <div className="fg-inv-form-field">
+                   <label>Turnover Ratio</label>
+                   <input
+                     type="number"
+                     min="0"
+                     step="0.1"
+                     placeholder="e.g. 2.5"
+                     value={newBatchForm.turnoverRatio}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, turnoverRatio: e.target.value })}
+                     required
+                   />
+                 </div>
+               </div>
 
-              <div className="fg-inv-form-row">
-                <div className="fg-inv-form-field">
-                  <label>Expiry Date</label>
-                  <input
-                    type="date"
-                    value={toInputDate(newBatchForm.expiryDate)}
-                    onChange={(e) => setNewBatchForm({ ...newBatchForm, expiryDate: fromInputDate(e.target.value) })}
-                    required
-                  />
-                </div>
-              </div>
+               <div className="fg-inv-form-row">
+                 <div className="fg-inv-form-field">
+                   <label>Date In</label>
+                   <input
+                     type="date"
+                     value={toInputDate(newBatchForm.dateIn)}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, dateIn: fromInputDate(e.target.value) })}
+                     required
+                   />
+                 </div>
+                 <div className="fg-inv-form-field">
+                   <label>Expiry Date</label>
+                   <input
+                     type="date"
+                     value={toInputDate(newBatchForm.expiryDate)}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, expiryDate: fromInputDate(e.target.value) })}
+                     required
+                   />
+                 </div>
+               </div>
 
-              {/* Automatic FEFO & DTE Live Preview */}
-              <div className="fg-inv-form-field">
-                <label>Days to Expiry (DTE) & Risk</label>
-                <div className="fg-inv-dte-readonly-box">
-                  <span>
-                    DTE: <strong>{computeDteAndRisk(newBatchForm.expiryDate).dte}</strong>
-                  </span>
-                  <span
-                    className={`fg-inv-risk-badge fg-inv-risk-badge--${computeDteAndRisk(newBatchForm.expiryDate).riskType}`}
-                    style={{ marginLeft: 8 }}
-                  >
-                    {computeDteAndRisk(newBatchForm.expiryDate).risk}
-                  </span>
-                </div>
-              </div>
+               {/* Automatic FEFO & DTE Live Preview */}
+               <div className="fg-inv-form-field">
+                 <label>Days to Expiry (DTE) &amp; Risk Preview</label>
+                 <div className="fg-inv-dte-readonly-box">
+                   <span>
+                     DTE: <strong>{computeDteAndRisk(newBatchForm.expiryDate).dte}</strong>
+                   </span>
+                   <span
+                     className={`fg-inv-risk-badge fg-inv-risk-badge--${computeDteAndRisk(newBatchForm.expiryDate).riskType}`}
+                     style={{ marginLeft: 8 }}
+                   >
+                     {computeDteAndRisk(newBatchForm.expiryDate).risk}
+                   </span>
+                 </div>
+               </div>
 
-              <div className="fg-inv-modal-actions" style={{ marginTop: '0.85rem' }}>
-                <button
-                  type="button"
-                  className="fg-inv-btn-outline"
-                  onClick={() => setShowAddModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="fg-inv-btn-primary">
-                  Save & Prioritize
-                </button>
-              </div>
-            </form>
+               <div className="fg-inv-modal-actions" style={{ marginTop: '0.85rem' }}>
+                 <button
+                   type="button"
+                   className="fg-inv-btn-outline"
+                   onClick={() => setShowAddModal(false)}
+                 >
+                   Cancel
+                 </button>
+                 <button type="submit" className="fg-inv-btn-primary">
+                   Save &amp; Prioritize
+                 </button>
+               </div>
+             </form>
           </div>
         </div>
       )}

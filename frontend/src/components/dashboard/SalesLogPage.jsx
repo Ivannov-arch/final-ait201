@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import gsap from 'gsap'
+import DashboardHeader from './DashboardHeader'
 
 function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
   const nodeRef = useRef(null)
@@ -445,46 +446,19 @@ export default function SalesLogPage({
         </div>
       )}
 
-      {/* Top Utility Bar */}
-      <div className="fg-inv-topbar">
-        <div className="fg-inv-topbar-right" style={{ marginLeft: 'auto' }}>
-          <button
-            type="button"
-            className="fg-inv-notify-btn"
-            aria-label="Notifications"
-            onClick={() => showToast('? Cashier active � POS sync running in real-time')}
-          >
-            <span className="fg-inv-notify-dot"></span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
-
-          <div className="fg-inv-user-chip" title="John Doe — Operations Lead">
-            <div className="fg-inv-avatar-initials">JD</div>
-            <span className="fg-inv-user-name">John Doe</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Header Row with Title and + Catat Penjualan Button */}
-      <div className="fg-inv-header">
-        <div>
-          <h1 className="fg-inv-title">Sales Log</h1>
-          <p className="fg-inv-subtitle">
-            Real-time cashier sales recording. Inventory stock and profit dashboard sync automatically.
-          </p>
-        </div>
-
-        <div className="fg-inv-header-actions">
+      {/* Unified Action Header */}
+      <DashboardHeader
+        title="Sales Log"
+        badge="POS Active"
+        badgePulse={true}
+        subtitle="Real-time cashier sales recording. Inventory stock and profit dashboard sync automatically."
+        onToggleSidebar={onToggleSidebar}
+        actions={
           <button
             type="button"
             className="fg-inv-btn-primary"
             onClick={handleOpenPOS}
+            style={{ minHeight: '38px', padding: '0.45rem 1.15rem' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -493,8 +467,8 @@ export default function SalesLogPage({
             </svg>
             <span>+ Record Sale</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="fg-kpi-grid" ref={kpiContainerRef}>
         <div className="fg-kpi-card">

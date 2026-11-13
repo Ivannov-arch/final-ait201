@@ -1,4 +1,4 @@
-﻿# WORKSTEPS — Dynamic Food Clearing House
+# WORKSTEPS — Dynamic Food Clearing House
 > **Scope:** Step 7 (FEFO/Stok) → Step 14 (Monitoring)  
 > Step 1–6 (produksi) hanya konteks; tidak dikerjakan di proyek ini.
 
@@ -69,14 +69,14 @@
 **Person:** 3
 
 ### Tasks
-- [ ] Definisikan Canonical Schema: field wajib (`batch_id`, `product_id`, `category`, `quantity`, `expiry_date`, `price_myr`, `store_id`, `demand_forecast`, `risk_label`)
-- [ ] Buat mapping table: kategori Grocery Inventory ↔ kategori M5 ↔ kategori Perishable Goods
-- [ ] Buat mapping unit (kg/unit/pack → unit standar)
-- [ ] Normalisasi harga ke MYR menggunakan lookup DOSM PriceCatcher (dari Person 0)
-- [ ] Normalisasi timestamp ke timezone Malaysia (UTC+8)
-- [ ] Buat fungsi `merge_to_canonical(df_inventory, df_forecast, df_price)` → DataFrame kanonikal
-- [ ] Validasi: tidak ada null pada field wajib, tidak ada duplikat `batch_id`
-- [ ] Output: `canonical_batch_table.csv`
+- [x] Definisikan Canonical Schema: field wajib (`batch_id`, `product_id`, `category`, `quantity`, `expiry_date`, `price_myr`, `store_id`, `demand_forecast`, `risk_label`)
+- [x] Buat mapping table: kategori Grocery Inventory ↔ kategori M5 ↔ kategori Perishable Goods
+- [x] Buat mapping unit (kg/unit/pack → unit standar)
+- [x] Normalisasi harga ke MYR menggunakan lookup DOSM PriceCatcher (dari Person 0)
+- [x] Normalisasi timestamp ke timezone Malaysia (UTC+8)
+- [x] Buat fungsi `merge_to_canonical(df_inventory, df_forecast, df_price)` → DataFrame kanonikal
+- [x] Validasi: tidak ada null pada field wajib, tidak ada duplikat `batch_id`
+- [x] Output: `canonical_batch_table.csv`
 
 ---
 
@@ -87,19 +87,19 @@
 ### 🏗️ BASE — Single-Source Batch Generator
 **Goal:** Generator lot sederhana dari satu dataset inventory untuk mendemo sistem 6-langkah.
 
-- [ ] Bersihkan dan standardisasi `Grocery_Inventory new v1.csv` ke skema dasar: `lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `store_id`
-- [ ] Buat skrip generator lot sederhana yang membaca CSV dan menghasilkan daftar lot aktif
-- [ ] Output: `lots_base.csv` — input langsung ke pipeline Spoilage Classifier dan Rule Engine Base
+- [x] Bersihkan dan standardisasi `Grocery_Inventory new v1.csv` ke skema dasar: `lot_id`, `product_name`, `category`, `quantity`, `expiry_date`, `store_id`
+- [x] Buat skrip generator lot sederhana yang membaca CSV dan menghasilkan daftar lot aktif
+- [x] Output: `lots_base.csv` — input langsung ke pipeline Spoilage Classifier dan Rule Engine Base
 
 ### 🚀 UPGRADE — Multi-Source Simulator Engine
 **Goal:** Mensimulasikan aliran batch pangan sintetis yang dikalibrasi dari 5 dataset riil.
 
-- [ ] Definisikan parameter simulasi: jumlah toko, jumlah produk, horizon waktu (30/60/90 hari)
-- [ ] Implementasi generator batch sintetis (pakai distribusi dari Canonical Schema Step 9)
-- [ ] Kalibrasi waste rate per kategori menggunakan FAO FLW benchmark
-- [ ] Kalibrasi demand per toko menggunakan output Step 8
-- [ ] Kalibrasi harga menggunakan PriceCatcher MYR (dari Person 0)
-- [ ] Output: `simulation_events.csv` — log semua event batch selama horizon simulasi (event types: `received`, `active_fefo`, `markdown`, `dispatched`, `wasted`)
+- [x] Definisikan parameter simulasi: jumlah toko, jumlah produk, horizon waktu (30/60/90 hari)
+- [x] Implementasi generator batch sintetis (pakai distribusi dari Canonical Schema Step 9)
+- [x] Kalibrasi waste rate per kategori menggunakan FAO FLW benchmark
+- [x] Kalibrasi demand per toko menggunakan output Step 8
+- [x] Kalibrasi harga menggunakan PriceCatcher MYR (dari Person 0)
+- [x] Output: `simulation_events.csv` — log semua event batch selama horizon simulasi (event types: `received`, `active_fefo`, `markdown`, `dispatched`, `wasted`)
 
 ---
 
@@ -216,12 +216,12 @@
 |---|---|---|
 | Step 7 — FEFO & Stok | 🏗️ BASE | ✅ Selesai |
 | Step 8 — Demand Forecasting | 🏗️ BASE | ⬜ Belum dimulai |
-| Step 10 Base — Batch Generator (`lots_base.csv`) | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 10 Base — Batch Generator (`lots_base.csv`) | 🏗️ BASE | ✅ Selesai (Person 3) |
 | Step 11 — Waste-Risk Scoring | 🏗️ BASE | ⬜ Menunggu Person 0 (dataset 8K) |
 | Step 12 Base — Rule Engine 3 Jalur | 🏗️ BASE | ⬜ Belum dimulai |
 | Step 13 — Matching & Dispatch (OSRM) | 🏗️ BASE | ⬜ Belum dimulai |
 | Step 8 Upgrade — Kalender MY | 🚀 UPGRADE | ⬜ Menunggu Person 0 |
-| Step 9 — Canonical Schema | 🚀 UPGRADE | ⬜ Belum dimulai |
-| Step 10 Full — Multi-Source Simulator | 🚀 UPGRADE | ⬜ Belum dimulai |
+| Step 9 — Canonical Schema | 🚀 UPGRADE | ✅ Selesai (Person 3) |
+| Step 10 Full — Multi-Source Simulator | 🚀 UPGRADE | ✅ Selesai (Person 3) |
 | Step 12 Full — Rule Engine ReFED | 🚀 UPGRADE | ⬜ Menunggu Person 0 (DOSM) |
 | Step 14 — Monitoring & Clustering | 💡 OPSIONAL | ⬜ Menunggu output simulator (stretch goal) |

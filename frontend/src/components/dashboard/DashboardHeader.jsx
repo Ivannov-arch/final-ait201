@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 
-export default function DashboardHeader({ onToggleSidebar }) {
+export default function DashboardHeader({
+  title = 'Operations Dashboard',
+  subtitle = 'Real-time inventory valuation, cashier profit, and food bank redistribution.',
+  badge = 'Live Sync',
+  badgePulse = true,
+  onToggleSidebar,
+  actions = null,
+  showDateSelector = false
+}) {
   const [selectedRange, setSelectedRange] = useState('7d')
   const [showNotificationToast, setShowNotificationToast] = useState(false)
   const [showDateMenu, setShowDateMenu] = useState(false)
@@ -39,105 +47,120 @@ export default function DashboardHeader({ onToggleSidebar }) {
     <header className="fg-header">
       <div className="fg-header__titles">
         <div className="fg-header__title-row">
-          <button
-            type="button"
-            className="fg-header__mobile-menu-btn"
-            onClick={onToggleSidebar}
-            aria-label="Toggle Navigation Menu"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
+          {onToggleSidebar && (
+            <button
+              type="button"
+              className="fg-header__mobile-menu-btn"
+              onClick={onToggleSidebar}
+              aria-label="Toggle Navigation Menu"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+          )}
           <div className="fg-header__title-with-badge">
-            <h1 className="fg-header__h1">Operations Dashboard</h1>
-            <span className="fg-header__live-pill">
-              <span className="fg-header__pulse-dot"></span>
-              Live Sync
-            </span>
+            <h1 className="fg-header__h1">{title}</h1>
+            {badge && (
+              <span className="fg-header__live-pill">
+                {badgePulse && <span className="fg-header__pulse-dot"></span>}
+                {badge}
+              </span>
+            )}
           </div>
         </div>
-        <p className="fg-header__subtitle">
-          Real-time inventory valuation, cashier profit, and food bank redistribution.
-        </p>
+        {subtitle && (
+          <p className="fg-header__subtitle">
+            {subtitle}
+          </p>
+        )}
       </div>
 
       <div className="fg-header__controls">
-        {/* Date Selector Pill & Adapted Dropdown / Bottom Sheet */}
-        <div className="fg-header__date-dropdown-wrapper" ref={dateMenuRef}>
-          <button
-            type="button"
-            className={`fg-header__pill-btn ${showDateMenu ? 'is-active' : ''}`}
-            title="Filter by reporting timeframe"
-            onClick={() => setShowDateMenu(prev => !prev)}
-            aria-expanded={showDateMenu}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span className="fg-header__pill-text-desktop">
-              {activeOption.label} <span className="fg-header__pill-dates">({activeOption.dateSpan})</span>
-            </span>
-            <span className="fg-header__pill-text-mobile">
-              {activeOption.label}
-            </span>
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ transform: showDateMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.18s ease' }}
+        {/* Custom page-specific actions slot */}
+        {actions && (
+          <div className="fg-header__actions-slot">
+            {actions}
+          </div>
+        )}
+
+        {/* Date Selector Pill (Operations Dashboard) */}
+        {showDateSelector && (
+          <div className="fg-header__date-dropdown-wrapper" ref={dateMenuRef}>
+            <button
+              type="button"
+              className={`fg-header__pill-btn ${showDateMenu ? 'is-active' : ''}`}
+              title="Filter by reporting timeframe"
+              onClick={() => setShowDateMenu(prev => !prev)}
+              aria-expanded={showDateMenu}
             >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span className="fg-header__pill-text-desktop">
+                {activeOption.label} <span className="fg-header__pill-dates">({activeOption.dateSpan})</span>
+              </span>
+              <span className="fg-header__pill-text-mobile">
+                {activeOption.label}
+              </span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ transform: showDateMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.18s ease' }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
 
-          {showDateMenu && (
-            <div className="fg-header__date-menu">
-              <div className="fg-header__date-menu-header">
-                <span className="fg-header__date-menu-title">Select Reporting Window</span>
-                <button
-                  type="button"
-                  className="fg-header__menu-close-mobile"
-                  onClick={() => setShowDateMenu(false)}
-                  aria-label="Close"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="fg-header__date-menu-list">
-                {dateOptions.map(opt => (
+            {showDateMenu && (
+              <div className="fg-header__date-menu">
+                <div className="fg-header__date-menu-header">
+                  <span className="fg-header__date-menu-title">Select Reporting Window</span>
                   <button
-                    key={opt.id}
                     type="button"
-                    className={`fg-header__date-menu-option ${selectedRange === opt.id ? 'is-selected' : ''}`}
-                    onClick={() => {
-                      setSelectedRange(opt.id)
-                      setShowDateMenu(false)
-                    }}
+                    className="fg-header__menu-close-mobile"
+                    onClick={() => setShowDateMenu(false)}
+                    aria-label="Close"
                   >
-                    <div>
-                      <div className="fg-header__option-title">{opt.label}</div>
-                      <div className="fg-header__option-sub">{opt.dateSpan}</div>
-                    </div>
-                    {selectedRange === opt.id && <span className="fg-check-mark">✓</span>}
+                    ✕
                   </button>
-                ))}
+                </div>
+                <div className="fg-header__date-menu-list">
+                  {dateOptions.map(opt => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`fg-header__date-menu-option ${selectedRange === opt.id ? 'is-selected' : ''}`}
+                      onClick={() => {
+                        setSelectedRange(opt.id)
+                        setShowDateMenu(false)
+                      }}
+                    >
+                      <div>
+                        <div className="fg-header__option-title">{opt.label}</div>
+                        <div className="fg-header__option-sub">{opt.dateSpan}</div>
+                      </div>
+                      {selectedRange === opt.id && <span className="fg-check-mark">✓</span>}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        {/* Notification Bell */}
+        {/* Global Notification Bell */}
         <div className="fg-header__notify-wrapper" ref={notifyRef}>
           <button
             type="button"
@@ -186,7 +209,7 @@ export default function DashboardHeader({ onToggleSidebar }) {
           )}
         </div>
 
-        {/* User profile */}
+        {/* Global User Profile Chip */}
         <div className="fg-header__user-chip" title="John Doe — Operations Lead">
           <div className="fg-inv-avatar-initials" style={{ width: 34, height: 34, fontSize: '0.82rem', borderRadius: '50%', background: '#1b9b55', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>JD</div>
           <div className="fg-header__user-details">
