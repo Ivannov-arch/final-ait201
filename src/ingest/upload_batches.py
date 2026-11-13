@@ -342,11 +342,17 @@ def _load_supabase_client() -> Any:
     except ImportError:
         print("  WARNING: python-dotenv not installed — reading env vars directly.")
 
-    url = os.environ.get("SUPABASE_URL", "").strip()
-    # Prefer service role key for write operations
+    url = (
+        os.environ.get("SUPABASE_URL", "").strip()
+        or os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "").strip()
+    )
+    # Prefer service_role / secret key for write operations; fallback to anon / publishable
     key = (
         os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        or os.environ.get("SUPABASE_SECRET_KEY", "").strip()
         or os.environ.get("SUPABASE_ANON_KEY", "").strip()
+        or os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+        or os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY", "").strip()
     )
 
     if not url or not key:

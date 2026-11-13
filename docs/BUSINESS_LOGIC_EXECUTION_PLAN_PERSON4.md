@@ -30,12 +30,14 @@ Following a complete scan and implementation cycle across the project workspace 
 │     - `database/teardown.sql` (Development rollback / reset script)         │
 │     - `src/ingest/upload_batches.py` (Idempotent Supabase Ingestion ETL)    │
 │                                                                             │
-│  🟡 Work In Progress / Pending Cloud Setup (Part 2):                        │
-│     - Supabase Project Creation on supabase.com                             │
-│     - `.env` configuration (Project URL & API keys)                         │
-│     - Schema execution in Supabase SQL Editor                               │
+│  ✅ Person 4 Cloud Database & Ingestion Live (Part 2):                       │
+│     - Supabase Project Created (Region: Singapore / ap-southeast-1)         │
+│     - `.env` configured with Project URL & API Credentials                  │
+│     - Database Schema & 15 Receivers Seeded                                 │
+│     - 990 Batches + 2,644 Events Uploaded via `upload_batches.py`           │
+│     - Live `v_dashboard_summary` view verified with real KPI aggregations   │
 │                                                                             │
-│  🔴 Work In Progress / Pending Upstream Dependencies (Part 3):              │
+│  🔴 Upstream Dependencies Pending (For Future Phase 2 Upgrade):             │
 │     - `item.parquet` (DOSM item lookup table pending from Person 0)         │
 │     - `models/demand_forecast.pkl` (Demand model pending from Person 2)     │
 │     - `data/processed/dispatch_log.csv` (OSRM dispatch pending Person 5)   │
@@ -175,15 +177,15 @@ python src/ingest/upload_batches.py
      │
 [COMPLETED] Step 5: Write `src/ingest/upload_batches.py` & verify via dry-run mode.
      │
-[PENDING]   Step 6: Create Supabase Cloud project at supabase.com.
+[COMPLETED] Step 6: Create Supabase Cloud project at supabase.com.
      │
-[PENDING]   Step 7: Copy .env.example -> .env and fill in Supabase credentials.
+[COMPLETED] Step 7: Configure .env with Supabase Project URL & API credentials.
      │
-[PENDING]   Step 8: Execute `database/schema.sql` and `seed_receivers.sql` in Supabase SQL Editor.
+[COMPLETED] Step 8: Execute `database/schema.sql` and `seed_receivers.sql` in Supabase SQL Editor.
      │
-[PENDING]   Step 9: Run live ETL: `python src/ingest/upload_batches.py` to upload batches & events.
+[COMPLETED] Step 9: Run live ETL: `python src/ingest/upload_batches.py` (990 batches + 2,644 events uploaded).
      │
-[PENDING]   Step 10: Verify rows in Supabase Table Editor & notify Person 2 (API) and Person 6 (Frontend).
+[COMPLETED] Step 10: Verify live KPIs via `v_dashboard_summary` view in Supabase.
 ```
 
 ---

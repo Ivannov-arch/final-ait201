@@ -109,14 +109,14 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 4 — Business Logic & Cloud Database
-- [ ] **Rule Engine Dynamic Markdown (Goal 6 Base+):**
+- [x] **Rule Engine Dynamic Markdown (Goal 6 Base+):**
   - Baca harga referensi pasar komoditas MYR dari file DOSM Person 0.
   - Implementasikan fungsi `assign_route(days_to_expiry, quantity, forecast_demand)`:
     - *Stok aman:* `Normal Sale` (harga penuh).
     - *Stok surplus & umur 2–4 hari:* `Dynamic Markdown` (diskon bertahap 15%–40% berbasis harga pasar DOSM).
     - *Stok surplus & umur ≤ 1 hari:* `Donation` (dialihkan ke mitra food bank).
   - Terapkan aturan *Anti-Moral-Hazard Pembeli*: donasi dilakukan tertutup ke food bank resmi dan dibatasi kuota maksimal 30% dari surplus.
-- [ ] **Database Supabase (Goal 9):**
+- [x] **Database Supabase (Goal 9):**
   - Buat project di Supabase dan buat 5 tabel PostgreSQL (`batches`, `simulation_events`, `dispatch_log`, `receivers`, `cluster_results`).
   - Terapkan Row Level Security (RLS) dan buat view ringkasan dashboard `v_dashboard_summary`.
 
