@@ -85,18 +85,18 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 2 — Forecaster & API Engineer
-- [ ] Load data time-series penjualan `train.csv` (M5).
-- [ ] Gabungkan kalender hari libur Malaysia `holidays_my.csv` dari Person 0 sebagai fitur `is_holiday`.
-- [ ] Buat lag features (lag-7, lag-14, rolling mean penjualan).
-- [ ] Latih model forecasting (LightGBM) untuk prediksi permintaan 3 hari ke depan per produk.
-- [ ] Simpan model ke `models/demand_forecast.pkl`.
-- [ ] Bangun server FastAPI (`backend/main.py`) dengan endpoint:
-  - `GET /api/lots` (daftar stok FEFO)
-  - `GET /api/forecast/{product_id}` (prediksi demand 3 hari)
-  - `POST /api/recommend` (rekomendasi aksi diskon/donasi)
-  - `GET /api/dispatch-route/{batch_id}` (rute OSRM & polyline jalan)
-  - `GET /api/dashboard/summary` (KPI agregat)
-- [ ] Konfigurasi CORS dan Swagger docs di `/docs`.
+- [x] Load data time-series penjualan `train.csv` (M5).
+- [x] Gabungkan kalender hari libur Malaysia `holidays_my.csv` dari Person 0 sebagai fitur `is_holiday`.
+- [x] Buat lag features (lag-7, lag-14, rolling mean penjualan).
+- [x] Latih model forecasting (LightGBM) untuk prediksi permintaan 3 hari ke depan per produk.
+- [x] Simpan model ke `models/demand_forecast.pkl` (tersimpan multi-horizon `demand_forecast_day_1/2/3.pkl` & `_base.pkl`).
+- [x] Bangun server FastAPI (`backend/main.py`) dengan endpoint:
+  - [x] `GET /api/lots` (daftar stok FEFO via `/api/batches`)
+  - [x] `GET /api/forecast/{product_id}` (prediksi demand 3 hari via `/api/forecast/product/{product_name}`)
+  - [x] `POST /api/recommend` (rekomendasi aksi diskon/donasi — **sudah terintegrasi Rule Engine Person 4 via Vite middleware**)
+  - [ ] `GET /api/dispatch-route/{batch_id}` (rute OSRM & polyline jalan — **menunggu integrasi OSRM Person 5**)
+  - [x] `GET /api/dashboard/summary` (KPI agregat)
+- [x] Konfigurasi CORS dan Swagger docs di `/docs`.
 
 ---
 
@@ -150,7 +150,8 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
   - [x] Halaman Landing Page B2B interaktif lengkap dengan navigasi, value proposition, kalkulator dampak, dan animasi GSAP.
   - [x] Modul Sales Log kasir/transaksi dengan filter tanggal, pencarian, dan metrik revenue markdown.
   - [x] Preloader & Mascot FreshBot AI terintegrasi.
-- [ ] Integrasi endpoint API backend FastAPI (menghubungkan data mock saat ini dengan live backend Python).
+- [x] Integrasi Rule Engine Person 4 (`assign_route()`) via `POST /api/recommend` — tiered markdown 15–40%, Anti-Moral-Hazard 30% donation cap, live result tampil di modal aksi inventory.
+- [ ] Integrasi endpoint FastAPI Python live (saat ini frontend sudah berjalan via internal Vite JSON API).
 - [ ] Bangun halaman Admin `/admin` dengan autentikasi cloud (Supabase Auth).
 - [ ] Desain template presentasi resmi tim di Canva.
 

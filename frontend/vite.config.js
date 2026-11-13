@@ -223,6 +223,71 @@ function createApiMiddleware() {
       return
     }
 
+    // ── POST /api/recommend → Person 4 Rule Engine (assign_route logic) ─────
+    // Implements: Dynamic Markdown + Anti-Moral-Hazard (30% donation cap)
+    // Source: src/engine/rule_engine.py by Person 4 — ported to Node.js
+    if (url === '/api/recommend' && req.method === 'POST') {
+      try {
+        const body = await collectBody(req)
+        const dte    = Math.max(parseInt(body.days_to_expiry) || 0, 0)
+        const qty    = Math.max(parseFloat(body.quantity)     || 0, 0)
+        const price  = Math.max(parseFloat(body.unit_price_myr) || 0, 0)
+        const demand = Math.max(parseFloat(body.demand_forecast_3d) || 0, 0)
+        const totalSurplus   = Math.max(parseFloat(body.total_surplus_volume)    || 0, 0)
+        const donatedSoFar   = Math.max(parseFloat(body.cumulative_donated_volume) || 0, 0)
+
+        // ── Person 4 Rule Engine constants ──────────────────────────────────
+        const DONATION_QUOTA_CAP = 0.30   // max 30% of total surplus can be donated
+        const MARKDOWN_AGGRESSIVE = 0.50  // applied when donation quota is full
+        const MARKDOWN_TIERS = { 3: 0.15, 2: 0.25, 1: 0.40 }  // DTE → discount
+
+        const isSurplus = qty > demand
+
+        let route, discount, channel, moralHazard, reason
+
+        // 1. Normal Sale — plenty of time, or demand is healthy
+        if (dte > 3 || !isSurplus) {
+          route = 'Normal Sale'; discount = 0.0; channel = 'retail'; moralHazard = false
+          reason = `DTE=${dte}d, demand healthy. Full-price sale at RM ${price.toFixed(2)}.`
+
+        // 2. Donation — imminent expiry (DTE ≤ 1); prefer donation if quota allows
+        } else if (dte <= 1) {
+          const quotaOk = totalSurplus <= 0 || (donatedSoFar + qty) <= totalSurplus * DONATION_QUOTA_CAP
+          if (quotaOk) {
+            route = 'Donation'; discount = 1.0; channel = 'closed_ngo'; moralHazard = false
+            reason = `DTE=${dte}d, imminent expiry. Routed to closed NGO/food bank (donation quota ≤ 30% of surplus).`
+          } else {
+            route = 'Dynamic Markdown'; discount = MARKDOWN_AGGRESSIVE; channel = 'retail'; moralHazard = true
+            reason = `DTE=${dte}d, but donation quota of 30% already filled (${donatedSoFar.toFixed(1)}/${(totalSurplus * DONATION_QUOTA_CAP).toFixed(1)} units). Redirected to aggressive markdown: 50% off.`
+          }
+
+        // 3. Dynamic Markdown — moderate spoilage risk (1 < DTE ≤ 3)
+        } else {
+          discount = MARKDOWN_TIERS[dte] ?? 0.15
+          route = 'Dynamic Markdown'; channel = 'retail'; moralHazard = false
+          reason = `DTE=${dte}d surplus. Tiered markdown: ${(discount * 100).toFixed(0)}% off → RM ${(price * (1 - discount)).toFixed(2)}/unit.`
+        }
+
+        const discountedPrice  = parseFloat((price * (1 - discount)).toFixed(2))
+        const expectedValue    = route !== 'Donation' ? parseFloat((discountedPrice * qty).toFixed(2)) : 0.0
+
+        sendJson(res, 200, {
+          recommended_route:    route,
+          discount_percent:     parseFloat((discount * 100).toFixed(1)),
+          discount_fraction:    discount,
+          discounted_price_myr: discountedPrice,
+          expected_value_myr:   expectedValue,
+          channel,
+          moral_hazard_flag:    moralHazard,
+          reason,
+          source: 'rule-engine-v1'
+        })
+      } catch (e) {
+        sendJson(res, 500, { error: e.message })
+      }
+      return
+    }
+
     next()
   }
 }

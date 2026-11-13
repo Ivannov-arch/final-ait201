@@ -5659,11 +5659,255 @@ button {
   color: #496354;
   margin: 0;
 }
+/* ── Legacy 3-col grid (kept for fallback) ── */
 .fg-inv-action-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.15rem;
   align-items: stretch;
+}
+
+/* ══════════════════════════════════════════════════════
+   NEW: Asymmetric action layout (v2)
+   Featured markdown card (top, wide) + compact row (bottom)
+   ══════════════════════════════════════════════════════ */
+.fg-inv-action-grid-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Featured Markdown Card ── */
+.fg-inv-action-card-featured {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-radius: 16px;
+  padding: 1.1rem 1.35rem;
+  border: 1.5px solid #fedcb2;
+  background: linear-gradient(100deg, #fff9f0 0%, #fff4e6 100%);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.fg-inv-action-card-featured:hover {
+  box-shadow: 0 6px 20px #e87a1e18;
+  transform: translateY(-1px);
+}
+
+.fg-inv-featured-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+.fg-inv-featured-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.fg-inv-featured-label {
+  font-family: var(--ff-head, "Nunito", sans-serif);
+  font-size: 0.98rem;
+  font-weight: 900;
+  color: #0c1f15;
+  letter-spacing: -0.01em;
+}
+.fg-inv-featured-discount-pill {
+  background: #e87a1e;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+}
+.fg-inv-featured-engine {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+.fg-inv-featured-price {
+  font-family: var(--ff-head, "Nunito", sans-serif);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #92400e;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.fg-inv-featured-price-label {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #b45309;
+  letter-spacing: normal;
+}
+.fg-inv-featured-value {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #78350f;
+}
+.fg-inv-featured-reason {
+  font-size: 0.72rem;
+  color: #92400e;
+  opacity: 0.75;
+  line-height: 1.4;
+  max-width: 55ch;
+  text-wrap: pretty;
+}
+.fg-inv-moral-hazard-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin-top: 2px;
+  width: fit-content;
+}
+.fg-inv-featured-cta {
+  /* override full-width from base */
+  width: auto !important;
+  margin-top: 0 !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.84rem;
+}
+
+/* ── Secondary compact row ── */
+.fg-inv-action-row-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.fg-inv-action-card-compact {
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.fg-inv-action-card-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px #0c1f150c;
+}
+.fg-inv-action-card--normal.fg-inv-action-card-compact {
+  background: #f4fbf6;
+  border: 1px solid #c9e9d5;
+}
+.fg-inv-action-card--donate.fg-inv-action-card-compact {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+}
+.fg-inv-compact-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.fg-inv-compact-title {
+  font-family: var(--ff-head, "Nunito", sans-serif);
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: #0c1f15;
+}
+.fg-inv-compact-rec-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.fg-inv-compact-rec-tag--green {
+  background: #dcfce7;
+  color: #15803d;
+}
+.fg-inv-compact-rec-tag--red {
+  background: #ffe4e6;
+  color: #be123c;
+}
+.fg-inv-compact-rec-tag--warn {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.fg-inv-compact-desc {
+  font-size: 0.74rem;
+  color: #496354;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+}
+.fg-inv-action-btn-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.44rem 1rem;
+  border-radius: 999px;
+  border: none;
+  font-family: var(--ff-body, "Figtree", sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  margin-top: auto;
+  align-self: flex-start;
+  transition: all 0.15s ease;
+}
+.fg-inv-action-btn-compact:active { transform: scale(0.97); }
+
+/* Shared icon-sm */
+.fg-inv-action-icon-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Banner stat row (replaces flat horizontal meta chain) ── */
+.fg-inv-banner-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+.fg-inv-banner-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.25rem 0.9rem 0.25rem 0;
+}
+.fg-inv-banner-stat-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9bb3a6;
+}
+.fg-inv-banner-stat-value {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #195038;
+}
+.fg-inv-banner-divider {
+  width: 1px;
+  height: 28px;
+  background: #d2e5d8;
+  margin: 0 0.75rem 0 0;
+  flex-shrink: 0;
 }
 .fg-inv-action-card {
   border-radius: 18px;

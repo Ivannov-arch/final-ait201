@@ -82,14 +82,39 @@ export default function DashboardPage({ onNavigateHome }) {
   const isMainView = activeNav === 'operations' || activeNav === 'dashboard'
 
   // Handler: apply action decision (markdown / donate) from Inventory
-  const handleApplyActionDecision = (batch, actionType) => {
-    const qtyNum = parseInt(batch.qty, 10) || 12
+  // ── Calls Person 4 Rule Engine via /api/recommend to get real discount % ──
+  const handleApplyActionDecision = async (batch, actionType) => {
+    const qtyNum = batch.stockQty !== undefined ? Number(batch.stockQty) : (parseInt(batch.qty, 10) || 12)
     const pricePerUnit = (() => {
+      if (batch.unitPrice !== undefined) return Number(batch.unitPrice)
       const src = batch.sellPrice || batch.costPrice || batch.price || ''
       const m = src.match(/[\d.]+/)
       return m ? parseFloat(m[0]) : 0
     })()
-    const batchValue = pricePerUnit * qtyNum
+
+    // Compute total surplus volume across all batches (for Anti-Moral-Hazard 30% cap)
+    const totalSurplusVolume = batches.reduce((s, b) => s + (b.stockQty !== undefined ? Number(b.stockQty) : 0), 0)
+    const alreadyDonated = batches.reduce((s, b) => s + (b.appliedAction === 'donate' ? (b.stockQty !== undefined ? Number(b.stockQty) : 0) : 0), 0)
+
+    // ── Ask Person 4 Rule Engine for the real recommendation ─────────────────
+    let ruleDecision = null
+    try {
+      const res = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          days_to_expiry:           batch.dteNum || 5,
+          quantity:                 qtyNum,
+          unit_price_myr:           pricePerUnit,
+          demand_forecast_3d:       qtyNum * 0.6,   // conservative: 60% of stock as expected demand
+          total_surplus_volume:     totalSurplusVolume,
+          cumulative_donated_volume: alreadyDonated
+        })
+      })
+      ruleDecision = await res.json()
+    } catch (_) {
+      // Rule engine unavailable — fall back to static 30% discount
+    }
 
     let actionLabel = ''
     let statusLabel = 'Completed'
@@ -97,16 +122,22 @@ export default function DashboardPage({ onNavigateHome }) {
     let earnedValue = 0
 
     if (actionType === 'markdown') {
-      actionLabel = 'Sales · 30% Dynamic Markdown'
-      earnedValue = batchValue * 0.70
+      // Use Person 4 Rule Engine discount if available, else fallback to 30%
+      const discountFraction = ruleDecision?.discount_fraction ?? 0.30
+      const discountPct = Math.round(discountFraction * 100)
+      const discountedPrice = (pricePerUnit * (1 - discountFraction)).toFixed(2)
+      const batchValue = pricePerUnit * qtyNum
+      earnedValue = parseFloat(discountedPrice) * qtyNum
 
-      // Update price with 30% discount in inventory_master.json and local state
-      const discountedPrice = (pricePerUnit * 0.70).toFixed(2)
+      actionLabel = `Sales · ${discountPct}% Dynamic Markdown`
+
       setBatches(prev => prev.map(b => b.id === batch.id ? {
         ...b,
         sellPrice: `RM ${discountedPrice}/${b.uom || 'unit'}`,
         unitPrice: parseFloat(discountedPrice),
-        appliedAction: 'markdown'
+        appliedAction: 'markdown',
+        ruleEngineReason: ruleDecision?.reason || null,
+        discountPercent: discountPct
       } : b))
       fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
         method: 'PATCH',
@@ -115,15 +146,38 @@ export default function DashboardPage({ onNavigateHome }) {
       }).catch(() => {})
 
     } else if (actionType === 'donate') {
-      actionLabel = 'Food Bank · NGO Dispatch'
-      statusLabel = 'Dispatched'
-      earnedValue = 0
+      // Check Anti-Moral-Hazard from Rule Engine: if moralHazardFlag, we redirect to markdown
+      if (ruleDecision?.moral_hazard_flag) {
+        // Donation quota exceeded — Rule Engine redirects to aggressive markdown
+        const discountFraction = ruleDecision?.discount_fraction ?? 0.50
+        const discountedPrice = (pricePerUnit * (1 - discountFraction)).toFixed(2)
+        earnedValue = parseFloat(discountedPrice) * qtyNum
+        actionLabel = `Sales · ${Math.round(discountFraction * 100)}% Aggressive Markdown (Anti-Moral-Hazard)`
+        statusLabel = 'Redirected'
 
-      // Donated: remove from active store inventory & delete from inventory_master.json
-      setBatches(prev => prev.filter(b => b.id !== batch.id))
-      fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
-        method: 'DELETE'
-      }).catch(() => {})
+        setBatches(prev => prev.map(b => b.id === batch.id ? {
+          ...b,
+          sellPrice: `RM ${discountedPrice}/${b.uom || 'unit'}`,
+          unitPrice: parseFloat(discountedPrice),
+          appliedAction: 'markdown',
+          ruleEngineReason: ruleDecision?.reason || null,
+          discountPercent: Math.round(discountFraction * 100)
+        } : b))
+        fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ unit_price_myr: discountedPrice })
+        }).catch(() => {})
+      } else {
+        actionLabel = 'Food Bank · NGO Dispatch (closed_ngo channel)'
+        statusLabel = 'Dispatched'
+        earnedValue = 0
+
+        setBatches(prev => prev.filter(b => b.id !== batch.id))
+        fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
+          method: 'DELETE'
+        }).catch(() => {})
+      }
 
     } else {
       return
