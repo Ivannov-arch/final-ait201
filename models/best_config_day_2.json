@@ -1,0 +1,47 @@
+{
+    "horizon": 2,
+    "configuration": 2,
+    "features": [
+        "store_nbr",
+        "family",
+        "lag_1",
+        "lag_2",
+        "lag_3",
+        "lag_7",
+        "lag_14",
+        "rolling_mean_7",
+        "rolling_mean_14",
+        "target_dayofweek",
+        "target_month",
+        "target_day",
+        "target_is_weekend"
+    ],
+    "family_categories": [
+        "BEVERAGES",
+        "BREAD/BAKERY",
+        "DAIRY",
+        "DELI",
+        "EGGS",
+        "FROZEN FOODS",
+        "GROCERY I",
+        "GROCERY II",
+        "LIQUOR,WINE,BEER",
+        "MEATS",
+        "POULTRY",
+        "PREPARED FOODS",
+        "PRODUCE",
+        "SEAFOOD"
+    ],
+    "parameters": {
+        "reg_lambda": 5.0,
+        "num_leaves": 63,
+        "min_child_samples": 20,
+        "max_depth": -1,
+        "learning_rate": 0.07,
+        "colsample_bytree": 0.8
+    },
+    "MAE": 116.84221603758314,
+    "RMSE": 326.13590179543405,
+    "WAPE": 11.787261708136569,
+    "best_iteration": 686
+}
