@@ -267,8 +267,6 @@ export default function DemandForecastingPage({ onToggleSidebar }) {
       {/* Unified Action Header */}
       <DashboardHeader
         title="Demand Forecasting & Replenishment"
-        badge="ML Projection"
-        badgePulse={true}
         subtitle="Projected stock demand over the next 3 days based on sell-through patterns. Click any point for day details."
         onToggleSidebar={onToggleSidebar}
         actions={

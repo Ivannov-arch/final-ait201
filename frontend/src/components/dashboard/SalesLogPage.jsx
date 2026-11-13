@@ -449,7 +449,6 @@ export default function SalesLogPage({
       {/* Unified Action Header */}
       <DashboardHeader
         title="Sales Log"
-        badge="POS Active"
         badgePulse={true}
         subtitle="Real-time cashier sales recording. Inventory stock and profit dashboard sync automatically."
         onToggleSidebar={onToggleSidebar}
@@ -684,12 +683,6 @@ export default function SalesLogPage({
                   </td>
                   <td>
                     <div className="fg-table-product">
-                      <img
-                        src={s.image}
-                        alt={s.product}
-                        className="fg-product-thumb"
-                        onError={(e) => { e.currentTarget.style.display = 'none' }}
-                      />
                       <div>
                         <div className="fg-product-name">{s.product}</div>
                         <div className="fg-product-cat">{s.category}</div>
@@ -774,12 +767,6 @@ export default function SalesLogPage({
             <div key={`m-${s.id}-${idx}`} className="fg-mobile-activity-card">
               <div className="fg-mobile-card__top">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <img
-                    src={s.image}
-                    alt={s.product}
-                    className="fg-product-thumb fg-product-thumb--mobile"
-                    onError={(e) => { e.currentTarget.style.display = 'none' }}
-                  />
                   <div>
                     <div className="fg-inv-product-name" style={{ fontSize: '0.96rem' }}>{s.product}</div>
                     <div className="fg-inv-category">

@@ -551,8 +551,6 @@ export default function DispatchPage({
           -------------------------------------------------------------------- */}
       <DashboardHeader
         title="Waste-Risk Intelligence & Smart Dispatch"
-        badge="AIT-201 · Step 11 & 13"
-        badgePulse={false}
         subtitle="Supervised waste-risk scoring model (trained on 8,000 retail records) paired with automated OSRM route matching to verified Lembah Klang food banks."
         onToggleSidebar={onToggleSidebar}
         actions={
@@ -876,11 +874,6 @@ export default function DispatchPage({
                             />
                           </label>
                         )}
-                        <img
-                          src={batch.image || 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=80&auto=format&fit=crop&q=80'}
-                          alt={batch.product}
-                          className="fg-dispatch-card__thumb"
-                        />
                         <div className="fg-dispatch-card__meta">
                           <div className="fg-dispatch-card__title-line">
                             <h3 className="fg-dispatch-card__title">{batch.product}</h3>

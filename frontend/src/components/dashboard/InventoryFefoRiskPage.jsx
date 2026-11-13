@@ -452,7 +452,6 @@ export default function InventoryFefoRiskPage({
       dteNum,
       risk,
       riskType,
-      image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=160&auto=format&fit=crop&q=80',
       recommended: riskType === 'high' ? 'Donate to Food Bank' : riskType === 'med' ? 'Dynamic Markdown' : 'Normal Sale'
     }
 
@@ -557,7 +556,6 @@ export default function InventoryFefoRiskPage({
       {/* Unified Action Header */}
       <DashboardHeader
         title="Inventory"
-        badge={`${batches.length} Batches Registered`}
         badgePulse={false}
         subtitle="FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation."
         onToggleSidebar={onToggleSidebar}
@@ -881,13 +879,6 @@ export default function InventoryFefoRiskPage({
                       {/* 1. Product Identity */}
                       <td>
                         <div className="fg-inv-product-identity">
-                          <img
-                            src={b.image}
-                            alt={b.product}
-                            className="fg-product-thumb"
-                            loading="lazy"
-                            onError={(e) => { e.currentTarget.style.display = 'none' }}
-                          />
                           <div className="fg-inv-product-copy">
                             <div className="fg-product-name">{b.product}</div>
                             <div className="fg-product-meta" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -1032,13 +1023,6 @@ export default function InventoryFefoRiskPage({
                 >
                 <div className="fg-mobile-card__top">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <img
-                      src={b.image}
-                      alt={b.product}
-                      className="fg-product-thumb fg-product-thumb--mobile"
-                      loading="lazy"
-                      onError={(e) => { e.currentTarget.style.display = 'none' }}
-                    />
                     <div>
                       <div className="fg-inv-product-name" style={{ fontSize: '0.96rem' }}>{b.product}</div>
                       <div className="fg-inv-category">
@@ -1198,12 +1182,6 @@ export default function InventoryFefoRiskPage({
             {/* Selected Batch Summary Banner with Risk Mascot on the side */}
             <div className={`fg-inv-decision-banner fg-inv-decision-banner--${selectedBatchForAction.riskType}`}>
               <div className="fg-inv-decision-main">
-                <img
-                  src={selectedBatchForAction.image}
-                  alt={selectedBatchForAction.product}
-                  className="fg-inv-decision-img"
-                  loading="lazy"
-                />
                 <div className="fg-inv-decision-info">
                   <h3 className="fg-inv-decision-title">
                     Batch {selectedBatchForAction.id} — {selectedBatchForAction.product}

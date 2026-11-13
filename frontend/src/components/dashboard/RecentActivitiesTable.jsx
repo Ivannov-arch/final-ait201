@@ -224,15 +224,6 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
                     </td>
                     <td>
                       <div className="fg-table-product">
-                        <img
-                          src={row.image}
-                          alt={row.product}
-                          className="fg-product-thumb"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                          }}
-                        />
                         <div>
                           <div className="fg-product-name">{row.product}</div>
                           <div className="fg-product-cat">{row.category}</div>
@@ -268,15 +259,6 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
               >
                 <div className="fg-mobile-card__top">
                   <div className="fg-mobile-card__product-info">
-                    <img
-                      src={row.image}
-                      alt={row.product}
-                      className="fg-product-thumb fg-product-thumb--mobile"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
                     <div>
                       <div className="fg-product-name fg-product-name--mobile">{row.product}</div>
                       <div className="fg-product-cat">{row.category} • <span className="fg-batch-code fg-batch-code--compact">{row.batch}</span></div>
