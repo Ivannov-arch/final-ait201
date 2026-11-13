@@ -132,6 +132,12 @@ export default function InventoryFefoRiskPage({
   // Filter & sort batches (declared before useEffect that depends on it)
   const filteredBatches = useMemo(() => {
     let list = batches.filter(b => {
+      // 0. Hide fully depleted batches (stock = 0, sold out)
+      const _qty = b.stockQty !== undefined
+        ? Number(b.stockQty)
+        : parseFloat(String(b.qty || '').replace(/[^\d.]/g, '')) || 0
+      if (_qty <= 0) return false
+
       // 1. Search filter
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase()
@@ -364,9 +370,12 @@ export default function InventoryFefoRiskPage({
   // Delete batch handler
   const handleDeleteBatch = (idToDelete) => {
     const deleted = batches.find(b => b.id === idToDelete)
-    setBatches(prev => prev.filter(b => b.id !== idToDelete))
     if (externalOnDeleteBatch && deleted) {
+      // DashboardPage handles: DELETE /api/batches/:id + setBatches update
       externalOnDeleteBatch(deleted)
+    } else {
+      // Standalone mode (no external handler)
+      setBatches(prev => prev.filter(b => b.id !== idToDelete))
     }
     showToast(`Batch ${idToDelete} deleted successfully from inventory`)
   }
@@ -416,6 +425,12 @@ export default function InventoryFefoRiskPage({
     setBatches(prev => prev.map(b => (b.id === editBatch.id ? updatedBatch : b)))
     setEditBatch(null)
     showToast(`Changes saved successfully for Batch ${editBatch.id}`)
+    // Persist edit to inventory_master.json + csv via local Vite API
+    fetch('/api/batches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedBatch)
+    }).catch(() => {})
   }
 
   // Submit Add Batch Form
@@ -427,7 +442,12 @@ export default function InventoryFefoRiskPage({
     }
 
     const { dte, dteNum, risk, riskType } = computeDteAndRisk(newBatchForm.expiryDate)
-    const newId = `B-10${52 + batches.length}`
+    // Sequential LOT number: find max existing lot number, increment by 1
+    const maxLotNum = batches.reduce((max, b) => {
+      const m = String(b.id || '').match(/LOT-(\d+)/)
+      return m ? Math.max(max, parseInt(m[1])) : max
+    }, 1284)
+    const newId = `LOT-${maxLotNum + 1}`
     const stockQty = parseFloat(newBatchForm.stockQty) || 10
     const reorderLevel = parseFloat(newBatchForm.reorderLevel) || 10
     const unitPrice = parseFloat(newBatchForm.unitPrice) || 5.00
@@ -459,6 +479,11 @@ export default function InventoryFefoRiskPage({
       externalOnAddBatch(createdBatch)
     } else {
       setBatches(prev => [createdBatch, ...prev])
+      fetch('/api/batches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createdBatch)
+      }).catch(() => {})
     }
 
     setShowAddModal(false)
@@ -472,6 +497,7 @@ export default function InventoryFefoRiskPage({
       dateIn: 'Oct 30, 2026',
       expiryDate: 'Nov 06, 2026'
     })
+
     showToast(`Batch ${newId} (${createdBatch.product}) added successfully to FEFO rotation`)
   }
 
@@ -1493,7 +1519,7 @@ export default function InventoryFefoRiskPage({
                    <label>Batch ID</label>
                    <input
                      type="text"
-                     value={`B-10${52 + batches.length}`}
+                     value={`LOT-${1000 + batches.length}`}
                      disabled
                      style={{ background: '#f4f8f5', color: '#496354' }}
                    />

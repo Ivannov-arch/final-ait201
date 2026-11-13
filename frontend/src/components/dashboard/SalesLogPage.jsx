@@ -1,3 +1,4 @@
+import initialSalesData from '../../data/unifiedSalesLog.json'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import gsap from 'gsap'
 import DashboardHeader from './DashboardHeader'
@@ -48,85 +49,8 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
   )
 }
 
-// Initial transaction history so the page doesn't look empty and matches the rest of the app
-const INITIAL_SALES = [
-  {
-    id: 'TXN-1004',
-    time: '10:48 PM',
-    date: 'Nov 03, 2026',
-    batchId: 'B-1047',
-    product: 'Organic Spinach',
-    category: 'Vegetables',
-    image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=160&auto=format&fit=crop&q=80',
-    unitPrice: 8.00,
-    unit: 'kg',
-    qty: 4,
-    discount: 30,
-    discountAmt: 9.60,
-    subtotal: 32.00,
-    total: 22.40,
-    payMethod: 'Cash',
-    cashier: 'John Doe',
-    status: 'paid'
-  },
-  {
-    id: 'TXN-1003',
-    time: '09:30 PM',
-    date: 'Nov 03, 2026',
-    batchId: 'B-1048',
-    product: 'Fresh Milk',
-    category: 'Dairy',
-    image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=160&auto=format&fit=crop&q=80',
-    unitPrice: 8.90,
-    unit: 'pack',
-    qty: 6,
-    discount: 0,
-    discountAmt: 0,
-    subtotal: 53.40,
-    total: 53.40,
-    payMethod: 'QR / e-Wallet',
-    cashier: 'John Doe',
-    status: 'paid'
-  },
-  {
-    id: 'TXN-1002',
-    time: '04:15 PM',
-    date: 'Nov 03, 2026',
-    batchId: 'B-1049',
-    product: 'Cherry Tomato',
-    category: 'Vegetables',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=160&auto=format&fit=crop&q=80',
-    unitPrice: 12.00,
-    unit: 'kg',
-    qty: 5,
-    discount: 0,
-    discountAmt: 0,
-    subtotal: 60.00,
-    total: 60.00,
-    payMethod: 'Card',
-    cashier: 'John Doe',
-    status: 'paid'
-  },
-  {
-    id: 'TXN-1001',
-    time: '02:20 PM',
-    date: 'Nov 03, 2026',
-    batchId: 'B-1050',
-    product: 'Brown Eggs',
-    category: 'Dairy',
-    image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=160&auto=format&fit=crop&q=80',
-    unitPrice: 15.00,
-    unit: 'pack',
-    qty: 2,
-    discount: 0,
-    discountAmt: 0,
-    subtotal: 30.00,
-    total: 30.00,
-    payMethod: 'Cash',
-    cashier: 'John Doe',
-    status: 'paid'
-  }
-]
+// Seed data: shown on first load until /api/transactions responds
+const INITIAL_SALES = initialSalesData
 
 function parseNum(str) {
   if (!str) return 0
@@ -154,6 +78,16 @@ export default function SalesLogPage({
   const [showPOSModal, setShowPOSModal] = useState(false)
   const [editingSale, setEditingSale] = useState(null)
   const [toastMessage, setToastMessage] = useState(null)
+
+  // Load transactions from /api/transactions (transactions.json) on mount
+  useEffect(() => {
+    fetch('/api/transactions')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) setSales(data)
+      })
+      .catch(() => {})
+  }, [])
 
   const kpiContainerRef = useRef(null)
   const tableContainerRef = useRef(null)
@@ -236,11 +170,22 @@ export default function SalesLogPage({
     }, 4500)
   }
 
-  // Find currently selected batch
-  const selectedBatch = batches.find(b => b.id === selectedBatchId) || batches[0] || null
+  // Active batches: only those with stock > 0 (connected to inventory_master)
+  const activeBatches = batches.filter(b => {
+    const qty = b.stockQty !== undefined ? Number(b.stockQty) : parseNum(b.qty)
+    return qty > 0
+  })
+
+  // Find currently selected batch (from active stock only)
+  const selectedBatch = activeBatches.find(b => b.id === selectedBatchId)
+    || activeBatches[0]
+    || null
   const unitPrice = selectedBatch ? parseNum(selectedBatch.sellPrice || selectedBatch.costPrice) : 0
   const unit = selectedBatch ? parseUnit(selectedBatch.qty) : 'kg'
-  const maxQty = selectedBatch ? parseNum(selectedBatch.qty) : 10
+  // maxQty uses live stockQty counter so it reflects actual remaining stock
+  const maxQty = selectedBatch
+    ? (selectedBatch.stockQty !== undefined ? Number(selectedBatch.stockQty) : parseNum(selectedBatch.qty))
+    : 10
   const subtotal = unitPrice * saleQty
   const discountAmt = (subtotal * (discount / 100))
   const total = Math.max(0, subtotal - discountAmt)
@@ -292,8 +237,13 @@ export default function SalesLogPage({
   }
 
   const handleOpenPOS = () => {
-    if (batches.length > 0) {
-      setSelectedBatchId(batches[0].id)
+    // Default to first batch that still has stock in inventory_master
+    const firstActive = batches.find(b => {
+      const qty = b.stockQty !== undefined ? Number(b.stockQty) : parseNum(b.qty)
+      return qty > 0
+    })
+    if (firstActive) {
+      setSelectedBatchId(firstActive.id)
     }
     setSaleQty(1)
     setDiscount(0)
@@ -307,6 +257,10 @@ export default function SalesLogPage({
     if (!selectedBatch) return
     if (saleQty <= 0) {
       showToast('⚠️ Purchase quantity must be greater than 0')
+      return
+    }
+    if (saleQty > maxQty) {
+      showToast(`⚠️ Quantity exceeds available stock (${maxQty} ${unit} remaining)`)
       return
     }
 
@@ -338,17 +292,21 @@ export default function SalesLogPage({
     // Add to sales list
     setSales(prev => [newSale, ...prev])
 
-    // Auto-update batch inventory quantity
+    // Auto-update batch inventory quantity in React state (PATCH to inventory_master handled by DashboardPage)
     if (onUpdateBatches) {
-      onUpdateBatches(prev => prev.map(b => {
-        if (b.id !== selectedBatch.id) return b
-        const currentQty = parseNum(b.qty)
-        const newQty = Math.max(0, currentQty - saleQty)
-        return {
-          ...b,
-          qty: `${newQty} ${unit}`
-        }
-      }))
+      onUpdateBatches(prev => {
+        const next = prev.map(b => {
+          if (b.id !== selectedBatch.id) return b
+          const currentQty = b.stockQty !== undefined ? Number(b.stockQty) : parseNum(b.qty)
+          const newQty = Math.max(0, currentQty - saleQty)
+          return {
+            ...b,
+            stockQty: newQty,
+            qty: `${newQty} ${unit}`
+          }
+        })
+        return next
+      })
     }
 
     // Pass up to Dashboard for live profit & activity stream update
@@ -872,11 +830,17 @@ export default function SalesLogPage({
                   }}
                   required
                 >
-                  {batches.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.id} — {b.product} ({b.qty} tersisa · Jual: {b.sellPrice || b.costPrice})
-                    </option>
-                  ))}
+                  {activeBatches.length === 0 && (
+                    <option value="">— Tidak ada stok aktif —</option>
+                  )}
+                  {activeBatches.map(b => {
+                    const stock = b.stockQty !== undefined ? Number(b.stockQty) : parseNum(b.qty)
+                    return (
+                      <option key={b.id} value={b.id}>
+                        {b.id} — {b.product} ({stock} {parseUnit(b.qty)} tersisa · Jual: {b.sellPrice || b.costPrice})
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
 

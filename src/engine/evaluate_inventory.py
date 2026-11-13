@@ -53,7 +53,8 @@ from src.engine.rule_engine import evaluate_lot_dataframe, DONATION_QUOTA_CAP
 # ---------------------------------------------------------------------------
 # Default paths (relative to project root)
 # ---------------------------------------------------------------------------
-DEFAULT_INPUT  = os.path.join("data", "processed", "lots_base.csv")
+MASTER_INPUT   = os.path.join("data", "processed", "inventory_master.csv")
+DEFAULT_INPUT  = MASTER_INPUT if os.path.exists(MASTER_INPUT) else os.path.join("data", "processed", "lots_base.csv")
 DEFAULT_OUTPUT = os.path.join("data", "processed", "lots_routed.csv")
 MIRROR_OUTPUT  = os.path.join("output", "lots_routed.csv")
 

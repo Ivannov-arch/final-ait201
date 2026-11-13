@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardSidebar from './DashboardSidebar'
 import DashboardHeader from './DashboardHeader'
 import KpiStrip from './KpiStrip'
@@ -6,11 +6,11 @@ import ProfitDailyChart from './FoodRescuedTrendChart'
 import ReasonForRecoveryChart from './ReasonForRecoveryChart'
 import RecentActivitiesTable from './RecentActivitiesTable'
 import { INITIAL_ACTIVITIES } from './activitiesData'
+import { INITIAL_BATCHES } from './inventoryData'
 import SalesLogPage from './SalesLogPage'
 import DemandForecastingPage from './DemandForecastingPage'
 import InventoryFefoRiskPage from './InventoryFefoRiskPage'
 import DispatchPage from './DispatchPage'
-import { INITIAL_BATCHES } from './inventoryData'
 import './dashboard.css'
 
 export default function DashboardPage({ onNavigateHome }) {
@@ -23,10 +23,22 @@ export default function DashboardPage({ onNavigateHome }) {
     setActiveNav('inventory-risk')
   }
 
-  // Synchronized state across Dashboard and Inventory ("serentak")
+  // ── Inventory state: 100% sourced directly from inventory_master.json ────────
   const [batches, setBatches] = useState(INITIAL_BATCHES)
+  const [batchesLoading, setBatchesLoading] = useState(true)
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES)
   const [profit, setProfit] = useState(0)
+
+  // Load latest inventory from inventory_master.json on mount (via Vite local API)
+  useEffect(() => {
+    fetch('/api/batches')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) setBatches(data)
+      })
+      .catch(() => {})
+      .finally(() => setBatchesLoading(false))
+  }, [])
 
   // Helper: parse "RM 6.50/kg" → 6.50
   function parsePricePerUnit(priceStr) {
@@ -44,14 +56,13 @@ export default function DashboardPage({ onNavigateHome }) {
 
   // Derived financial KPIs from live batches
   const totalAssets = batches.reduce((sum, b) => {
-    return sum + parsePricePerUnit(b.sellPrice) * parseQtyNum(b.qty)
+    return sum + parsePricePerUnit(b.sellPrice) * (b.stockQty !== undefined ? Number(b.stockQty) : parseQtyNum(b.qty))
   }, 0)
-  // Modal = procurement cost (cost price × qty)
   const modal = batches.reduce((sum, b) => {
-    return sum + parsePricePerUnit(b.costPrice) * parseQtyNum(b.qty)
+    return sum + parsePricePerUnit(b.costPrice) * (b.stockQty !== undefined ? Number(b.stockQty) : parseQtyNum(b.qty))
   }, 0)
 
-  // Scroll to top upon landing on dashboard
+  // Scroll to top on nav change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
     document.title = activeNav === 'inventory-risk'
@@ -70,8 +81,7 @@ export default function DashboardPage({ onNavigateHome }) {
 
   const isMainView = activeNav === 'operations' || activeNav === 'dashboard'
 
-  // Handler when user applies an Action Decision in Inventory:
-  // Synchronously updates Inventory batch, adds to Recent Activities log, and updates Dashboard KPIs!
+  // Handler: apply action decision (markdown / donate) from Inventory
   const handleApplyActionDecision = (batch, actionType) => {
     const qtyNum = parseInt(batch.qty, 10) || 12
     const pricePerUnit = (() => {
@@ -88,22 +98,41 @@ export default function DashboardPage({ onNavigateHome }) {
 
     if (actionType === 'markdown') {
       actionLabel = 'Sales · 30% Dynamic Markdown'
-      earnedValue = batchValue * 0.70   // 70% of value recovered (30% discount)
+      earnedValue = batchValue * 0.70
+
+      // Update price with 30% discount in inventory_master.json and local state
+      const discountedPrice = (pricePerUnit * 0.70).toFixed(2)
+      setBatches(prev => prev.map(b => b.id === batch.id ? {
+        ...b,
+        sellPrice: `RM ${discountedPrice}/${b.uom || 'unit'}`,
+        unitPrice: parseFloat(discountedPrice),
+        appliedAction: 'markdown'
+      } : b))
+      fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unit_price_myr: discountedPrice })
+      }).catch(() => {})
+
     } else if (actionType === 'donate') {
       actionLabel = 'Food Bank · NGO Dispatch'
       statusLabel = 'Dispatched'
-      earnedValue = 0                    // donation: no revenue
+      earnedValue = 0
+
+      // Donated: remove from active store inventory & delete from inventory_master.json
+      setBatches(prev => prev.filter(b => b.id !== batch.id))
+      fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
+        method: 'DELETE'
+      }).catch(() => {})
+
     } else {
-      // Normal sale retained in store: stock is held, not a clearance sale or foodbank dispatch
       return
     }
 
     setProfit(prev => prev + earnedValue)
 
-    // Use riskType enum ('high'|'med'|'low') for safe, stable riskTier label
     const riskTierMap = { high: 'High', med: 'Moderate', low: 'Low' }
     const riskTierLabel = riskTierMap[batch.riskType] || 'Low'
-
     const now = new Date()
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
@@ -116,35 +145,53 @@ export default function DashboardPage({ onNavigateHome }) {
       action: actionLabel,
       quantity: batch.qty,
       status: statusLabel,
-      statusType: statusType,
+      statusType,
       riskTier: riskTierLabel
     }
 
-    // Deduplicate: replace any existing entry for this batch so it never appears twice
     setActivities(prev => {
       const remaining = prev.filter(a => a.batch !== batch.id)
       return [newActivity, ...remaining]
     })
   }
 
-  // Handler when user deletes a batch
-  const handleDeleteBatch = (deletedBatch) => {
-    // Clean up activity entry for deleted batch so it doesn't linger
+  // Handler: delete batch → DELETE directly from inventory_master.json
+  const handleDeleteBatch = useCallback((deletedBatch) => {
     setActivities(prev => prev.filter(a => a.batch !== deletedBatch.id))
-  }
+    // Remove from local state immediately
+    setBatches(prev => prev.filter(b => b.id !== deletedBatch.id))
+    // Persist deletion directly to inventory_master.json
+    fetch(`/api/batches/${encodeURIComponent(deletedBatch.id)}`, {
+      method: 'DELETE'
+    }).catch(() => {})
+  }, [])
 
-  // Handler when user adds a batch
-  const handleAddBatch = (newBatch) => {
+  // Handler: add batch → POST to /api/batches → saves directly to inventory_master.json
+  const handleAddBatch = useCallback((newBatch) => {
+    // Optimistic UI: add to local state immediately
     setBatches(prev => {
       const exists = prev.some(b => b.id === newBatch.id)
-      if (exists) return prev
-      return [newBatch, ...prev]
+      return exists ? prev : [newBatch, ...prev]
     })
-  }
+    // Write directly to inventory_master.json via Vite API
+    fetch('/api/batches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newBatch)
+    })
+      .then(r => r.json())
+      .then(result => {
+        if (result?.batch) {
+          setBatches(prev => prev.map(b => b.id === result.batch.id ? result.batch : b))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
-  // Handler when a Sale is recorded from SalesLogPage
-  const handleSaleRecorded = (sale) => {
-    setProfit(prev => prev + sale.total)
+  // Handler: sale recorded → PATCH quantity directly in inventory_master.json
+  // If qty reaches 0 → server auto-removes it from inventory_master.json
+  const handleSaleRecorded = useCallback((sale) => {
+    setProfit(prev => prev + (Number(sale.total) || 0))
 
     const riskTierMap = { high: 'High', med: 'Moderate', low: 'Low' }
     const batch = batches.find(b => b.id === sale.batchId)
@@ -166,7 +213,39 @@ export default function DashboardPage({ onNavigateHome }) {
       const remaining = prev.filter(a => a.batch !== sale.batchId)
       return [newActivity, ...remaining]
     })
-  }
+
+    // Persist transaction directly to transactions.json
+    fetch('/api/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sale)
+    }).catch(() => {})
+
+    // PATCH quantity directly in inventory_master.json
+    if (sale.batchId && batch) {
+      const currentQty = batch.stockQty !== undefined ? Number(batch.stockQty) : parseQtyNum(batch.qty)
+      const newQty = Math.max(0, currentQty - Number(sale.qty || 0))
+
+      // Optimistic update in local state
+      if (newQty <= 0) {
+        // Stock depleted — remove from local state
+        setBatches(prev => prev.filter(b => b.id !== sale.batchId))
+      } else {
+        setBatches(prev => prev.map(b => b.id !== sale.batchId ? b : {
+          ...b,
+          stockQty: newQty,
+          qty: `${newQty} ${sale.unit || b.uom || 'units'}`
+        }))
+      }
+
+      // Persist directly to inventory_master.json (auto-deleted if qty <= 0)
+      fetch(`/api/batches/${encodeURIComponent(sale.batchId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQty })
+      }).catch(() => {})
+    }
+  }, [batches])
 
   return (
     <div className="fg-dashboard-root">
@@ -280,7 +359,7 @@ export default function DashboardPage({ onNavigateHome }) {
         )}
       </main>
 
-      {/* Mobile Bottom Navigation Bar (Handheld Grocery Floor Ops Adaptation) */}
+      {/* Mobile Bottom Navigation Bar */}
       <nav className="fg-mobile-bottom-nav" aria-label="Mobile Navigation">
         <button
           type="button"
