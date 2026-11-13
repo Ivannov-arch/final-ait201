@@ -229,28 +229,56 @@ export default function InventoryFefoRiskPage({
       )
     }, actionModalRef)
 
-    // ── Fetch Person 4 Rule Engine recommendation ────────────────────────────
+    // ── Fetch ML demand then Rule Engine recommendation ───────────────────────
     const b = selectedBatchForAction
     const qty = b.stockQty !== undefined ? Number(b.stockQty) : (parseFloat(String(b.qty || '').replace(/[^\d.]/g, '')) || 10)
     const price = b.unitPrice !== undefined ? Number(b.unitPrice) : (parseFloat(String(b.sellPrice || b.costPrice || '').replace(/[^\d.]/g, '')) || 5)
 
     setRuleEngineResult(null)
     setRuleEngineLoading(true)
-    fetch('/api/recommend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        days_to_expiry: b.dteNum || 5,
-        quantity: qty,
-        unit_price_myr: price,
-        demand_forecast_3d: qty * 0.6,
-        total_surplus_volume: 0,
-        cumulative_donated_volume: 0
+
+    // Step 1: get ML demand for this product from /api/forecast/products
+    // Fall back to conservative 60% heuristic if ML unavailable
+    const productName = encodeURIComponent(b.product || '')
+    fetch(`/api/forecast/products?store_nbr=1&limit=200`)
+      .then(r => r.json())
+      .then(data => {
+        const pd = (data.products || {})[b.product]
+        // Use ML totalDemand if available, else conservative 60% fallback
+        const mlDemand3d = pd ? pd.totalDemand : qty * 0.6
+        return fetch('/api/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            days_to_expiry: b.dteNum || 5,
+            quantity: qty,
+            unit_price_myr: price,
+            demand_forecast_3d: mlDemand3d,
+            total_surplus_volume: 0,
+            cumulative_donated_volume: 0
+          })
+        })
       })
-    })
       .then(r => r.json())
       .then(data => { setRuleEngineResult(data); setRuleEngineLoading(false) })
-      .catch(() => setRuleEngineLoading(false))
+      .catch(() => {
+        // Double-fallback: rule engine with heuristic if ML call failed
+        fetch('/api/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            days_to_expiry: b.dteNum || 5,
+            quantity: qty,
+            unit_price_myr: price,
+            demand_forecast_3d: qty * 0.6,
+            total_surplus_volume: 0,
+            cumulative_donated_volume: 0
+          })
+        })
+          .then(r => r.json())
+          .then(data => { setRuleEngineResult(data); setRuleEngineLoading(false) })
+          .catch(() => setRuleEngineLoading(false))
+      })
 
     return () => ctx.revert()
   }, [selectedBatchForAction])

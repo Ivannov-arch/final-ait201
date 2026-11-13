@@ -3,6 +3,46 @@ import gsap from 'gsap'
 import DashboardHeader from './DashboardHeader'
 import defaultForecastData from '../../data/generatedProductForecasts.json'
 
+// ── Merge ML forecast products with live batch stock (source of truth) ──────────
+// ML forecast provides demand from three_day_forecast.json via /api/forecast/products.
+// Live batches override currentStock, daysToExpiry, and unitPrice.
+function mergeMlWithBatches(mlProducts, batches) {
+  const merged = { ...mlProducts }
+  for (const b of batches) {
+    if (!b.product) continue
+    const stock = b.stockQty !== undefined ? Number(b.stockQty) : 0
+    const dte   = b.dteNum   !== undefined ? Number(b.dteNum)   : 4
+    const price = b.unitPrice !== undefined ? Number(b.unitPrice) : 6.0
+    if (merged[b.product]) {
+      // Product exists in ML — patch live stock & expiry, keep ML demand points
+      let cur = stock
+      const patchedPoints = (merged[b.product].points || []).map(p => {
+        cur = Math.max(0, cur - (p.demand || 1))
+        return { ...p, stockRemaining: cur, status: cur === 0 ? 'Stockout' : cur < 15 ? 'Low' : 'Adequate' }
+      })
+      merged[b.product] = { ...merged[b.product], batchId: b.id, currentStock: stock, daysToExpiry: dte, unitPrice: price, points: patchedPoints }
+    } else {
+      // Product not in ML — fallback to heuristic decay (35/30/25%)
+      const d1 = Math.max(1, Math.round(stock * 0.35))
+      const d2 = Math.max(1, Math.round(stock * 0.30))
+      const d3 = Math.max(1, Math.round(stock * 0.25))
+      const r1 = Math.max(0, stock - d1), r2 = Math.max(0, r1 - d2), r3 = Math.max(0, r2 - d3)
+      merged[b.product] = {
+        product: b.product, category: b.category || 'Produce',
+        batchId: b.id, unit: b.uom || 'units', unitPrice: price,
+        currentStock: stock, daysToExpiry: dte, totalDemand: d1 + d2 + d3,
+        mlFamily: null, mlWeight: null, // heuristic fallback flag
+        points: [
+          { label: 'Tomorrow', date: 'Day +1', demand: d1, stockRemaining: r1, status: r1 === 0 ? 'Stockout' : 'Adequate' },
+          { label: 'Day After', date: 'Day +2', demand: d2, stockRemaining: r2, status: r2 === 0 ? 'Stockout' : 'Adequate' },
+          { label: 'Day 3',     date: 'Day +3', demand: d3, stockRemaining: r3, status: r3 === 0 ? 'Stockout' : 'Adequate' }
+        ]
+      }
+    }
+  }
+  return merged
+}
+
 // Compact animated number for crisp metric transitions
 function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
   const nodeRef = useRef(null)
@@ -138,20 +178,58 @@ function computeDecision(stock, totalDemand, dte, unit) {
 }
 
 export default function DemandForecastingPage({ onToggleSidebar, batches = [] }) {
-  const [forecastDb, setForecastDb] = useState(defaultForecastData)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [mlProducts, setMlProducts]     = useState({})   // from /api/forecast/products
+  const [mlLoading,  setMlLoading]      = useState(true)
+  const [mlError,    setMlError]        = useState(null)
+  const [searchTerm, setSearchTerm]     = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [selectedDayIdx, setSelectedDayIdx] = useState(0)
-  const [toastMessage, setToastMessage] = useState(null)
-  const [isExecuting, setIsExecuting] = useState(false)
+  const [selectedDayIdx, setSelectedDayIdx]   = useState(0)
+  const [toastMessage, setToastMessage]       = useState(null)
+  const [isExecuting,  setIsExecuting]        = useState(false)
 
   const searchContainerRef = useRef(null)
-  const toastRef = useRef(null)
+  const toastRef           = useRef(null)
 
   const showToast = (msg) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 3200)
   }
+
+  // ── Fetch ML forecast from /api/forecast/products on mount ────────────────────
+  useEffect(() => {
+    setMlLoading(true)
+    fetch('/api/forecast/products?store_nbr=1&limit=100')
+      .then(r => r.json())
+      .then(data => {
+        const products = data.products || {}
+        const count = Object.keys(products).length
+        if (count > 0) {
+          console.log(
+            `%c[FreshGuard Forecast] ✅ ML model active (LightGBM — Person 2)`,
+            'color: #16a34a; font-weight: bold;'
+          )
+          console.log(`  Source : data/processed/three_day_forecast.json (from demand_forecast_final_day_*.pkl)`)
+          console.log(`  Products loaded : ${count}`)
+          console.log(`  Store : store_nbr=1`)
+          console.table(
+            Object.fromEntries(
+              Object.entries(products).slice(0, 10).map(([name, d]) => [
+                name,
+                { mlFamily: d.mlFamily, weight: d.mlWeight, totalDemand: d.totalDemand, currentStock: d.currentStock }
+              ])
+            )
+          )
+        }
+        setMlProducts(products)
+        setMlError(null)
+      })
+      .catch(() => {
+        console.warn('[FreshGuard Forecast] ⚠ ML forecast unavailable — using heuristic fallback (stock × 0.35/0.30/0.25)')
+        setMlError('ML forecast unavailable — using heuristic fallback.')
+        setMlProducts({})
+      })
+      .finally(() => setMlLoading(false))
+  }, [])
 
   // Toast animation
   useEffect(() => {
@@ -177,76 +255,13 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [])
 
-  // Forecast data comes entirely from live batches props (mergedDb below).
-  // No external API needed — inventory_master.json is the source of truth.
-
-  // Merge live batches with forecast database cleanly
+  // ── Merge ML forecast with live batch data ───────────────────────────────────
+  // mergedDb always has fresh stock from inventory_master.json (via batches prop)
+  // Demand numbers come from ML model; heuristic fallback for unknown products
   const mergedDb = useMemo(() => {
-    const db = { ...forecastDb }
-
-    batches.forEach(b => {
-      if (!b.product) return
-
-      const stock = b.stockQty !== undefined ? Number(b.stockQty) : (parseFloat(b.qty) || 0)
-      const dte = b.dteNum !== undefined ? Number(b.dteNum) : 4
-      const cat = b.category || 'Produce'
-      const unit = b.qty ? String(b.qty).replace(/[\d.\s]+/, '') : 'units'
-      const price = b.unitPrice !== undefined ? Number(b.unitPrice) : (parseFloat(String(b.sellPrice || b.price || '6').replace(/[^\d.]/g, '')) || 6.0)
-
-      const dem1 = Math.max(1, Math.round(stock * 0.35))
-      const dem2 = Math.max(1, Math.round(stock * 0.30))
-      const dem3 = Math.max(1, Math.round(stock * 0.25))
-      const totalDem = stock === 0 ? 3 : (dem1 + dem2 + dem3)
-
-      const d1 = stock === 0 ? 1 : dem1
-      const d2 = stock === 0 ? 1 : dem2
-      const d3 = stock === 0 ? 1 : dem3
-
-      const rem1 = Math.max(0, stock - d1)
-      const rem2 = Math.max(0, rem1 - d2)
-      const rem3 = Math.max(0, rem2 - d3)
-
-      if (db[b.product]) {
-        const existing = db[b.product]
-        let cur = stock
-        const updatedPoints = (existing.points || []).map(p => {
-          cur = Math.max(0, cur - (p.demand || 1))
-          return {
-            ...p,
-            stockRemaining: cur,
-            status: cur === 0 ? 'Stockout' : cur < 15 ? 'Low' : 'Adequate'
-          }
-        })
-
-        db[b.product] = {
-          ...existing,
-          batchId: b.id,
-          unitPrice: price,
-          currentStock: stock,
-          daysToExpiry: dte,
-          points: updatedPoints
-        }
-      } else {
-        db[b.product] = {
-          product: b.product,
-          category: cat,
-          batchId: b.id,
-          unit: unit,
-          unitPrice: price,
-          currentStock: stock,
-          daysToExpiry: dte,
-          totalDemand: totalDem,
-          points: [
-            { label: 'Tomorrow', date: 'Day +1', demand: d1, stockRemaining: rem1, status: rem1 === 0 ? 'Stockout' : 'Adequate' },
-            { label: 'Day After', date: 'Day +2', demand: d2, stockRemaining: rem2, status: rem2 === 0 ? 'Stockout' : 'Adequate' },
-            { label: 'Day 3', date: 'Day +3', demand: d3, stockRemaining: rem3, status: rem3 === 0 ? 'Stockout' : 'Adequate' }
-          ]
-        }
-      }
-    })
-
-    return db
-  }, [forecastDb, batches])
+    const base = Object.keys(mlProducts).length > 0 ? mlProducts : defaultForecastData
+    return mergeMlWithBatches(base, batches)
+  }, [mlProducts, batches])
 
   const allProducts = useMemo(() => Object.keys(mergedDb), [mergedDb])
   const [selectedProduct, setSelectedProduct] = useState(allProducts[0] || 'Bell Pepper')
