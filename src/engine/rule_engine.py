@@ -116,23 +116,10 @@ def assign_route(
     is_surplus: bool = qty > demand
 
     # -----------------------------------------------------------------------
-    # Route Decision Tree
+    # Route Decision Tree (FEFO Priority)
     # -----------------------------------------------------------------------
 
-    # 1. NORMAL SALE — plenty of time left and/or demand is healthy
-    if dte > 3 or (not is_surplus):
-        return _make_result(
-            route="Normal Sale",
-            discount=0.0,
-            price=price,
-            qty=qty,
-            channel="retail",
-            moral_hazard=False,
-            reason=f"DTE={dte}d, demand={demand:.1f} ≥ qty={qty:.1f}. "
-                   f"Full-price sale at RM {price:.2f}.",
-        )
-
-    # 2. DONATION — imminent expiry (DTE ≤ 1); prefer donation if quota allows
+    # 1. DONATION — imminent expiry (DTE ≤ 1); prefer donation if quota allows
     if dte <= 1:
         return _route_donation_or_cap(
             dte=dte,
@@ -142,19 +129,48 @@ def assign_route(
             cumulative_donated_volume=cumulative_donated_volume,
         )
 
-    # 3. DYNAMIC MARKDOWN — moderate spoilage risk (1 < DTE ≤ 3)
-    discount = MARKDOWN_TIERS.get(dte, 0.15)   # fallback to 15 % if unknown DTE
+    # 2. DYNAMIC MARKDOWN — approaching expiry (1 < DTE ≤ 3)
+    if dte <= 3:
+        discount = MARKDOWN_TIERS.get(dte, 0.15)   # DTE=2 -> 25%, DTE=3 -> 15%
+        return _make_result(
+            route="Dynamic Markdown",
+            discount=discount,
+            price=price,
+            qty=qty,
+            channel="retail",
+            moral_hazard=False,
+            reason=(
+                f"DTE={dte}d surplus lot. Applied tiered markdown: "
+                f"{discount*100:.0f}% off → RM {price * (1 - discount):.2f}/unit."
+            ),
+        )
+
+    # 3. SHELF LIFE > 3 DAYS
+    if is_surplus:
+        discount = 0.15
+        return _make_result(
+            route="Dynamic Markdown",
+            discount=discount,
+            price=price,
+            qty=qty,
+            channel="retail",
+            moral_hazard=False,
+            reason=(
+                f"DTE={dte}d with surplus volume (qty={qty:.1f} > demand={demand:.1f}). "
+                f"Early 15% markdown recommended to balance velocity."
+            ),
+        )
+
+    # Normal Sale — plenty of shelf life left and demand is healthy
     return _make_result(
-        route="Dynamic Markdown",
-        discount=discount,
+        route="Normal Sale",
+        discount=0.0,
         price=price,
         qty=qty,
         channel="retail",
         moral_hazard=False,
-        reason=(
-            f"DTE={dte}d surplus lot. Applied tiered markdown: "
-            f"{discount*100:.0f}% off → RM {price * (1 - discount):.2f}/unit."
-        ),
+        reason=f"DTE={dte}d, demand={demand:.1f} ≥ qty={qty:.1f}. "
+               f"Full-price sale at RM {price:.2f}.",
     )
 
 

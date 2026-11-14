@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import fs from 'fs'
 
-const DATA_DIR    = path.resolve(__dirname, '../data/processed')
-const MASTER_JSON = path.join(DATA_DIR, 'inventory_master.json')
-const TXNS_JSON   = path.join(DATA_DIR, 'transactions.json')
+const DATA_DIR       = path.resolve(__dirname, '../data/processed')
+const MASTER_JSON    = path.join(DATA_DIR, 'inventory_master.json')
+const TXNS_JSON      = path.join(DATA_DIR, 'transactions.json')
+const FORECAST_JSON  = path.join(DATA_DIR, 'three_day_forecast.json')
 
 // ── JSON Helpers ──────────────────────────────────────────────────────────────
 function readJson(p) {
@@ -223,6 +224,125 @@ function createApiMiddleware() {
       return
     }
 
+    // ── GET /api/forecast/products → ML forecast from three_day_forecast.json ──
+    // Ports forecast_service.py disaggregation logic to Node.js
+    // Source: src/forecasting/forecast_service.py (Person 2)
+    if (url.startsWith('/api/forecast/products') && req.method === 'GET') {
+      try {
+        const params   = new URL(url, 'http://localhost').searchParams
+        const storeNbr = parseInt(params.get('store_nbr') || '1', 10)
+        const limit    = parseInt(params.get('limit') || '100', 10)
+
+        const forecasts = readJson(FORECAST_JSON)
+        const batches   = readJson(MASTER_JSON).filter(r => Number(r.quantity) > 0)
+
+        // Category → ML family map (mirrors CATEGORY_MAP in forecast_service.py)
+        const CATEGORY_MAP = {
+          'Produce': 'PRODUCE', 'Fruits & Vegetables': 'PRODUCE',
+          'Dairy': 'DAIRY', 'Bakery': 'BREAD/BAKERY',
+          'Beverages': 'BEVERAGES', 'Seafood': 'SEAFOOD',
+          'Meat': 'MEATS', 'Meats': 'MEATS', 'Poultry': 'POULTRY',
+          'Eggs': 'EGGS', 'Frozen Foods': 'FROZEN FOODS',
+          'Grains & Pulses': 'GROCERY I', 'Oils & Fats': 'GROCERY I',
+          'Grocery': 'GROCERY I'
+        }
+        const UNIT_MAP = {
+          'Produce': 'kg', 'Fruits & Vegetables': 'kg', 'Dairy': 'pack',
+          'Bakery': 'pcs', 'Beverages': 'bottle', 'Seafood': 'kg',
+          'Meat': 'kg', 'Meats': 'kg', 'Grains & Pulses': 'pack', 'Oils & Fats': 'bottle'
+        }
+
+        // Build family → {1,2,3} demand lookup for the given store
+        const lookup = {}
+        for (const f of forecasts) {
+          if (f.store_nbr === storeNbr) {
+            if (!lookup[f.family]) lookup[f.family] = {}
+            lookup[f.family][f.horizon] = parseFloat(f.predicted_demand)
+          }
+        }
+
+        // Group batches by product
+        const byProduct = {}
+        for (const r of batches) {
+          const p = r.product_name; if (!p) continue
+          if (!byProduct[p]) byProduct[p] = []
+          byProduct[p].push(r)
+        }
+
+        // Sort by total stock desc, take limit
+        const topProducts = Object.entries(byProduct)
+          .map(([name, rows]) => ({ name, rows, totalQty: rows.reduce((s, r) => s + Number(r.quantity), 0) }))
+          .sort((a, b) => b.totalQty - a.totalQty)
+          .slice(0, limit)
+
+        const products = {}
+        for (const { name, rows } of topProducts) {
+          const category = rows[0].category || 'Produce'
+          const unit     = UNIT_MAP[category] || rows[0].uom || 'units'
+          const totalQty = rows.reduce((s, r) => s + Number(r.quantity), 0)
+          const minDte   = Math.min(...rows.map(r => Number(r.days_to_expiry) || 7))
+          const price    = parseFloat(rows[0].unit_price_myr) || 6.0
+
+          // Disaggregation: weight = product stock / category total stock
+          const catTotal = batches
+            .filter(r => r.category === category)
+            .reduce((s, r) => s + Number(r.quantity), 0)
+          const weight = catTotal > 0 ? totalQty / catTotal : 1
+
+          // Get ML family forecast for this store; fallback if family missing
+          const mlFamily = CATEGORY_MAP[category] || 'GROCERY I'
+          const famFc    = lookup[mlFamily] || { 1: 50.0, 2: 45.0, 3: 40.0 }
+
+          // Generate 3-day projections with disaggregated demand
+          const labels = ['Tomorrow', 'Day After', 'Day 3']
+          let cur = totalQty, totalDemand = 0
+          const points = [1, 2, 3].map((h, i) => {
+            const rawDem = (famFc[h] || 50.0) * weight
+            const dem    = Math.max(1, Math.round(rawDem))
+            totalDemand += dem
+            const rem     = Math.max(0, cur - dem)
+            const deficit = dem > cur ? dem - cur : 0
+            cur = rem
+            return {
+              label: labels[i], date: `Day +${h}`,
+              demand: dem, stockRemaining: rem, stockDeficit: deficit,
+              status: rem === 0 ? 'Stockout' : rem < 15 ? 'Low' : 'Adequate'
+            }
+          })
+
+          const surplusQty   = Math.max(0, totalQty - totalDemand)
+          const reorderNeeded = cur === 0 && totalDemand > totalQty
+          let recommendedAction, actionReason
+          if (surplusQty > 0 && minDte <= 1) {
+            recommendedAction = 'Donate to Food Bank'
+            actionReason = `Surplus of ${surplusQty} ${unit} with critical shelf life (DTE ${minDte}d).`
+          } else if (surplusQty > 0 && minDte <= 3) {
+            recommendedAction = 'Dynamic Markdown'
+            actionReason = `Surplus of ${surplusQty} ${unit} nearing expiry (DTE ${minDte}d). Apply markdown.`
+          } else {
+            recommendedAction = 'Normal Sale'
+            actionReason = `Adequate stock velocity. DTE ${minDte}d is safe for standard pricing.`
+          }
+
+          products[name] = {
+            status: 'success', product: name, category, unit,
+            unitPrice: price, currentStock: totalQty,
+            daysToExpiry: minDte, totalDemand,
+            surplusQty, reorderNeeded,
+            reorderQty: reorderNeeded ? Math.max(0, totalDemand - totalQty) : 0,
+            recommendedAction, actionReason,
+            mlFamily, mlWeight: parseFloat(weight.toFixed(4)),
+            points
+          }
+        }
+
+        sendJson(res, 200, { status: 'success', store_nbr: storeNbr, total_products: Object.keys(products).length, products })
+      } catch (e) {
+        sendJson(res, 500, { error: e.message })
+      }
+      return
+    }
+
     // ── POST /api/recommend → Person 4 Rule Engine (assign_route logic) ─────
     // Implements: Dynamic Markdown + Anti-Moral-Hazard (30% donation cap)
     // Source: src/engine/rule_engine.py by Person 4 — ported to Node.js
@@ -245,38 +365,47 @@ function createApiMiddleware() {
 
         let route, discount, channel, moralHazard, reason
 
-        // 1. Normal Sale — plenty of time, or demand is healthy
-        if (dte > 3 || !isSurplus) {
-          route = 'Normal Sale'; discount = 0.0; channel = 'retail'; moralHazard = false
-          reason = `DTE=${dte}d, demand healthy. Full-price sale at RM ${price.toFixed(2)}.`
-
-        // 2. Donation — imminent expiry (DTE ≤ 1); prefer donation if quota allows
-        } else if (dte <= 1) {
+        // ── Retail Decision Tree (FEFO Priority) ───────────────────────────
+        // 1. Critical Expiry (DTE <= 1) — Spoilage imminent; prioritize donation
+        if (dte <= 1) {
           const quotaOk = totalSurplus <= 0 || (donatedSoFar + qty) <= totalSurplus * DONATION_QUOTA_CAP
           if (quotaOk) {
             route = 'Donation'; discount = 1.0; channel = 'closed_ngo'; moralHazard = false
-            reason = `DTE=${dte}d, imminent expiry. Routed to closed NGO/food bank (donation quota ≤ 30% of surplus).`
+            reason = `DTE=${dte}d (critical expiry). Route to closed NGO/food bank before complete spoilage.`
           } else {
             route = 'Dynamic Markdown'; discount = MARKDOWN_AGGRESSIVE; channel = 'retail'; moralHazard = true
-            reason = `DTE=${dte}d, but donation quota of 30% already filled (${donatedSoFar.toFixed(1)}/${(totalSurplus * DONATION_QUOTA_CAP).toFixed(1)} units). Redirected to aggressive markdown: 50% off.`
+            reason = `DTE=${dte}d critical, but 30% donation quota reached. Redirected to 50% aggressive clearance markdown.`
           }
 
-        // 3. Dynamic Markdown — moderate spoilage risk (1 < DTE ≤ 3)
-        } else {
-          discount = MARKDOWN_TIERS[dte] ?? 0.15
+        // 2. Approaching Expiry (1 < DTE <= 3) — Moderate risk; tiered markdown
+        } else if (dte <= 3) {
+          discount = MARKDOWN_TIERS[dte] || 0.15
           route = 'Dynamic Markdown'; channel = 'retail'; moralHazard = false
-          reason = `DTE=${dte}d surplus. Tiered markdown: ${(discount * 100).toFixed(0)}% off → RM ${(price * (1 - discount)).toFixed(2)}/unit.`
+          reason = `DTE=${dte}d surplus lot. Tiered markdown: ${(discount * 100).toFixed(0)}% off → RM ${(price * (1 - discount)).toFixed(2)}/unit.`
+
+        // 3. Safe Shelf Life (DTE > 3)
+        } else {
+          if (isSurplus) {
+            discount = 0.15
+            route = 'Dynamic Markdown'; channel = 'retail'; moralHazard = false
+            reason = `DTE=${dte}d with surplus volume (qty=${qty} > 3d demand=${demand.toFixed(0)}). 15% markdown recommended to balance velocity.`
+          } else {
+            route = 'Normal Sale'; discount = 0.0; channel = 'retail'; moralHazard = false
+            reason = `DTE=${dte}d, demand healthy. Full-price sale at RM ${price.toFixed(2)}.`
+          }
         }
 
-        const discountedPrice  = parseFloat((price * (1 - discount)).toFixed(2))
-        const expectedValue    = route !== 'Donation' ? parseFloat((discountedPrice * qty).toFixed(2)) : 0.0
+        // Tiered markdown preview for the UI (shows what markdown gives even if donation is recommended)
+        const markdownTierFraction = dte <= 1 ? (moralHazard ? 0.50 : 0.40) : (MARKDOWN_TIERS[dte] || 0.15)
+        const markdownPrice = parseFloat((price * (1 - markdownTierFraction)).toFixed(2))
+        const markdownValue = parseFloat((markdownPrice * qty).toFixed(2))
 
         sendJson(res, 200, {
           recommended_route:    route,
-          discount_percent:     parseFloat((discount * 100).toFixed(1)),
-          discount_fraction:    discount,
-          discounted_price_myr: discountedPrice,
-          expected_value_myr:   expectedValue,
+          discount_percent:     parseFloat((markdownTierFraction * 100).toFixed(1)),
+          discount_fraction:    markdownTierFraction,
+          discounted_price_myr: markdownPrice,
+          expected_value_myr:   markdownValue,
           channel,
           moral_hazard_flag:    moralHazard,
           reason,

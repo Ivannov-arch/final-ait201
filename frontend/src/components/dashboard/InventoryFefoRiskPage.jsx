@@ -68,11 +68,14 @@ export default function InventoryFefoRiskPage({
   const [editBatch, setEditBatch] = useState(null)
   const [batchToDelete, setBatchToDelete] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [showUploadModal, setShowUploadModal] = useState(false)
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [isPriorityStripCollapsed, setIsPriorityStripCollapsed] = useState(false)
   const [toastMessage, setToastMessage] = useState(null)
   const [undoAction, setUndoAction] = useState(null)
+
+  // Pagination state (10 batches per page, matching DispatchPage behavior)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   // Controlled form state for Add Batch
   const [newBatchForm, setNewBatchForm] = useState(() => {
@@ -129,7 +132,13 @@ export default function InventoryFefoRiskPage({
     setSelectedRiskFilter('all')
     setSelectedCategoryFilter('all')
     setSortBy('fefo')
+    setCurrentPage(1)
   }
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedRiskFilter, selectedCategoryFilter, sortBy])
 
   // Filter & sort batches (declared before useEffect that depends on it)
   const filteredBatches = useMemo(() => {
@@ -177,7 +186,15 @@ export default function InventoryFefoRiskPage({
     })
   }, [batches, searchTerm, selectedRiskFilter, selectedCategoryFilter, sortBy])
 
-  // Staggered animation for table rows on load/filter
+  // Slicing for pagination (10 batches per page)
+  const totalPages = Math.max(1, Math.ceil(filteredBatches.length / pageSize))
+  const paginatedBatches = useMemo(() => {
+    const safePage = Math.min(currentPage, totalPages)
+    const start = (safePage - 1) * pageSize
+    return filteredBatches.slice(start, start + pageSize)
+  }, [filteredBatches, currentPage, totalPages, pageSize])
+
+  // Staggered animation for table rows on load/filter/page change
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
@@ -204,7 +221,7 @@ export default function InventoryFefoRiskPage({
     }, container)
 
     return () => ctx.revert()
-  }, [batches, searchTerm, selectedRiskFilter, selectedCategoryFilter, sortBy])
+  }, [currentPage, batches, searchTerm, selectedRiskFilter, selectedCategoryFilter, sortBy])
 
   // GSAP animation for Action Decision modal + 3 action cards + risk mascot
   useEffect(() => {
@@ -299,9 +316,9 @@ export default function InventoryFefoRiskPage({
     return () => ctx.revert()
   }, [showAddModal])
 
-  // GSAP animation for Edit Batch modal
+  // GSAP animation for Edit Batch modal (only animate when modal opens, not on every keystroke)
   useEffect(() => {
-    if (!editBatch) return
+    if (!editBatch?.id) return
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const ctx = gsap.context(() => {
@@ -313,7 +330,7 @@ export default function InventoryFefoRiskPage({
     }, editModalRef)
 
     return () => ctx.revert()
-  }, [editBatch])
+  }, [editBatch?.id])
 
   // GSAP animation for Toast Notification
   useEffect(() => {
@@ -397,7 +414,8 @@ export default function InventoryFefoRiskPage({
     if (actionType === 'normal') {
       text = `Batch ${batch.id} (${batch.product}) retained for Normal Sale`
     } else if (actionType === 'markdown') {
-      text = `30% Dynamic Markdown applied to Batch ${batch.id}. POS sync active.`
+      const disc = ruleEngineResult?.discount_percent ? `${ruleEngineResult.discount_percent}% ` : ''
+      text = `${disc}Dynamic Markdown applied to Batch ${batch.id}. POS sync active.`
     } else if (actionType === 'donate') {
       text = `Donation shipment arranged for Batch ${batch.id} to Food Bank.`
     }
@@ -639,32 +657,17 @@ export default function InventoryFefoRiskPage({
         subtitle="FEFO (First Expiry, First Out) rotation priority and stock spoilage risk mitigation."
         onToggleSidebar={onToggleSidebar}
         actions={
-          <>
-            <button
-              type="button"
-              className="fg-inv-btn-outline"
-              onClick={() => setShowUploadModal(true)}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <span>Upload CSV</span>
-            </button>
-
-            <button
-              type="button"
-              className="fg-inv-btn-primary"
-              onClick={() => setShowAddModal(true)}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span>Add Batch</span>
-            </button>
-          </>
+          <button
+            type="button"
+            className="fg-inv-btn-primary"
+            onClick={() => setShowAddModal(true)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add Batch</span>
+          </button>
         }
       />
 
@@ -944,7 +947,7 @@ export default function InventoryFefoRiskPage({
                   </td>
                 </tr>
               ) : (
-                filteredBatches.map(b => {
+                paginatedBatches.map(b => {
                   const isHighRisk = b.riskType === 'high'
                   const isMenuOpen = activeMenuBatchId === b.id
 
@@ -1090,7 +1093,7 @@ export default function InventoryFefoRiskPage({
               </button>
             </div>
           ) : (
-            filteredBatches.map(b => {
+            paginatedBatches.map(b => {
               const isHighRisk = b.riskType === 'high'
               const isMenuOpen = activeMenuBatchId === b.id
 
@@ -1212,6 +1215,46 @@ export default function InventoryFefoRiskPage({
             )
           }))}
         </div>
+
+        {/* Pagination & Count Navigation Bar */}
+        {filteredBatches.length > 0 && (
+          <div className="fg-inv-pagination">
+            <span className="fg-inv-pagination__info">
+              Showing <strong>{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredBatches.length)}</strong> of <strong>{filteredBatches.length}</strong> batches
+            </span>
+
+            <div className="fg-inv-pagination__btns">
+              <button
+                type="button"
+                className="fg-inv-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              >
+                ← Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  type="button"
+                  className={`fg-inv-page-btn ${page === currentPage ? 'is-active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="fg-inv-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* POP-UP MODAL: Action Decision */}
@@ -1340,6 +1383,11 @@ export default function InventoryFefoRiskPage({
                     {!ruleEngineLoading && ruleEngineResult && ruleEngineResult.discount_percent > 0 && (
                       <span className="fg-inv-featured-discount-pill">
                         {ruleEngineResult.discount_percent}% off
+                      </span>
+                    )}
+                    {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Dynamic Markdown' && (
+                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn" style={{ marginLeft: '4px' }}>
+                        Recommended
                       </span>
                     )}
                     {ruleEngineLoading && (
@@ -1812,52 +1860,6 @@ export default function InventoryFefoRiskPage({
                   Delete Batch
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* POP-UP MODAL: Upload CSV */}
-      {showUploadModal && (
-        <div className="fg-inv-modal-backdrop" onClick={() => setShowUploadModal(false)}>
-          <div className="fg-inv-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="fg-inv-modal-header">
-              <h3>Upload Batch CSV / ERP Manifest</h3>
-              <button
-                type="button"
-                className="fg-inv-modal-close"
-                onClick={() => setShowUploadModal(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="fg-inv-upload-zone">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1b9b55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <p>Drag & drop batch manifest file here, or click to browse</p>
-              <span>Supports .csv, .xlsx formatted for grocery lot intake</span>
-            </div>
-            <div className="fg-inv-modal-actions">
-              <button
-                type="button"
-                className="fg-inv-btn-outline"
-                onClick={() => setShowUploadModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="fg-inv-btn-primary"
-                onClick={() => {
-                  setShowUploadModal(false)
-                  showToast('✓ 18 batches imported successfully from CSV manifest')
-                }}
-              >
-                Import Manifest
-              </button>
             </div>
           </div>
         </div>

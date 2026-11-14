@@ -7784,3 +7784,71 @@ button {
   gap: 0.65rem;
   flex-wrap: wrap;
 }
+
+/* ─── Inventory Pagination (Styled to match Dispatch Pagination) ─────────────── */
+.fg-inv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #e1ece5;
+  font-size: 0.82rem;
+  color: #496354;
+  flex-wrap: wrap;
+  background-color: #ffffff;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+.fg-inv-pagination__info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #627d6e;
+}
+
+.fg-inv-pagination__info strong {
+  color: #123020;
+  font-weight: 700;
+}
+
+.fg-inv-pagination__btns {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.fg-inv-page-btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  border-radius: 7px;
+  border: 1px solid #d4e2d8;
+  background-color: #ffffff;
+  color: #123020;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 32px;
+  text-align: center;
+}
+
+.fg-inv-page-btn:hover:not(:disabled) {
+  background-color: #edf8f1;
+  border-color: #1b9b55;
+  color: #147b43;
+}
+
+.fg-inv-page-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.fg-inv-page-btn.is-active {
+  background-color: #1b9b55;
+  color: #ffffff;
+  border-color: #1b9b55;
+  box-shadow: 0 2px 6px rgba(27, 155, 85, 0.25);
+}
