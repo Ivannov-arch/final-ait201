@@ -1,12 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://sccsbjlmpxjligwckqpp.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Xpgq-ETg1SUq37N9Qtq-mQ_UEiEO2c-'
+// Safe environment loading without hardcoded production fallback (BUG-DB-03 fix)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = (supabaseUrl && supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
 
-// ── Map Supabase row → Frontend Batch Object ──────────────────────────────────
+// ── Map Supabase row → Frontend Batch Object (BUG-INV-01 fix: standard LOT-XXXX format)
 export function supabaseRowToBatch(r) {
+  const rawId = r.lot_id || r.batch_id || `LOT-${r.product_id ? String(r.product_id).replace(/\D/g, '') : '1000'}`
+  let canonicalId = String(rawId)
+  const canMatch = canonicalId.match(/^CAN-(\d+)$/i)
+  if (canMatch) {
+    const num = parseInt(canMatch[1], 10)
+    canonicalId = num >= 2000 ? `LOT-${num - 1000}` : `LOT-${num}`
+  }
   const qty   = Number(r.quantity) || 0
   const price = parseFloat(r.unit_price_myr) || 0
   const cost  = parseFloat(r.cost_price_myr) || price * 0.70
@@ -17,7 +27,9 @@ export function supabaseRowToBatch(r) {
   else if (dte <= 5) { riskType = 'med';  risk = 'Moderate Risk' }
 
   return {
-    id:                r.batch_id || r.lot_id,
+    id:                canonicalId,
+    lot_id:            canonicalId,
+    batch_id:          canonicalId,
     product:           r.product_name,
     category:          r.category,
     stockQty:          qty,
@@ -38,8 +50,8 @@ export function supabaseRowToBatch(r) {
     supplier:          r.supplier_name || 'Direct Procurement',
     warehouseLocation: r.warehouse_location || 'Aisle 1',
     storeId:           r.store_id || 'MY-KL-001',
-    recommended:       riskType === 'high' ? 'Donate to Food Bank'
+    recommended:       r.recommended_route || (riskType === 'high' ? 'Donate to Food Bank'
                      : riskType === 'med'  ? 'Dynamic Markdown'
-                     :                       'Normal Sale'
+                     :                       'Normal Sale')
   }
 }

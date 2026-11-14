@@ -102,14 +102,15 @@ def sort_by_fefo(batch_list: list[dict]) -> list[dict]:
     return sorted(batch_list, key=lambda x: pd.to_datetime(x.get('expiry_date', '9999-12-31'), errors='coerce'))
 
 # ── Demo Penggunaan Mandiri (Inferensi Model ML / Fallback Heuristik) ──
-sample_lot = {
-    'turnover_ratio': 3.5,
-    'stock_pressure': 0.8,
-    'unit_price': 12.0,
-    'sales_rate': 0.15,
-    'category': 'Fruits & Vegetables',
-    'shelf_life_days': 5
-}
+if __name__ == "__main__":
+    sample_lot = {
+        'turnover_ratio': 3.5,
+        'stock_pressure': 0.8,
+        'unit_price': 12.0,
+        'sales_rate': 0.15,
+        'category': 'Fruits & Vegetables',
+        'shelf_life_days': 5
+    }
 
-result = predict_spoilage_risk(sample_lot)
-print(f"✅ Pengujian independen model: {result}")
+    result = predict_spoilage_risk(sample_lot)
+    print(f"✅ Pengujian independen model: {result}")

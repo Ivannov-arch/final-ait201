@@ -171,7 +171,7 @@ def _print_report(df: pd.DataFrame) -> None:
             print(
                 f"  {row[id_col]:<12}  {str(row['product_name']):<22}  "
                 f"{int(row['days_to_expiry']):>4}d  "
-                f"{row['discount_percent']*100:>7.0f}%"
+                f"{(row.get('discount_fraction', row['discount_percent'] / 100 if row['discount_percent'] > 1.0 else row['discount_percent']) * 100):>7.0f}%"
             )
     else:
         print(f"\n  ✓  No anti-moral-hazard redirects triggered in this run.")

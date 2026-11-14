@@ -3,6 +3,27 @@ import gsap from 'gsap'
 import DashboardHeader from './DashboardHeader'
 import defaultForecastData from '../../data/generatedProductForecasts.json'
 
+// ── Category-Aware Velocity Heuristics (BUG-FC-04 fix) ──────────────────────────
+function getCategoryDecayRates(category, turnoverRatio) {
+  const cat = String(category || '').toLowerCase()
+  const tr = parseFloat(turnoverRatio) || 1.2
+  const velocity = Math.min(1.8, Math.max(0.6, tr / 1.5))
+
+  if (cat.includes('produce') || cat.includes('fruit') || cat.includes('vegetable') || cat.includes('bakery') || cat.includes('bread')) {
+    // Highly perishable: ~45-55% over 3 days
+    return [0.22 * velocity, 0.18 * velocity, 0.14 * velocity]
+  } else if (cat.includes('dairy') || cat.includes('meat') || cat.includes('poultry') || cat.includes('seafood') || cat.includes('egg')) {
+    // Moderately perishable: ~35-45% over 3 days
+    return [0.18 * velocity, 0.15 * velocity, 0.11 * velocity]
+  } else if (cat.includes('beverage') || cat.includes('juice')) {
+    // Semi-perishable drinks: ~22-28% over 3 days
+    return [0.11 * velocity, 0.09 * velocity, 0.07 * velocity]
+  } else {
+    // Shelf-stable pantry / dry goods / oils / grains: ~12-18% over 3 days
+    return [0.07 * velocity, 0.05 * velocity, 0.04 * velocity]
+  }
+}
+
 // ── Merge ML forecast products with live batch stock (source of truth) ──────────
 // ML forecast provides demand from three_day_forecast.json via /api/forecast/products.
 // Live batches override currentStock, daysToExpiry, and unitPrice.
@@ -22,16 +43,18 @@ function mergeMlWithBatches(mlProducts, batches) {
       })
       merged[b.product] = { ...merged[b.product], batchId: b.id, currentStock: stock, daysToExpiry: dte, unitPrice: price, points: patchedPoints }
     } else {
-      // Product not in ML — fallback to heuristic decay (35/30/25%)
-      const d1 = Math.max(1, Math.round(stock * 0.35))
-      const d2 = Math.max(1, Math.round(stock * 0.30))
-      const d3 = Math.max(1, Math.round(stock * 0.25))
+      // Product not in ML — category-aware heuristic decay (BUG-FC-04 fix)
+      const [r1Rate, r2Rate, r3Rate] = getCategoryDecayRates(b.category, b.turnoverRatio)
+      const d1 = Math.max(1, Math.round(stock * r1Rate))
+      const d2 = Math.max(1, Math.round(stock * r2Rate))
+      const d3 = Math.max(1, Math.round(stock * r3Rate))
       const r1 = Math.max(0, stock - d1), r2 = Math.max(0, r1 - d2), r3 = Math.max(0, r2 - d3)
       merged[b.product] = {
         product: b.product, category: b.category || 'Produce',
         batchId: b.id, unit: b.uom || 'units', unitPrice: price,
         currentStock: stock, daysToExpiry: dte, totalDemand: d1 + d2 + d3,
         mlFamily: null, mlWeight: null, // heuristic fallback flag
+        isHeuristic: true,
         points: [
           { label: 'Tomorrow', date: 'Day +1', demand: d1, stockRemaining: r1, status: r1 === 0 ? 'Stockout' : 'Adequate' },
           { label: 'Day After', date: 'Day +2', demand: d2, stockRemaining: r2, status: r2 === 0 ? 'Stockout' : 'Adequate' },
@@ -185,7 +208,6 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedDayIdx, setSelectedDayIdx]   = useState(0)
   const [toastMessage, setToastMessage]       = useState(null)
-  const [isExecuting,  setIsExecuting]        = useState(false)
 
   const searchContainerRef = useRef(null)
   const toastRef           = useRef(null)
@@ -266,6 +288,13 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
   const allProducts = useMemo(() => Object.keys(mergedDb), [mergedDb])
   const [selectedProduct, setSelectedProduct] = useState(allProducts[0] || 'Bell Pepper')
 
+  // Reset selectedProduct if current product was deleted from batches (BUG-FC-03 fix)
+  useEffect(() => {
+    if (allProducts.length > 0 && !allProducts.includes(selectedProduct)) {
+      setSelectedProduct(allProducts[0])
+    }
+  }, [allProducts, selectedProduct])
+
   // Search matches
   const searchMatches = useMemo(() => {
     if (!searchTerm) return allProducts.slice(0, 8)
@@ -275,6 +304,10 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
 
   // Current product data & decision
   const productData = mergedDb[selectedProduct] || mergedDb[allProducts[0]] || defaultForecastData['Bell Pepper']
+  const isMlSource = Boolean(productData.mlFamily && !mlError)
+  const sourceLabel = isMlSource
+    ? `LightGBM ML (${productData.mlFamily})`
+    : 'Category Velocity Heuristic'
   const points = productData.points || []
   const stockNum = Number(productData.currentStock) || 0
   const demandNum = Number(productData.totalDemand) || points.reduce((sum, p) => sum + (p.demand || 0), 0) || 3
@@ -304,23 +337,6 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
   const stockPath = `M ${stockCoords.map(c => `${c.x},${c.y}`).join(' L ')}`
   const demandPath = `M ${demandCoords.map(c => `${c.x},${c.y}`).join(' L ')}`
   const stockArea = `${stockPath} L ${getX(points.length - 1)},${padB} L ${getX(0)},${padB} Z`
-
-  // Handle action CTA
-  const handleExecute = () => {
-    setIsExecuting(true)
-    setTimeout(() => {
-      setIsExecuting(false)
-      if (decision.actionType === 'reorder') {
-        showToast(`📦 Restock PO created for +${decision.deficit} ${unit} of ${selectedProduct}.`)
-      } else if (decision.actionType === 'markdown') {
-        showToast(`🏷️ 30% discount applied to ${selectedProduct} in POS.`)
-      } else if (decision.actionType === 'donate') {
-        showToast(`🚚 Food Bank dispatch booked for ${decision.surplus} ${unit} of ${selectedProduct}.`)
-      } else {
-        showToast(`✓ Shelf placement verified for ${selectedProduct}.`)
-      }
-    }, 400)
-  }
 
   return (
     <div className="fg-inv-root" style={{ maxWidth: '1240px', margin: '0 auto', paddingBottom: '2.5rem' }}>
@@ -515,7 +531,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
                 {decision.title}
               </span>
               <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                {productData.category} {productData.batchId ? `• ${productData.batchId}` : ''} • DTE {dteNum}d
+                {productData.category} {productData.batchId ? `• ${productData.batchId}` : ''} • DTE {dteNum}d • Source: {sourceLabel}
               </span>
             </div>
 
@@ -526,6 +542,9 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
             <p style={{ margin: 0, fontSize: '0.86rem', color: '#334155', lineHeight: 1.45, fontWeight: 500 }}>
               {decision.reason}
             </p>
+            <div style={{ marginTop: '5px', fontSize: '0.74rem', color: '#64748b' }}>
+              Forecast Source: {isMlSource ? `LightGBM ML Model (Family: ${productData.mlFamily})` : 'Category Velocity Heuristics'}
+            </div>
           </div>
 
           {/* Center: 3 Clean Inline Figures (No nested cards!) */}
@@ -575,29 +594,28 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
             </div>
           </div>
 
-          {/* Right: The Single Primary Action Button */}
+          {/* Right: Recommended Action Status Badge (BUG-FC-02: dead code button removed) */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
             <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
               Recommended Action
             </span>
-            <button
-              type="button"
-              className="fg-inv-btn-primary"
-              onClick={handleExecute}
-              disabled={isExecuting}
+            <div
               style={{
-                width: '100%',
-                background: decision.badgeColor,
-                borderColor: decision.badgeColor,
-                padding: '0.65rem 1.4rem',
-                fontSize: '0.88rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: `${decision.badgeColor}18`,
+                border: `1.5px solid ${decision.badgeColor}`,
+                color: decision.badgeColor,
+                padding: '0.55rem 1.15rem',
+                fontSize: '0.85rem',
                 fontWeight: 800,
-                borderRadius: '12px',
-                boxShadow: '0 3px 12px rgba(0,0,0,0.08)'
+                borderRadius: '12px'
               }}
             >
-              {isExecuting ? 'Processing...' : decision.btnText}
-            </button>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: decision.badgeColor }} />
+              <span>{decision.btnText}</span>
+            </div>
           </div>
 
         </div>

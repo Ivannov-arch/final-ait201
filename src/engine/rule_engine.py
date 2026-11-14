@@ -252,7 +252,8 @@ def _make_result(
 
     return {
         "recommended_route": route,
-        "discount_percent": round(discount, 4),
+        "discount_percent": round(discount * 100.0, 2),
+        "discount_fraction": round(discount, 4),
         "discounted_price_myr": round(discounted_price, 2),
         "expected_value_myr": round(expected_value, 2),
         "channel": channel,
@@ -293,7 +294,10 @@ def evaluate_lot_dataframe(
     """
     import pandas as pd
 
+    # Sort deterministically by days_to_expiry so nearest-expiry batches get quota prioritized
     result_df = df.copy()
+    original_index = result_df.index
+    result_df.sort_values(by="days_to_expiry", ascending=True, inplace=True)
 
     # Resolve demand column
     if demand_col not in result_df.columns:
@@ -346,6 +350,7 @@ def evaluate_lot_dataframe(
 
     # Clean up temp columns
     result_df.drop(columns=["_is_surplus", "_demand_tmp"], errors="ignore", inplace=True)
+    result_df = result_df.reindex(original_index)
 
     return result_df
 

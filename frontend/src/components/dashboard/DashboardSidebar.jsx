@@ -232,9 +232,9 @@ export default function DashboardSidebar({
         {/* Mascot Card with real image */}
         <div className="fg-sidebar__mascot-card">
           <FreshBotMascot className="fg-sidebar__mascot-avatar" />
-          <div className="fg-sidebar__mascot-greeting">Hi Raoul</div>
+          <div className="fg-sidebar__mascot-greeting">Store Supervisor</div>
           <p className="fg-sidebar__mascot-sub">
-            AI telemetry active. 1,240 kg rescued this week.
+            AI telemetry active · Real-time food rescue live.
           </p>
           <button
             type="button"

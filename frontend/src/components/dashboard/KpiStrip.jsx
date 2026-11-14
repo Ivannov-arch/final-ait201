@@ -50,7 +50,7 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
 export default function KpiStrip({
   totalAssets = 0,
   profit = 0,
-  activeBatchesCount = 5,
+  activeBatchesCount = 0,
   onNavigateInventory
 }) {
   const containerRef = useRef(null)
@@ -125,7 +125,9 @@ export default function KpiStrip({
       >
         <div className="fg-kpi-card__header">
           <span className="fg-kpi-card__label">Active Batches (FEFO)</span>
-          <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--info">100% Monitored</span>
+          <span className="fg-kpi-card__delta-tag fg-kpi-card__delta-tag--info">
+            {activeBatchesCount > 0 ? '100% Monitored' : '0 Lots'}
+          </span>
         </div>
         <div className="fg-kpi-card__main">
           <span className="fg-kpi-card__value">

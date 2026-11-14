@@ -1,5 +1,24 @@
 [
   {
+    "id": "TXN-1026",
+    "time": "11:45 AM",
+    "date": "14 Nov 2026",
+    "batchId": "LOT-1843",
+    "product": "toto",
+    "category": "Fruits & Vegetables",
+    "image": "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=160&auto=format&fit=crop&q=80",
+    "unitPrice": 12,
+    "unit": "units",
+    "qty": 12,
+    "discount": 0,
+    "discountAmt": 0,
+    "subtotal": 144,
+    "total": 144,
+    "payMethod": "Cash",
+    "cashier": "John Doe",
+    "status": "paid"
+  },
+  {
     "id": "TXN-1025",
     "time": "10:42 AM",
     "date": "14 Nov 2026",

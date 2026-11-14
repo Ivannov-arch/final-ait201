@@ -69,7 +69,7 @@ Dataset mentah menggunakan satuan yang bervariasi (`kg`, `pack`, `box`, `crate`,
 
 | Nama Kolom | Tipe Data | Wajib | Keterangan & Asal Sumber |
 |---|---|:---:|---|
-| `batch_id` | `VARCHAR(32)` | Ya | Primary Key unik (format: `CAN-XXXX`) |
+| `batch_id` | `VARCHAR(32)` | Ya | Primary Key unik (format: `LOT-XXXX`) |
 | `product_id` | `VARCHAR(32)` | Ya | Kode SKU produk terstandarisasi |
 | `product_name` | `VARCHAR(128)` | Ya | Nama resmi produk |
 | `canonical_category` | `VARCHAR(64)` | Ya | Salah satu dari 6 kategori kanonikal |

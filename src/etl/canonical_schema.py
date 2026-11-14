@@ -120,8 +120,8 @@ def build_canonical_batch_table(
         risk_label = "HIGH" if dte <= 2 else ("MODERATE" if dte <= 5 else "LOW")
 
         canon_row = {
-            "batch_id": f"CAN-{2000 + idx}",
-            "product_id": f"SKU-{r.get('lot_id', idx)}",
+            "batch_id": r.get("lot_id") or f"LOT-{1000 + idx}",
+            "product_id": f"SKU-{r.get('lot_id', f'LOT-{1000 + idx}')}",
             "product_name": r.get("product_name", f"Item {idx}"),
             "canonical_category": canon_cat,
             "quantity": f"{qty:.1f}",

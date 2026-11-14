@@ -64,6 +64,16 @@ function parseUnit(str) {
   return m ? m[0] : 'kg'
 }
 
+function matchBatchId(recId, searchId) {
+  if (!recId || !searchId) return false
+  const r = String(recId).trim().toUpperCase()
+  const s = String(searchId).trim().toUpperCase()
+  if (r === s) return true
+  const nr = r.replace(/\D/g, '')
+  const ns = s.replace(/\D/g, '')
+  return Boolean(nr && ns && nr === ns)
+}
+
 function getNextTxnId(salesList) {
   const maxNum = (salesList || []).reduce((max, s) => {
     const m = String(s.id || '').match(/TXN-(\d+)/)
@@ -221,16 +231,35 @@ export default function SalesLogPage({
     e.preventDefault()
     if (!editingSale) return
 
-    const qty = Number(editingSale.qty) || 1
+    const existingSale = sales.find(s => s.id === editingSale.id)
+    const oldQty = Number(existingSale?.qty) || 0
+    const newQty = Number(editingSale.qty) || 1
+    const qtyDiff = newQty - oldQty
+
+    // Find corresponding inventory batch to validate stock & adjust (BUG-SALES-04 fix)
+    const batchKey = editingSale.batchId || existingSale?.batchId
+    const targetBatch = batches.find(b => {
+      if (batchKey && matchBatchId(b.id, batchKey)) return true
+      return b.product && b.product.toLowerCase() === (editingSale.product || '').toLowerCase()
+    })
+
+    if (targetBatch && qtyDiff > 0) {
+      const currentStock = targetBatch.stockQty !== undefined ? Number(targetBatch.stockQty) : parseNum(targetBatch.qty)
+      if (qtyDiff > currentStock) {
+        showToast(`⚠️ Cannot increase quantity by ${qtyDiff}: only ${currentStock} ${targetBatch.uom || 'units'} left in stock`)
+        return
+      }
+    }
+
     const unitPrice = Number(editingSale.unitPrice) || 0
     const discount = Number(editingSale.discount) || 0
-    const subtotal = qty * unitPrice
+    const subtotal = newQty * unitPrice
     const discountAmt = subtotal * (discount / 100)
     const total = Math.max(0, subtotal - discountAmt)
 
     const updated = {
       ...editingSale,
-      qty,
+      qty: newQty,
       unitPrice,
       discount,
       subtotal,
@@ -239,6 +268,7 @@ export default function SalesLogPage({
     }
 
     setSales(prev => prev.map(s => s.id === updated.id ? updated : s))
+    
     // Persist edit to backend
     fetch(`/api/transactions/${encodeURIComponent(updated.id)}`, {
       method: 'PATCH',
@@ -246,19 +276,70 @@ export default function SalesLogPage({
       body: JSON.stringify(updated)
     }).catch(() => {})
 
+    // Adjust inventory stock according to qtyDiff (BUG-SALES-04 fix)
+    if (targetBatch && qtyDiff !== 0) {
+      const currentStock = targetBatch.stockQty !== undefined ? Number(targetBatch.stockQty) : parseNum(targetBatch.qty)
+      const newStock = Math.max(0, currentStock - qtyDiff)
+      if (onUpdateBatches) {
+        onUpdateBatches(prev => prev.map(b => {
+          if (b.id !== targetBatch.id) return b
+          return {
+            ...b,
+            stockQty: newStock,
+            qty: `${newStock} ${b.uom || targetBatch.uom || 'units'}`
+          }
+        }))
+      }
+      fetch(`/api/batches/${encodeURIComponent(targetBatch.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newStock })
+      }).catch(() => {})
+    }
+
     setEditingSale(null)
     showToast(`✓ Transaction ${updated.id} successfully updated!`)
   }
 
   const handleDeleteSale = (txnId) => {
+    const saleToDelete = sales.find(s => s.id === txnId)
     setSales(prev => prev.filter(s => s.id !== txnId))
+    
     // Persist deletion to backend
     fetch(`/api/transactions/${encodeURIComponent(txnId)}`, {
       method: 'DELETE'
     }).catch(() => {})
 
+    // Restore inventory stock if this transaction had an associated batch (BUG-SALES-04 fix)
+    if (saleToDelete && (saleToDelete.batchId || saleToDelete.product)) {
+      const targetBatch = batches.find(b => {
+        if (saleToDelete.batchId && matchBatchId(b.id, saleToDelete.batchId)) return true
+        return b.product && b.product.toLowerCase() === (saleToDelete.product || '').toLowerCase()
+      })
+      if (targetBatch) {
+        const restoreQty = Number(saleToDelete.qty) || 0
+        const currentStock = targetBatch.stockQty !== undefined ? Number(targetBatch.stockQty) : parseNum(targetBatch.qty)
+        const newStock = currentStock + restoreQty
+        if (onUpdateBatches) {
+          onUpdateBatches(prev => prev.map(b => {
+            if (b.id !== targetBatch.id) return b
+            return {
+              ...b,
+              stockQty: newStock,
+              qty: `${newStock} ${b.uom || targetBatch.uom || 'units'}`
+            }
+          }))
+        }
+        fetch(`/api/batches/${encodeURIComponent(targetBatch.id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: newStock })
+        }).catch(() => {})
+      }
+    }
+
     setEditingSale(null)
-    showToast(`🗑 Transaction ${txnId} deleted`)
+    showToast(`🗑 Transaction ${txnId} deleted (stock restored)`)
   }
 
   const handleOpenPOS = () => {

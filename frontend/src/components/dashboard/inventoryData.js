@@ -6,11 +6,13 @@ export function parseDateToDays(expiryStr) {
   const parsed = Date.parse(expiryStr)
   if (!isNaN(parsed)) {
     const expDate = new Date(parsed)
-    const baseYear = expDate.getFullYear()
     const now = new Date()
-    const refDate = (baseYear === 2026) ? new Date('2026-11-14') : now
-    const diffMs = expDate - refDate
-    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+    // Compare dates at start of day (00:00:00) to ensure accurate calendar days
+    const dExp = new Date(expDate.getFullYear(), expDate.getMonth(), expDate.getDate())
+    const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const diffMs = dExp - dNow
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+    return Math.max(0, diffDays)
   }
   return 7
 }

@@ -366,8 +366,8 @@ export default function DashboardPage({ onNavigateHome }) {
 
             {/* Middle row: Trend bar chart + Reason for recovery donut chart */}
             <div className="fg-charts-row">
-              <ProfitDailyChart />
-              <ReasonForRecoveryChart />
+              <ProfitDailyChart liveProfit={profit} />
+              <ReasonForRecoveryChart batches={batches} />
             </div>
 
             {/* Bottom section: Full-width recent activities stream synced with Inventory actions */}

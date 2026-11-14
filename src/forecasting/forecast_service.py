@@ -1,5 +1,7 @@
 import pandas as pd
 import json
+import os
+import urllib.request
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -62,10 +64,76 @@ def load_forecast():
     return forecasts
 
 
-def load_lots():
-    if not LOTS_PATH.exists():
-        raise FileNotFoundError(f"Inventory lots file not found at {LOTS_PATH}")
-    return pd.read_csv(LOTS_PATH)
+def _get_env_var(name: str) -> str:
+    if os.getenv(name):
+        return os.getenv(name)
+    env_file = ROOT / ".env"
+    if env_file.exists():
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith(f"{name}="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    fe_env = ROOT / "frontend" / ".env"
+    if fe_env.exists():
+        try:
+            with open(fe_env, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith(f"{name}="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    return ""
+
+
+def load_lots() -> pd.DataFrame:
+    """
+    Loads active inventory lots for forecast disaggregation.
+    Connects to Supabase Cloud live batches table first (BUG-FC-07 & BUG-FC-01 fix).
+    Falls back gracefully to inventory_master.json, then inventory_master.csv.
+    """
+    supabase_url = _get_env_var("VITE_SUPABASE_URL") or _get_env_var("SUPABASE_URL")
+    supabase_key = _get_env_var("SUPABASE_SERVICE_ROLE_KEY") or _get_env_var("VITE_SUPABASE_ANON_KEY")
+
+    if supabase_url and supabase_key:
+        try:
+            req = urllib.request.Request(
+                f"{supabase_url}/rest/v1/batches?select=*&quantity=gt.0",
+                headers={
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode("utf-8"))
+                    if isinstance(data, list) and len(data) > 0:
+                        df = pd.DataFrame(data)
+                        if "batch_id" in df.columns and "lot_id" not in df.columns:
+                            df["lot_id"] = df["batch_id"]
+                        return df
+        except Exception:
+            pass
+
+    # Fallback 1: live application JSON
+    json_master = DATA_PATH / "inventory_master.json"
+    if json_master.exists():
+        try:
+            with open(json_master, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list) and len(data) > 0:
+                    df = pd.DataFrame(data)
+                    return df
+        except Exception:
+            pass
+
+    # Fallback 2: static CSV
+    if LOTS_PATH.exists():
+        return pd.read_csv(LOTS_PATH)
+
+    raise FileNotFoundError(f"Inventory lots file not found at {LOTS_PATH}")
 
 
 # ==========================================

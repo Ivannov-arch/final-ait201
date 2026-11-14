@@ -20,7 +20,7 @@ function getEnvKey(key) {
   return '';
 }
 
-const SUPABASE_URL = getEnvKey('VITE_SUPABASE_URL') || 'https://sccsbjlmpxjligwckqpp.supabase.co';
+const SUPABASE_URL = getEnvKey('VITE_SUPABASE_URL');
 const SECRET_KEY   = getEnvKey('SUPABASE_SERVICE_ROLE_KEY');
 
 const MASTER_PATH = path.join(__dirname, '../data/processed/inventory_master.json');

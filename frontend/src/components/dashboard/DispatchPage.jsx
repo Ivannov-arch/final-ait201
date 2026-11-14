@@ -45,6 +45,38 @@ const DEFAULT_RECEIVERS = [
   }
 ]
 
+// Smart Receiver Matching (BUG-DSP-01 fix: match by accepted category & available capacity)
+function matchReceiverForBatch(batch) {
+  const cat = (batch.category || '').toLowerCase()
+  const suitable = DEFAULT_RECEIVERS.filter(r => {
+    const accepted = r.accepted.toLowerCase()
+    if (accepted.includes('all')) return true
+    if ((cat.includes('veg') || cat.includes('produce') || cat.includes('fruit')) && (accepted.includes('vegetables') || accepted.includes('fruits') || accepted.includes('produce'))) return true
+    if ((cat.includes('bake') || cat.includes('bread')) && accepted.includes('bakery')) return true
+    if ((cat.includes('dairy') || cat.includes('milk') || cat.includes('cheese')) && (accepted.includes('dairy') || accepted.includes('perishable'))) return true
+    if ((cat.includes('meat') || cat.includes('poultry') || cat.includes('seafood')) && (accepted.includes('meat') || accepted.includes('perishable'))) return true
+    return false
+  })
+
+  const pool = suitable.length > 0 ? suitable : DEFAULT_RECEIVERS
+  // Prioritize highest available capacity
+  const chosen = [...pool].sort((a, b) => (b.availableKg || 0) - (a.availableKg || 0))[0] || DEFAULT_RECEIVERS[0]
+
+  // Spatial distance from Store (KL Central: ~3.1390, 101.6869)
+  const storeLat = 3.1390, storeLng = 101.6869
+  const [recLat, recLng] = chosen.coords || [3.1448, 101.7139]
+  const dLat = (recLat - storeLat) * 111.0
+  const dLng = (recLng - storeLng) * 111.0 * Math.cos(storeLat * (Math.PI / 180))
+  const roadDist = Math.max(2.1, parseFloat((Math.sqrt(dLat * dLat + dLng * dLng) * 1.35).toFixed(1)))
+  const etaMins = Math.max(8, Math.round(roadDist * 2.2 + 3))
+
+  return {
+    receiver: chosen,
+    distanceKm: roadDist.toFixed(1),
+    etaMinutes: etaMins
+  }
+}
+
 // Retail Category Color Mapping for Wayfinding
 const getCategoryColorClass = (cat) => {
   const c = (cat || '').toLowerCase()
@@ -176,10 +208,11 @@ export default function DispatchPage({
         demandGap = 'Balanced'
       }
 
-      // Assign nearest food bank via nearest-neighbor
-      const assignedReceiver = DEFAULT_RECEIVERS[idx % DEFAULT_RECEIVERS.length]
-      const distanceKm = (4.5 + (idx * 1.8)).toFixed(1)
-      const etaMinutes = Math.round(Number(distanceKm) * 2.3 + 4)
+      // Assign nearest suitable food bank via smart category & capacity matching (BUG-DSP-01)
+      const match = matchReceiverForBatch(b)
+      const assignedReceiver = match.receiver
+      const distanceKm = match.distanceKm
+      const etaMinutes = match.etaMinutes
 
       const isDispatched = dispatchedBatchIds.has(b.id)
 
@@ -273,9 +306,33 @@ export default function DispatchPage({
 
   const totalCarbonOffsetKg = Math.round(criticalWeight * 2.5) // 2.5 kg CO2e per kg food diverted
 
+  // Cleanup countdown intervals on unmount (BUG-DSP-04 memory leak fix)
+  useEffect(() => {
+    return () => {
+      if (countdownRefs.current) {
+        Object.values(countdownRefs.current).forEach(clearInterval)
+      }
+    }
+  }, [])
+
   // Commit a dispatch (called after the undo window expires, or immediately if re-dispatching)
   const commitDispatch = useCallback((batch) => {
     setDispatchedBatchIds(prev => new Set([...prev, batch.id]))
+
+    // Persist dispatch record to backend & Supabase dispatch_log (BUG-DSP-02 fix)
+    fetch('/api/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        batch_id: batch.id,
+        receiver_id: batch.assignedReceiver?.id || 'REC-01',
+        receiver_name: batch.assignedReceiver?.name || 'Food Bank',
+        distance_km: batch.distanceKm,
+        eta_minutes: batch.etaMinutes,
+        quantity: batch.weightKg || batch.stockQty || 10
+      })
+    }).catch(() => {})
+
     if (onApplyAction) {
       onApplyAction(batch, 'donate')
     }

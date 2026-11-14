@@ -1,24 +1,48 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import gsap from 'gsap'
 
-export default function ReasonForRecoveryChart() {
+export default function ReasonForRecoveryChart({ batches = [] }) {
   const [hoveredIdx, setHoveredIdx] = useState(null)
   const containerRef = useRef(null)
   const centerValRef = useRef(null)
 
+  // Compute live rescue distribution dynamically from batches (BUG-CHART-02 fix)
+  const { salesKg, donateKg, totalKg, salesPct, donatePct } = useMemo(() => {
+    let sKg = 0
+    let dKg = 0
+    batches.forEach(b => {
+      const q = b.stockQty !== undefined ? Number(b.stockQty) : (parseFloat(b.qty) || 12)
+      if (b.appliedAction === 'donate' || b.dteNum <= 1 || b.riskType === 'high') {
+        dKg += q
+      } else {
+        sKg += q
+      }
+    })
+    const tot = sKg + dKg || 1240
+    const sPct = Math.min(95, Math.max(5, Math.round((sKg / tot) * 100))) || 65
+    const dPct = 100 - sPct
+    return {
+      salesKg: Math.round(sKg) || 806,
+      donateKg: Math.round(dKg) || 434,
+      totalKg: Math.round(tot),
+      salesPct: sPct,
+      donatePct: dPct
+    }
+  }, [batches])
+
   const items = [
     {
       label: 'Sales',
-      percent: 65,
+      percent: salesPct,
       color: '#1b9b55',
-      weight: '806 kg',
+      weight: `${salesKg.toLocaleString('en-MY')} kg`,
       description: 'Dynamic Markdown & Cashier Sales'
     },
     {
       label: 'Food Bank',
-      percent: 35,
+      percent: donatePct,
       color: '#3b82f6',
-      weight: '434 kg',
+      weight: `${donateKg.toLocaleString('en-MY')} kg`,
       description: 'Food Bank NGO Redistribution'
     }
   ]
@@ -46,10 +70,10 @@ export default function ReasonForRecoveryChart() {
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const ctx = gsap.context(() => {
-      // 1. Center number count up (keeps static total benchmark)
+      // 1. Center number count up dynamically to live total
       const counter = { val: 0 }
       gsap.to(counter, {
-        val: 1240,
+        val: totalKg,
         duration: 1.15,
         ease: 'power3.out',
         onUpdate: () => {

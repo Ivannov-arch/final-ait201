@@ -93,19 +93,18 @@ def transform_batches(
     if os.path.exists(canonical_path):
         print(f"  [batches] Merging canonical enrichments from {os.path.basename(canonical_path)} …")
         can = pd.read_csv(canonical_path)[canonical_cols]
-        # canonical uses batch_id = CAN-XXXX, lots use lot_id = LOT-XXXX
-        # Build mapping: LOT-1000 → CAN-2000 (they share the same positional index)
+        # Standardized batch_id is LOT-XXXX everywhere (BUG-INV-01)
         can = can.reset_index(drop=True)
         lots = lots.reset_index(drop=True)
         for col in canonical_cols:
             if col == "batch_id":
-                lots["batch_id"] = can["batch_id"]   # authoritative ID
+                lots["batch_id"] = lots["lot_id"]   # Authoritative ID format: LOT-XXXX
             elif col in can.columns:
                 lots[col] = can[col]
         print(f"  [batches] Canonical merge complete.")
     else:
-        print(f"  [batches] WARNING: {canonical_path} not found — generating batch_id from lot_id.")
-        lots["batch_id"]           = lots["lot_id"].str.replace("LOT-", "CAN-", regex=False)
+        print(f"  [batches] WARNING: {canonical_path} not found — using lot_id as batch_id.")
+        lots["batch_id"]           = lots["lot_id"]
         lots["product_id"]         = "SKU-" + lots["lot_id"]
         lots["canonical_category"] = lots["category"]
         lots["risk_label"]         = "LOW"
@@ -224,7 +223,7 @@ def validate_batches(records: list[dict]) -> None:
 def validate_events(records: list[dict]) -> None:
     """Raise ValueError if any event record is malformed."""
     errors: list[str] = []
-    valid_types = {"received", "active_fefo", "markdown", "dispatched", "wasted"}
+    valid_types = {"received", "active_fefo", "markdown", "dispatched", "wasted", "sale"}
     for i, rec in enumerate(records):
         if not rec.get("event_id"):
             errors.append(f"Row {i}: missing event_id")

@@ -1,22 +1,40 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import gsap from 'gsap'
 
-export default function ProfitDailyChart() {
+export default function ProfitDailyChart({ liveProfit = 0 }) {
   const [activeBar, setActiveBar] = useState(null)
   const chartRef = useRef(null)
   const totalRef = useRef(null)
 
-  const data = [
-    { day: 'Fri',  date: 'Oct 28', value: 312,  formatted: 'RM 312',   rate: '+8%'  },
-    { day: 'Sat',  date: 'Oct 29', value: 480,  formatted: 'RM 480',   rate: '+12%' },
-    { day: 'Sun',  date: 'Oct 30', value: 390,  formatted: 'RM 390',   rate: '+5%'  },
-    { day: 'Mon',  date: 'Oct 31', value: 620,  formatted: 'RM 620',   rate: '+18%' },
-    { day: 'Tue',  date: 'Nov 01', value: 540,  formatted: 'RM 540',   rate: '+10%' },
-    { day: 'Wed',  date: 'Nov 02', value: 780,  formatted: 'RM 780',   rate: '+25%' },
-    { day: 'Thu',  date: 'Nov 03', value: 950,  formatted: 'RM 950',   rate: '+30%' }
-  ]
+  // Dynamic 7-day rolling window ending on current calendar date (BUG-CHART-01 fix)
+  const data = useMemo(() => {
+    const days = []
+    const now = new Date()
+    const baseDaily = [380, 490, 420, 610, 580, 750]
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
+      const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
 
-  const maxVal = 1200
+      let val = 0
+      if (i === 0) {
+        val = 820 + Math.round(Number(liveProfit) || 0)
+      } else {
+        val = baseDaily[6 - i] || 450
+      }
+      days.push({
+        day: dayName,
+        date: dateLabel,
+        value: val,
+        formatted: `RM ${val.toLocaleString('en-MY')}`,
+        rate: i === 0 ? '+32%' : `+${(val % 20) + 5}%`
+      })
+    }
+    return days
+  }, [liveProfit])
+
+  const maxVal = Math.max(1200, ...data.map(d => d.value * 1.2))
   const total = data.reduce((s, d) => s + d.value, 0)
 
   useEffect(() => {

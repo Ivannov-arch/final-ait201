@@ -18,7 +18,21 @@ function readJson(p) {
 }
 
 function writeJson(p, data) {
+  try {
+    fs.mkdirSync(path.dirname(p), { recursive: true })
+  } catch (_) {}
   fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf8')
+}
+
+// ── Match batch IDs flexibly across CAN-XXXX and LOT-XXXX (BUG-INV-01 fix) ──
+function matchBatchId(recId, searchId) {
+  if (!recId || !searchId) return false
+  const r = String(recId).trim().toUpperCase()
+  const s = String(searchId).trim().toUpperCase()
+  if (r === s) return true
+  const nr = r.replace(/\D/g, '')
+  const ns = s.replace(/\D/g, '')
+  return Boolean(nr && ns && nr === ns)
 }
 
 function collectBody(req) {
@@ -133,7 +147,7 @@ function getEnvKey(key) {
   return ''
 }
 
-const SUPABASE_URL = getEnvKey('VITE_SUPABASE_URL') || 'https://sccsbjlmpxjligwckqpp.supabase.co'
+const SUPABASE_URL = getEnvKey('VITE_SUPABASE_URL')
 const SUPABASE_KEY = getEnvKey('SUPABASE_SERVICE_ROLE_KEY')
 
 function parseDateIso(dStr, fallbackDays = 7) {
@@ -153,14 +167,38 @@ function rowToSupabase(r) {
   const qty = Number(r.quantity) || 0
   const price = parseFloat(r.unit_price_myr) || 5.0
   let riskLabel = 'LOW'
-  if (dte <= 2) riskLabel = 'HIGH'
-  else if (dte <= 5) riskLabel = 'MODERATE'
+  let route = 'Normal Sale'
+  let discountPct = 0
+  let channel = 'retail'
+
+  if (dte <= 1) {
+    riskLabel = 'HIGH'
+    route = 'Donation'
+    channel = 'closed_ngo'
+    discountPct = 0
+  } else if (dte <= 3) {
+    riskLabel = 'MODERATE'
+    route = 'Dynamic Markdown'
+    channel = 'retail'
+    discountPct = dte <= 2 ? 0.35 : 0.20
+  }
+
+  const discountedPrice = discountPct > 0 ? parseFloat((price * (1 - discountPct)).toFixed(2)) : price
+  const expectedValue = parseFloat((qty * (route === 'Donation' ? 0 : discountedPrice)).toFixed(2))
+  const rawId = r.lot_id || r.batch_id || 'LOT-1000'
+  let batchId = String(rawId)
+  const canMatch = batchId.match(/^CAN-(\d+)$/i)
+  if (canMatch) {
+    const num = parseInt(canMatch[1], 10)
+    batchId = num >= 2000 ? `LOT-${num - 1000}` : `LOT-${num}`
+  }
 
   return {
-    batch_id: r.lot_id,
-    product_id: r.product_id || ('PRD-' + String(r.lot_id).replace(/\D/g, '')),
-    product_name: r.product_name,
+    batch_id: batchId,
+    product_id: r.product_id || ('PRD-' + String(batchId || '1000').replace(/\D/g, '')),
+    product_name: r.product_name || 'Fresh Produce',
     category: r.category || 'Produce',
+    canonical_category: r.canonical_category || r.category || 'Produce',
     quantity: qty,
     uom: r.uom || 'units',
     expiry_date: parseDateIso(r.expiry_date, dte),
@@ -172,8 +210,14 @@ function rowToSupabase(r) {
     reorder_level: Number(r.reorder_level) || 15,
     unit_price_myr: price,
     store_id: r.store_id || 'MY-KL-001',
-    risk_label: riskLabel,
-    recommended_route: dte <= 1 ? 'Donation' : dte <= 3 ? 'Dynamic Markdown' : 'Normal Sale'
+    risk_label: r.risk_label || riskLabel,
+    recommended_route: r.recommended_route || route,
+    discount_percent: r.discount_percent !== undefined ? parseFloat(r.discount_percent) : discountPct,
+    discounted_price_myr: r.discounted_price_myr !== undefined ? parseFloat(r.discounted_price_myr) : discountedPrice,
+    expected_value_myr: r.expected_value_myr !== undefined ? parseFloat(r.expected_value_myr) : expectedValue,
+    channel: r.channel || channel,
+    moral_hazard_flag: Boolean(r.moral_hazard_flag || false),
+    updated_at: new Date().toISOString()
   }
 }
 
@@ -192,13 +236,18 @@ async function syncToSupabase(action, payload) {
         body: JSON.stringify([payload])
       })
     } else if (action === 'DELETE') {
-      await fetch(`${SUPABASE_URL}/rest/v1/batches?batch_id=eq.${encodeURIComponent(payload)}`, {
+      const lotId = String(payload)
+      const cleanId = lotId.replace(/\D/g, '')
+      const filter = cleanId ? `in.(${encodeURIComponent(lotId)},CAN-${cleanId},LOT-${cleanId})` : `eq.${encodeURIComponent(lotId)}`
+      await fetch(`${SUPABASE_URL}/rest/v1/batches?batch_id=${filter}`, {
         method: 'DELETE',
         headers
       })
     } else if (action === 'PATCH') {
       const { batch_id, ...updates } = payload
-      await fetch(`${SUPABASE_URL}/rest/v1/batches?batch_id=eq.${encodeURIComponent(batch_id)}`, {
+      const cleanId = String(batch_id).replace(/\D/g, '')
+      const filter = cleanId ? `in.(${encodeURIComponent(batch_id)},CAN-${cleanId},LOT-${cleanId})` : `eq.${encodeURIComponent(batch_id)}`
+      await fetch(`${SUPABASE_URL}/rest/v1/batches?batch_id=${filter}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(updates)
@@ -231,20 +280,21 @@ function createApiMiddleware() {
         const batch   = await collectBody(req)
         const row     = batchToRow(batch)
         const records = readJson(MASTER_JSON)
-        const idx     = records.findIndex(r => r.lot_id === row.lot_id)
-        if (idx >= 0) records[idx] = row
+        const idx     = records.findIndex(r => matchBatchId(r.lot_id, row.lot_id))
+        if (idx >= 0) records[idx] = { ...records[idx], ...row }
         else          records.unshift(row)
         writeJson(MASTER_JSON, records)
-        // Background sync to Supabase Cloud
+        // Background sync to Supabase Cloud (BUG-INV-02: full row schema)
         syncToSupabase('UPSERT', rowToSupabase(row))
-        sendJson(res, 200, { status: 'saved', batch: rowToBatch(row) })
+        sendJson(res, 200, { status: 'saved', batch: rowToBatch(records[idx >= 0 ? idx : 0]) })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }
       return
     }
 
-    // ── PATCH /api/batches/:id → UPDATE quantity in local JSON + Supabase Cloud ─
+    // ── PATCH /api/batches/:id → UPDATE in local JSON + Supabase Cloud ──────────
+    // Supports editing all fields and synchronizing to Supabase (BUG-INV-05 & BUG-INV-01)
     // If quantity <= 0 → directly DELETE from local JSON + Supabase Cloud ────────
     const patchMatch = url.match(/^\/api\/batches\/([^?/]+)$/)
     if (patchMatch && req.method === 'PATCH') {
@@ -252,7 +302,7 @@ function createApiMiddleware() {
         const lotId   = decodeURIComponent(patchMatch[1])
         const payload = await collectBody(req)
         const records = readJson(MASTER_JSON)
-        const idx     = records.findIndex(r => r.lot_id === lotId)
+        const idx     = records.findIndex(r => matchBatchId(r.lot_id, lotId))
 
         if (idx < 0) {
           sendJson(res, 404, { error: `Batch ${lotId} not found in inventory_master.json` })
@@ -262,27 +312,72 @@ function createApiMiddleware() {
         if (payload.quantity !== undefined) {
           records[idx].quantity = Number(payload.quantity)
         }
-        if (payload.unit_price_myr !== undefined) {
-          records[idx].unit_price_myr = String(payload.unit_price_myr)
+        if (payload.unit_price_myr !== undefined || payload.unitPrice !== undefined || payload.sellPrice !== undefined) {
+          const p = payload.unit_price_myr ?? payload.unitPrice ?? payload.sellPrice
+          const m = String(p).match(/[\d.]+/)
+          records[idx].unit_price_myr = m ? parseFloat(m[0]).toFixed(2) : String(p)
+        }
+        if (payload.expiry_date !== undefined || payload.expiryDate !== undefined) {
+          records[idx].expiry_date = payload.expiry_date ?? payload.expiryDate
+        }
+        if (payload.days_to_expiry !== undefined || payload.dteNum !== undefined) {
+          records[idx].days_to_expiry = Number(payload.days_to_expiry ?? payload.dteNum)
+        }
+        if (payload.reorder_level !== undefined || payload.reorderLevel !== undefined) {
+          records[idx].reorder_level = Number(payload.reorder_level ?? payload.reorderLevel)
+        }
+        if (payload.turnover_ratio !== undefined || payload.turnoverRatio !== undefined) {
+          records[idx].turnover_ratio = String(payload.turnover_ratio ?? payload.turnoverRatio)
+        }
+        if (payload.product_name !== undefined || payload.product !== undefined) {
+          records[idx].product_name = payload.product_name ?? payload.product
+        }
+        if (payload.category !== undefined) {
+          records[idx].category = payload.category
         }
         if (payload.status !== undefined) {
           records[idx].status = payload.status
         }
 
+        const canonicalLotId = records[idx].lot_id || lotId
+
         // Automatic removal when stock reaches 0
         if (Number(records[idx].quantity) <= 0) {
           records.splice(idx, 1)
           writeJson(MASTER_JSON, records)
-          syncToSupabase('DELETE', lotId)
-          sendJson(res, 200, { status: 'deleted', lot_id: lotId, reason: 'stock_depleted' })
+          syncToSupabase('DELETE', canonicalLotId)
+          sendJson(res, 200, { status: 'deleted', lot_id: canonicalLotId, reason: 'stock_depleted' })
         } else {
           writeJson(MASTER_JSON, records)
-          const updates = { batch_id: lotId, quantity: Number(records[idx].quantity) }
+          const updates = {
+            batch_id: canonicalLotId,
+            quantity: Number(records[idx].quantity),
+            updated_at: new Date().toISOString()
+          }
           if (records[idx].unit_price_myr) {
             updates.unit_price_myr = parseFloat(records[idx].unit_price_myr)
           }
+          if (records[idx].expiry_date) {
+            updates.expiry_date = parseDateIso(records[idx].expiry_date)
+          }
+          if (records[idx].days_to_expiry !== undefined) {
+            updates.days_to_expiry = Number(records[idx].days_to_expiry)
+          }
+          if (records[idx].reorder_level !== undefined) {
+            updates.reorder_level = Number(records[idx].reorder_level)
+          }
+          if (records[idx].turnover_ratio !== undefined) {
+            updates.turnover_ratio = parseFloat(records[idx].turnover_ratio)
+          }
+          if (records[idx].product_name) {
+            updates.product_name = records[idx].product_name
+          }
+          if (records[idx].category) {
+            updates.category = records[idx].category
+            updates.canonical_category = records[idx].category
+          }
           syncToSupabase('PATCH', updates)
-          sendJson(res, 200, { status: 'updated', lot_id: lotId, quantity: records[idx].quantity })
+          sendJson(res, 200, { status: 'updated', lot_id: canonicalLotId, batch: rowToBatch(records[idx]) })
         }
       } catch (e) {
         sendJson(res, 500, { error: e.message })
@@ -297,7 +392,7 @@ function createApiMiddleware() {
         const lotId   = decodeURIComponent(delMatch[1])
         const records = readJson(MASTER_JSON)
         const before  = records.length
-        const updated = records.filter(r => r.lot_id !== lotId)
+        const updated = records.filter(r => !matchBatchId(r.lot_id, lotId))
         writeJson(MASTER_JSON, updated)
         syncToSupabase('DELETE', lotId)
         sendJson(res, 200, { status: 'deleted', lot_id: lotId, removed: before - updated.length })
@@ -320,14 +415,8 @@ function createApiMiddleware() {
         }
         writeJson(TXNS_JSON, records)
 
-        // Also sync to frontend bundled file if needed
-        try {
-          const unifiedPath = path.resolve(__dirname, 'src/data/unifiedSalesLog.json')
-          writeJson(unifiedPath, records)
-        } catch (_) {}
-
-        // Sync event to Supabase Cloud simulation_events
-        if (SUPABASE_URL && SUPABASE_KEY) {
+        // Sync event to Supabase Cloud simulation_events (BUG-SALES-01 fix: valid enum 'markdown')
+        if (SUPABASE_URL && SUPABASE_KEY && txn.batchId && txn.batchId !== 'UNKNOWN') {
           fetch(`${SUPABASE_URL}/rest/v1/simulation_events`, {
             method: 'POST',
             headers: {
@@ -338,18 +427,20 @@ function createApiMiddleware() {
             },
             body: JSON.stringify([{
               event_id: `EVT-${txn.id}`,
-              batch_id: txn.batchId || 'UNKNOWN',
+              batch_id: txn.batchId,
               store_id: 'MY-KL-001',
-              event_type: 'sale',
+              event_type: 'markdown',
               timestamp: new Date().toISOString(),
               quantity: Number(txn.qty) || 1,
               metadata: {
+                action: 'pos_sale',
                 txn_id: txn.id,
                 product: txn.product,
                 unit_price: txn.unitPrice,
                 total: txn.total,
                 pay_method: txn.payMethod,
-                discount: txn.discount
+                discount: txn.discount,
+                cashier: txn.cashier || 'Cashier'
               }
             }])
           }).catch(err => console.warn('[Supabase Sync] simulation_events notice:', err.message))
@@ -373,10 +464,6 @@ function createApiMiddleware() {
         if (idx >= 0) {
           records[idx] = { ...records[idx], ...payload }
           writeJson(TXNS_JSON, records)
-          try {
-            const unifiedPath = path.resolve(__dirname, 'src/data/unifiedSalesLog.json')
-            writeJson(unifiedPath, records)
-          } catch (_) {}
           sendJson(res, 200, { status: 'updated', id: txnId })
         } else {
           sendJson(res, 404, { error: `Transaction ${txnId} not found` })
@@ -395,11 +482,69 @@ function createApiMiddleware() {
         const records = readJson(TXNS_JSON)
         const filtered = records.filter(r => r.id !== txnId)
         writeJson(TXNS_JSON, filtered)
-        try {
-          const unifiedPath = path.resolve(__dirname, 'src/data/unifiedSalesLog.json')
-          writeJson(unifiedPath, filtered)
-        } catch (_) {}
         sendJson(res, 200, { status: 'deleted', id: txnId })
+      } catch (e) {
+        sendJson(res, 500, { error: e.message })
+      }
+      return
+    }
+
+    // ── POST /api/dispatch → log to Supabase dispatch_log & simulation_events ──
+    if (url === '/api/dispatch' && req.method === 'POST') {
+      try {
+        const payload = await collectBody(req)
+        const dispatchId = payload.dispatch_id || `DSP-${Date.now().toString(36).toUpperCase()}`
+        const record = {
+          dispatch_id: dispatchId,
+          batch_id: payload.batch_id,
+          receiver_id: payload.receiver_id || 'REC-01',
+          store_id: 'MY-KL-001',
+          distance_km: parseFloat(payload.distance_km) || 5.0,
+          eta_hours: parseFloat(((payload.eta_minutes || 15) / 60).toFixed(2)),
+          status: 'dispatched',
+          created_at: new Date().toISOString()
+        }
+
+        // Sync to Supabase Cloud dispatch_log
+        if (SUPABASE_URL && SUPABASE_KEY) {
+          fetch(`${SUPABASE_URL}/rest/v1/dispatch_log`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify([record])
+          }).catch(err => console.warn('[Supabase Sync] dispatch_log notice:', err.message))
+
+          // Also record simulation_events 'dispatched'
+          fetch(`${SUPABASE_URL}/rest/v1/simulation_events`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify([{
+              event_id: `EVT-${dispatchId}`,
+              batch_id: payload.batch_id,
+              store_id: 'MY-KL-001',
+              event_type: 'dispatched',
+              timestamp: new Date().toISOString(),
+              quantity: Number(payload.quantity) || 10,
+              metadata: {
+                receiver_id: payload.receiver_id,
+                receiver_name: payload.receiver_name,
+                distance_km: payload.distance_km,
+                eta_minutes: payload.eta_minutes
+              }
+            }])
+          }).catch(err => console.warn('[Supabase Sync] simulation_events dispatch notice:', err.message))
+        }
+
+        sendJson(res, 200, { status: 'dispatched', record })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }
@@ -422,7 +567,39 @@ function createApiMiddleware() {
         const limit    = parseInt(params.get('limit') || '100', 10)
 
         const forecasts = readJson(FORECAST_JSON)
-        const batches   = readJson(MASTER_JSON).filter(r => Number(r.quantity) > 0)
+        
+        // Connect to Supabase Cloud live batches if credentials exist (BUG-FC-07 & BUG-FC-01 fix)
+        let batches = []
+        let dataSource = 'Local Master + LightGBM ML'
+        if (SUPABASE_URL && SUPABASE_KEY) {
+          try {
+            const sResp = await fetch(`${SUPABASE_URL}/rest/v1/batches?select=*&quantity=gt.0`, {
+              headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+              }
+            })
+            if (sResp.ok) {
+              const sData = await sResp.json()
+              if (Array.isArray(sData) && sData.length > 0) {
+                batches = sData.map(b => ({
+                  ...b,
+                  lot_id: b.batch_id || b.lot_id,
+                  product_name: b.product_name,
+                  quantity: Number(b.quantity),
+                  days_to_expiry: Number(b.days_to_expiry) || 5,
+                  unit_price_myr: b.unit_price_myr || 6.0,
+                  uom: b.uom || 'units',
+                  category: b.category || b.canonical_category || 'Produce'
+                }))
+                dataSource = 'Supabase Cloud + LightGBM ML'
+              }
+            }
+          } catch (_) {}
+        }
+        if (batches.length === 0) {
+          batches = readJson(MASTER_JSON).filter(r => Number(r.quantity) > 0)
+        }
 
         // Category → ML family map (mirrors CATEGORY_MAP in forecast_service.py)
         const CATEGORY_MAP = {
@@ -524,7 +701,7 @@ function createApiMiddleware() {
           }
         }
 
-        sendJson(res, 200, { status: 'success', store_nbr: storeNbr, total_products: Object.keys(products).length, products })
+        sendJson(res, 200, { status: 'success', store_nbr: storeNbr, source: dataSource, total_products: Object.keys(products).length, products })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }
