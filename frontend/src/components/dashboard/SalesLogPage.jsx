@@ -86,7 +86,8 @@ export default function SalesLogPage({
   batches = [],
   onUpdateBatches,
   onSaleRecorded,
-  onToggleSidebar
+  onToggleSidebar,
+  onSalesUpdated
 }) {
   const [sales, setSales] = useState(INITIAL_SALES)
   const [searchTerm, setSearchTerm] = useState('')
@@ -470,6 +471,13 @@ export default function SalesLogPage({
   const totalUnitsSold = sales.filter(s => s.status === 'paid').reduce((sum, s) => sum + (Number(s.qty) || 0), 0)
   const paidCount = sales.filter(s => s.status === 'paid').length
   const averageSaleValue = paidCount > 0 ? totalRevenue / paidCount : 0
+
+  // Notify parent dashboard of live revenue/profit updates
+  useEffect(() => {
+    if (typeof onSalesUpdated === 'function' && totalRevenue > 0) {
+      onSalesUpdated(Math.round(totalRevenue * 100) / 100)
+    }
+  }, [totalRevenue, onSalesUpdated])
 
   // Staggered entrance for table rows and mobile card items
   useEffect(() => {

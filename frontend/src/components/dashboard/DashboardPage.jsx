@@ -66,6 +66,21 @@ export default function DashboardPage({ onNavigateHome }) {
     loadBatches().finally(() => setBatchesLoading(false))
   }, [])
 
+  // Load initial realized profit from stored transactions history
+  useEffect(() => {
+    fetch('/api/transactions')
+      .then(r => r.json())
+      .then(txns => {
+        if (Array.isArray(txns) && txns.length > 0) {
+          const totalPaid = txns
+            .filter(t => t.status === 'paid')
+            .reduce((sum, t) => sum + (Number(t.total) || 0), 0)
+          setProfit(Math.round(totalPaid * 100) / 100)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Helper: parse "RM 6.50/kg" → 6.50
   function parsePricePerUnit(priceStr) {
     if (!priceStr) return 0
@@ -393,6 +408,7 @@ export default function DashboardPage({ onNavigateHome }) {
             batches={batches}
             onUpdateBatches={setBatches}
             onSaleRecorded={handleSaleRecorded}
+            onSalesUpdated={setProfit}
             onToggleSidebar={() => setSidebarOpen(prev => !prev)}
           />
         ) : activeNav === 'demand-forecasting' ? (
