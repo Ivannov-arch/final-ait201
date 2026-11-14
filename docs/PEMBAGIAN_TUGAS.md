@@ -150,8 +150,10 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
   - [x] Halaman Landing Page B2B interaktif lengkap dengan navigasi, value proposition, kalkulator dampak, dan animasi GSAP.
   - [x] Modul Sales Log kasir/transaksi dengan filter tanggal, pencarian, dan metrik revenue markdown.
   - [x] Preloader & Mascot FreshBot AI terintegrasi.
-- [x] Integrasi Rule Engine Person 4 (`assign_route()`) via `POST /api/recommend` — tiered markdown 15–40%, Anti-Moral-Hazard 30% donation cap, live result tampil di modal aksi inventory.
-- [ ] Integrasi endpoint FastAPI Python live (saat ini frontend sudah berjalan via internal Vite JSON API).
+- [x] Integrasi Rule Engine Person 4 (`assign_route()`) via `POST /api/recommend` — tiered markdown 15–40%, Anti-Moral-Hazard 30% donation cap, live result tampil di modal aksi inventory (telah dikalibrasi prioritas FEFO: DTE ≤ 1 memprioritaskan donasi/diskon darurat).
+- [x] Integrasi model ML Demand Forecasting Person 2 (`.pkl` via `three_day_forecast.json` & endpoint `/api/forecast/products`) — demand LightGBM multi-horizon riil tersinkron ke visualisasi chart 3-hari dan input Rule Engine.
+- [x] Paginasi inventaris FEFO (10 batch per halaman dengan tombol navigasi Prev/Next dan nomor halaman, sinkron dengan pencarian dan filter kategori).
+- [x] API Layer Frontend mandiri: Vite Local API Middleware (BFF) aktif melayani endpoint `/api/batches`, `/api/recommend`, `/api/forecast/products`, dan `/api/transactions` secara instan tanpa perlu menyalakan server Uvicorn Python terpisah saat demo.
 - [ ] Bangun halaman Admin `/admin` dengan autentikasi cloud (Supabase Auth).
 - [ ] Desain template presentasi resmi tim di Canva.
 
@@ -165,6 +167,8 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 | **Charting Engine** | Recharts / Chart.js | **Custom Native SVG Charts** | Sangat ringan (zero external bundle weight), tidak ada lag re-render, responsif pixel-perfect, dan dapat dikustomisasi penuh sesuai kebutuhan retail. |
 | **Cakupan Halaman** | Hanya dashboard internal 1 halaman | **Ekosistem Aplikasi Penuh (Landing Page + Multi-tab Dashboard)** | Menyediakan tampilan web publik profesional untuk presentasi bisnis ke dosen/stakeholder, dilengkapi modul Sales Log dan detail Inventory interaktif. |
 | **Sistem State** | Static mock | **State Reaktif Tersinkronisasi (*Single Source of Truth*)** | Aksi yang dieksekusi pada tabel Inventory langsung memicu pembaruan serentak pada KPI Dashboard, Riwayat Aktivitas, dan kalkulasi profit. |
+| **Koneksi Backend / API** | FastAPI Server terpisah (Port 8000) | **Vite Local API Middleware (BFF — Backend-for-Frontend)** | Mengeliminasi kerumitan menjalankan 2 terminal terpisah & instalasi dependensi Python lokal saat demo; Node.js langsung memproses endpoint `/api/batches`, `/api/recommend`, dan `/api/forecast/products` secara instan bebas error CORS. Backend FastAPI Python di `backend/` tetap utuh sebagai deliverable Person 2. |
+| **Arsitektur Database** | Supabase Cloud Live | **JSON Single Source of Truth (`inventory_master.json`)** | Menjaga demo tetap 100% reliabel tanpa dependensi koneksi internet, bebas latency, dan kebal dari file-lock Excel. Skema `schema.sql` Supabase tetap tersedia lengkap di folder `database/` sebagai deliverable resmi Person 4. |
 
 -
 
