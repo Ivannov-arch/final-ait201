@@ -11,6 +11,7 @@ import SalesLogPage from './SalesLogPage'
 import DemandForecastingPage from './DemandForecastingPage'
 import InventoryFefoRiskPage from './InventoryFefoRiskPage'
 import DispatchPage from './DispatchPage'
+import { supabase, supabaseRowToBatch } from '../../services/supabase'
 import './dashboard.css'
 
 export default function DashboardPage({ onNavigateHome }) {
@@ -29,15 +30,40 @@ export default function DashboardPage({ onNavigateHome }) {
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES)
   const [profit, setProfit] = useState(0)
 
-  // Load latest inventory from inventory_master.json on mount (via Vite local API)
+  // Load latest inventory from Supabase Cloud (with seamless local fallback)
   useEffect(() => {
-    fetch('/api/batches')
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) setBatches(data)
-      })
-      .catch(() => {})
-      .finally(() => setBatchesLoading(false))
+    async function loadBatches() {
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from('batches')
+            .select('*')
+            .gt('quantity', 0)
+            .order('days_to_expiry', { ascending: true })
+
+          if (!error && Array.isArray(data) && data.length > 0) {
+            console.log(
+              `%c[FreshGuard Supabase] ⚡ Connected to Supabase Cloud (${data.length} batches live)`,
+              'color: #16a34a; font-weight: bold;'
+            )
+            setBatches(data.map(supabaseRowToBatch))
+            return
+          }
+        }
+      } catch (err) {
+        console.warn('[FreshGuard Supabase] Live connection skipped, falling back to local database:', err.message)
+      }
+
+      // Fallback: Local Vite API JSON
+      fetch('/api/batches')
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) setBatches(data)
+        })
+        .catch(() => {})
+    }
+
+    loadBatches().finally(() => setBatchesLoading(false))
   }, [])
 
   // Helper: parse "RM 6.50/kg" → 6.50
@@ -275,24 +301,28 @@ export default function DashboardPage({ onNavigateHome }) {
       body: JSON.stringify(sale)
     }).catch(() => {})
 
-    // PATCH quantity directly in inventory_master.json
-    if (sale.batchId && batch) {
-      const currentQty = batch.stockQty !== undefined ? Number(batch.stockQty) : parseQtyNum(batch.qty)
+    // PATCH quantity directly in inventory_master.json + Supabase Cloud
+    if (sale.batchId) {
+      const currentQty = batch
+        ? (batch.stockQty !== undefined ? Number(batch.stockQty) : parseQtyNum(batch.qty))
+        : (Number(sale.qty) || 10)
       const newQty = Math.max(0, currentQty - Number(sale.qty || 0))
 
       // Optimistic update in local state
-      if (newQty <= 0) {
-        // Stock depleted — remove from local state
-        setBatches(prev => prev.filter(b => b.id !== sale.batchId))
-      } else {
-        setBatches(prev => prev.map(b => b.id !== sale.batchId ? b : {
-          ...b,
-          stockQty: newQty,
-          qty: `${newQty} ${sale.unit || b.uom || 'units'}`
-        }))
+      if (batch) {
+        if (newQty <= 0) {
+          // Stock depleted — remove from local state
+          setBatches(prev => prev.filter(b => b.id !== sale.batchId))
+        } else {
+          setBatches(prev => prev.map(b => b.id !== sale.batchId ? b : {
+            ...b,
+            stockQty: newQty,
+            qty: `${newQty} ${sale.unit || b.uom || 'units'}`
+          }))
+        }
       }
 
-      // Persist directly to inventory_master.json (auto-deleted if qty <= 0)
+      // Persist directly to inventory_master.json + Supabase Cloud (auto-deleted if qty <= 0)
       fetch(`/api/batches/${encodeURIComponent(sale.batchId)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

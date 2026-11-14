@@ -1,0 +1,60 @@
+lot_id,product_name,category,quantity,uom,unit_price_myr,cost_price_myr,expiry_date,days_to_expiry,shelf_life_days,date_received,reorder_level,reorder_quantity,turnover_ratio,stock_pressure,risk_tier,risk_label,supplier_name,warehouse_location,store_id,status
+LOT-1000,Bell Pepper,Produce,41,kg,20.47,14.33,2026-11-15,1,8,2026-11-01,64,36,55.00,0.71,high,High Risk,Eimbee,20 Pennsylvania Parkway,MY-KL-001,Active
+LOT-1010,Cheddar Cheese,Dairy,60,pack,40.05,28.03,2026-11-15,1,8,2026-11-01,10,48,63.00,5.45,high,High Risk,Gabcube,5 Oxford Pass,MY-KL-001,Active
+LOT-1070,Cabbage,Produce,94,kg,4.00,2.80,2026-11-15,1,8,2026-11-01,90,75,71.00,1.03,high,High Risk,Lajo,081 Jana Lane,MY-KL-001,Active
+LOT-1021,Sweet Potato,Produce,48,kg,8.90,6.23,2026-11-16,2,9,2026-11-02,10,39,95.00,4.45,high,High Risk,Trupe,7015 Ramsey Lane,MY-KL-001,Active
+LOT-1031,Cucumber,Produce,67,kg,8.01,5.61,2026-11-16,2,9,2026-11-02,14,53,77.00,4.47,high,High Risk,Kanoodle,38 Killdeer Point,MY-KL-001,Active
+LOT-1041,Chocolate Biscuit,Bakery,100,pack,22.25,15.57,2026-11-16,2,9,2026-11-02,10,80,79.00,9.09,high,High Risk,Yodo,7561 5th Terrace,MY-KL-001,Active
+LOT-1051,Egg (Duck),Dairy,37,pack,4.45,3.11,2026-11-16,2,9,2026-11-02,53,29,89.00,0.69,high,High Risk,Katz,45190 Fordem Court,MY-KL-001,Active
+LOT-1002,Parmesan Cheese,Dairy,38,pack,53.40,37.38,2026-11-17,3,10,2026-11-03,67,30,24.00,0.56,med,Moderate Risk,BlogXS,73 Graedel Street,MY-KL-001,Active
+LOT-1012,Orange,Produce,94,kg,12.90,9.03,2026-11-17,3,10,2026-11-03,58,75,74.00,1.59,med,Moderate Risk,Flashdog,3 Bashford Court,MY-KL-001,Active
+LOT-1022,Mango,Produce,89,kg,21.36,14.95,2026-11-17,3,10,2026-11-03,92,71,11.00,0.96,med,Moderate Risk,Meevee,48 Vahlen Place,MY-KL-001,Active
+LOT-1032,Cheese,Dairy,50,pack,40.94,28.66,2026-11-17,3,10,2026-11-03,14,40,72.00,3.33,med,Moderate Risk,Eimbee,01 Gateway Plaza,MY-KL-001,Active
+LOT-1003,Carrot,Produce,51,kg,6.68,4.68,2026-11-19,5,12,2026-11-05,60,40,95.00,0.84,med,Moderate Risk,Avaveo,44801 Myrtle Center,MY-KL-001,Active
+LOT-1013,Digestive Biscuit,Bakery,77,pack,17.80,12.46,2026-11-19,5,12,2026-11-05,79,61,75.00,0.96,med,Moderate Risk,Devshare,2 Carioca Crossing,MY-KL-001,Active
+LOT-1023,Kale,Produce,47,kg,17.80,12.46,2026-11-19,5,12,2026-11-05,22,37,59.00,2.04,med,Moderate Risk,Blogpad,85 Farwell Parkway,MY-KL-001,Active
+LOT-1033,Milk,Dairy,15,pack,4.00,2.80,2026-11-19,5,12,2026-11-05,39,15,46.00,0.38,med,Moderate Risk,Centimia,36483 Burning Wood Pass,MY-KL-001,Active
+LOT-1004,Garlic,Produce,27,kg,31.15,21.80,2026-11-20,6,13,2026-11-06,22,21,77.00,1.17,low,Low Risk,Katz,6195 Monterey Center,MY-KL-001,Active
+LOT-1014,Cauliflower,Produce,34,kg,11.12,7.78,2026-11-20,6,13,2026-11-06,92,27,71.00,0.37,low,Low Risk,Cogilith,01 Northfield Road,MY-KL-001,Active
+LOT-1034,Lime,Produce,18,kg,8.90,6.23,2026-11-20,6,13,2026-11-06,10,15,45.00,1.64,low,Low Risk,Livefish,3 Meadow Valley Court,MY-KL-001,Active
+LOT-1054,Cucumber,Produce,19,kg,7.79,5.45,2026-11-20,6,13,2026-11-06,36,15,81.00,0.51,low,Low Risk,Brainverse,157 David Center,MY-KL-001,Active
+LOT-1005,Lemon,Produce,91,kg,10.68,7.48,2026-11-21,7,14,2026-11-07,10,72,70.00,8.27,low,Low Risk,Yata,5141 Anniversary Crossing,MY-KL-001,Active
+LOT-1015,Pear,Produce,79,kg,20.03,14.02,2026-11-21,7,14,2026-11-07,37,63,20.00,2.08,low,Low Risk,Roodel,2004 Cody Plaza,MY-KL-001,Active
+LOT-1025,Sourdough Bread,Bakery,65,pack,17.80,12.46,2026-11-21,7,14,2026-11-07,79,52,9.00,0.81,low,Low Risk,Plajo,338 Annamark Court,MY-KL-001,Active
+LOT-1045,Lettuce,Produce,58,kg,8.90,6.23,2026-11-21,7,14,2026-11-07,10,46,80.00,5.27,low,Low Risk,Fadeo,19069 Cordelia Drive,MY-KL-001,Active
+LOT-1016,Egg (Turkey),Dairy,76,pack,11.12,7.78,2026-11-23,9,16,2026-11-09,54,60,27.00,1.38,low,Low Risk,Bluezoom,94862 Beilfuss Terrace,MY-KL-001,Active
+LOT-1036,Sourdough Bread,Bakery,40,pack,20.03,14.02,2026-11-23,9,16,2026-11-09,30,32,29.00,1.29,low,Low Risk,Rhyloo,94 Mallory Center,MY-KL-001,Active
+LOT-1046,Feta Cheese,Dairy,98,pack,31.15,21.80,2026-11-23,9,16,2026-11-09,77,78,29.00,1.26,low,Low Risk,Rhynyx,60356 Derek Lane,MY-KL-001,Active
+LOT-1056,Onion,Produce,34,kg,8.90,6.23,2026-11-23,9,16,2026-11-09,29,27,23.00,1.13,low,Low Risk,Oba,74 Menomonie Point,MY-KL-001,Active
+LOT-1007,Anchovies,Seafood,81,kg,44.50,31.15,2026-11-24,10,17,2026-11-10,22,64,77.00,3.52,low,Low Risk,Zoonder,86 Porter Junction,MY-KL-001,Active
+LOT-1017,Ricotta Cheese,Dairy,50,pack,27.59,19.31,2026-11-24,10,17,2026-11-10,46,40,70.00,1.06,low,Low Risk,Skimia,10342 Division Place,MY-KL-001,Active
+LOT-1037,Cheese,Dairy,53,pack,40.05,28.03,2026-11-24,10,17,2026-11-10,63,42,95.00,0.83,low,Low Risk,Shuffledrive,19 Shoshone Circle,MY-KL-001,Active
+LOT-1047,Apricot,Produce,42,kg,22.25,15.57,2026-11-24,10,17,2026-11-10,61,33,99.00,0.68,low,Low Risk,Skinix,36687 Maple Avenue,MY-KL-001,Active
+LOT-1008,Cheese,Dairy,78,pack,40.05,28.03,2026-11-25,11,18,2026-11-11,24,62,41.00,3.12,low,Low Risk,Oozz,05518 Saint Paul Street,MY-KL-001,Active
+LOT-1018,Eggplant,Produce,25,kg,13.35,9.34,2026-11-25,11,18,2026-11-11,62,20,98.00,0.40,low,Low Risk,Blogpad,52 Namekagon Junction,MY-KL-001,Active
+LOT-1028,Tilapia,Seafood,30,kg,31.15,21.80,2026-11-25,11,18,2026-11-11,42,24,23.00,0.70,low,Low Risk,Vinder,57 Eastwood Junction,MY-KL-001,Active
+LOT-1038,Sour Cream,Dairy,15,pack,17.80,12.46,2026-11-25,11,18,2026-11-11,30,15,4.00,0.48,low,Low Risk,Skyvu,805 Center Parkway,MY-KL-001,Active
+LOT-1009,Yogurt,Dairy,55,pack,7.57,5.30,2026-11-26,12,19,2026-11-12,50,44,26.00,1.08,low,Low Risk,Jaxnation,14042 Dottie Avenue,MY-KL-001,Active
+LOT-1039,Whole Wheat Bread,Bakery,17,pack,15.58,10.91,2026-11-26,12,19,2026-11-12,63,15,26.00,0.27,low,Low Risk,Lazz,46 Delaware Place,MY-KL-001,Active
+LOT-1059,Sourdough Bread,Bakery,15,pack,20.03,14.02,2026-11-26,12,19,2026-11-12,59,15,92.00,0.25,low,Low Risk,Avamba,744 Green Center,MY-KL-001,Active
+LOT-1069,Cream,Dairy,82,pack,10.68,7.48,2026-11-26,12,19,2026-11-12,10,65,31.00,7.45,low,Low Risk,Riffpedia,09189 2nd Drive,MY-KL-001,Active
+LOT-1035,Rice Flour,Grains & Pulses,24,pack,8.90,6.23,2026-11-28,14,21,2026-11-13,10,19,82.00,2.18,low,Low Risk,Quatz,47817 Oneill Park,MY-KL-001,Active
+LOT-1140,Black Coffee,Beverages,78,bottle,66.75,46.72,2026-11-28,14,21,2026-11-13,38,62,42.00,2.00,low,Low Risk,Digitube,0023 Upham Road,MY-KL-001,Active
+LOT-1245,Powdered Sugar,Grains & Pulses,47,pack,11.12,7.78,2026-11-28,14,21,2026-11-13,30,37,81.00,1.52,low,Low Risk,Riffwire,8499 Hanover Terrace,MY-KL-001,Active
+LOT-1350,Powdered Sugar,Grains & Pulses,21,pack,11.12,7.78,2026-11-28,14,21,2026-11-13,15,16,41.00,1.31,low,Low Risk,Skidoo,42 Mandrake Alley,MY-KL-001,Active
+LOT-1001,Vegetable Oil,Oils & Fats,51,bottle,8.90,6.23,2026-11-29,15,22,2026-11-13,87,40,83.00,0.58,low,Low Risk,Digitube,03643 Oakridge Lane,MY-KL-001,Active
+LOT-1141,Whole Wheat Flour,Grains & Pulses,86,pack,12.24,8.57,2026-11-29,15,22,2026-11-13,100,68,91.00,0.85,low,Low Risk,Rhyloo,0 Moose Lane,MY-KL-001,Active
+LOT-1246,Canola Oil,Oils & Fats,79,bottle,10.23,7.16,2026-11-29,15,22,2026-11-13,31,63,13.00,2.47,low,Low Risk,Yodo,48788 Chinook Place,MY-KL-001,Active
+LOT-1491,Sesame Oil,Oils & Fats,39,bottle,28.93,20.25,2026-11-29,15,22,2026-11-13,78,31,89.00,0.49,low,Low Risk,Shuffledrive,9 Meadow Vale Drive,MY-KL-001,Active
+LOT-1107,Black Tea,Beverages,35,bottle,20.92,14.64,2026-11-30,16,23,2026-11-13,88,28,62.00,0.39,low,Low Risk,Kare,24 South Trail,MY-KL-001,Active
+LOT-1212,Sunflower Oil,Oils & Fats,23,bottle,11.12,7.78,2026-11-30,16,23,2026-11-13,43,18,86.00,0.52,low,Low Risk,Skibox,27408 Burning Wood Street,MY-KL-001,Active
+LOT-1352,White Rice,Grains & Pulses,20,pack,8.01,5.61,2026-11-30,16,23,2026-11-13,20,16,69.00,0.95,low,Low Risk,Centidel,80930 Briar Crest Point,MY-KL-001,Active
+LOT-1842,Brown Rice,Grains & Pulses,44,pack,11.12,7.78,2026-11-30,16,23,2026-11-13,67,35,72.00,0.65,low,Low Risk,Flipbug,83291 Hansons Crossing,MY-KL-001,Active
+LOT-1073,All-Purpose Flour,Grains & Pulses,55,pack,7.79,5.45,2026-12-01,17,24,2026-11-13,33,44,62.00,1.62,low,Low Risk,Dabjam,050 Mcbride Avenue,MY-KL-001,Active
+LOT-1108,Olive Oil,Oils & Fats,100,bottle,26.70,18.69,2026-12-01,17,24,2026-11-13,92,80,9.00,1.08,low,Low Risk,Midel,8626 Chinook Parkway,MY-KL-001,Active
+LOT-1143,Wild Rice,Grains & Pulses,41,pack,43.39,30.37,2026-12-01,17,24,2026-11-13,56,32,88.00,0.72,low,Low Risk,Podcat,84 Rusk Terrace,MY-KL-001,Active
+LOT-1213,Long Grain Rice,Grains & Pulses,15,pack,6.68,4.68,2026-12-01,17,24,2026-11-13,59,15,99.00,0.25,low,Low Risk,Brightbean,3 Westerfield Crossing,MY-KL-001,Active
+LOT-1109,White Tea,Beverages,91,bottle,111.25,77.88,2026-12-02,18,25,2026-11-13,78,72,15.00,1.15,low,Low Risk,Brightbean,5501 Fuller Way,MY-KL-001,Active
+LOT-1144,Black Rice,Grains & Pulses,15,pack,27.59,19.31,2026-12-02,18,25,2026-11-13,58,15,34.00,0.25,low,Low Risk,Wordware,662 Vernon Point,MY-KL-001,Active
+LOT-1214,White Tea,Beverages,99,bottle,111.25,77.88,2026-12-02,18,25,2026-11-13,87,79,70.00,1.12,low,Low Risk,Skipstorm,5756 Stephen Avenue,MY-KL-001,Active
+LOT-1284,Sushi Rice,Grains & Pulses,75,pack,20.03,14.02,2026-12-02,18,25,2026-11-13,69,60,18.00,1.07,low,Low Risk,Linklinks,67 Little Fleur Road,MY-KL-001,Active

@@ -64,7 +64,13 @@ function parseUnit(str) {
   return m ? m[0] : 'kg'
 }
 
-let _txnIdCounter = 1005
+function getNextTxnId(salesList) {
+  const maxNum = (salesList || []).reduce((max, s) => {
+    const m = String(s.id || '').match(/TXN-(\d+)/)
+    return m ? Math.max(max, parseInt(m[1], 10)) : max
+  }, 1024)
+  return `TXN-${maxNum + 1}`
+}
 
 export default function SalesLogPage({
   batches = [],
@@ -195,6 +201,13 @@ export default function SalesLogPage({
       if (s.id !== txnId) return s
       return { ...s, status: newStatus }
     }))
+    // Persist status change to backend
+    fetch(`/api/transactions/${encodeURIComponent(txnId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    }).catch(() => {})
+
     const statusLabels = {
       paid: 'Paid (Lunas)',
       pending: 'Pending (Menunggu)',
@@ -226,12 +239,24 @@ export default function SalesLogPage({
     }
 
     setSales(prev => prev.map(s => s.id === updated.id ? updated : s))
+    // Persist edit to backend
+    fetch(`/api/transactions/${encodeURIComponent(updated.id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    }).catch(() => {})
+
     setEditingSale(null)
     showToast(`✓ Transaction ${updated.id} successfully updated!`)
   }
 
   const handleDeleteSale = (txnId) => {
     setSales(prev => prev.filter(s => s.id !== txnId))
+    // Persist deletion to backend
+    fetch(`/api/transactions/${encodeURIComponent(txnId)}`, {
+      method: 'DELETE'
+    }).catch(() => {})
+
     setEditingSale(null)
     showToast(`🗑 Transaction ${txnId} deleted`)
   }
@@ -267,7 +292,7 @@ export default function SalesLogPage({
     const now = new Date()
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     const dateStr = now.toLocaleDateString('en-MY', { day: '2-digit', month: 'short', year: 'numeric' })
-    const txnId = `TXN-${_txnIdCounter++}`
+    const txnId = getNextTxnId(sales)
 
     const newSale = {
       id: txnId,
@@ -289,10 +314,17 @@ export default function SalesLogPage({
       status: 'paid'
     }
 
-    // Add to sales list
+    // Add to sales list immediately
     setSales(prev => [newSale, ...prev])
 
-    // Auto-update batch inventory quantity in React state (PATCH to inventory_master handled by DashboardPage)
+    // Persist transaction to server immediately
+    fetch('/api/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSale)
+    }).catch(() => {})
+
+    // Auto-update batch inventory quantity in React state
     if (onUpdateBatches) {
       onUpdateBatches(prev => {
         const next = prev.map(b => {

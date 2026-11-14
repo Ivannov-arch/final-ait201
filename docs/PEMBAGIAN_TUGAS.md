@@ -112,13 +112,16 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 - [x] **Rule Engine Dynamic Markdown (Goal 6 Base+):**
   - Baca harga referensi pasar komoditas MYR dari file DOSM Person 0.
   - Implementasikan fungsi `assign_route(days_to_expiry, quantity, forecast_demand)`:
-    - *Stok aman:* `Normal Sale` (harga penuh).
-    - *Stok surplus & umur 2–4 hari:* `Dynamic Markdown` (diskon bertahap 15%–40% berbasis harga pasar DOSM).
-    - *Stok surplus & umur ≤ 1 hari:* `Donation` (dialihkan ke mitra food bank).
+    - *Stok kritis (DTE ≤ 1 hari):* `Donation` (dialihkan ke mitra food bank) atau Markdown darurat 40%.
+    - *Stok surplus & umur 2–3 hari:* `Dynamic Markdown` (diskon bertahap 15%–25% berbasis harga pasar DOSM).
+    - *Stok aman (DTE > 3 hari):* `Normal Sale` (harga penuh).
   - Terapkan aturan *Anti-Moral-Hazard Pembeli*: donasi dilakukan tertutup ke food bank resmi dan dibatasi kuota maksimal 30% dari surplus.
-- [x] **Database Supabase (Goal 9):**
-  - Buat project di Supabase dan buat 5 tabel PostgreSQL (`batches`, `simulation_events`, `dispatch_log`, `receivers`, `cluster_results`).
+  - Kalibrasi logika evaluasi: prioritas FEFO dievaluasi terlebih dahulu sebelum pengecekan surplus umum agar produk berumur 1 hari tidak terlewatkan menjadi normal sale.
+- [x] **Database Supabase Cloud (Goal 9):**
+  - Buat project di Supabase Cloud (`sccsbjlmpxjligwckqpp.supabase.co`) dan buat 5 tabel PostgreSQL (`batches`, `simulation_events`, `dispatch_log`, `receivers`, `cluster_results`).
   - Terapkan Row Level Security (RLS) dan buat view ringkasan dashboard `v_dashboard_summary`.
+  - Seeding 61 batch stok awal dan 4 mitra receiver food bank Lembah Klang ke cloud database.
+  - Sediakan integrasi API autentikasi via Publishable Anon Key (frontend read) & Secret Service Role Key (server-side secure sync).
 
 ---
 
@@ -152,7 +155,18 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
   - [x] Preloader & Mascot FreshBot AI terintegrasi.
 - [x] Integrasi Rule Engine Person 4 (`assign_route()`) via `POST /api/recommend` — tiered markdown 15–40%, Anti-Moral-Hazard 30% donation cap, live result tampil di modal aksi inventory (telah dikalibrasi prioritas FEFO: DTE ≤ 1 memprioritaskan donasi/diskon darurat).
 - [x] Integrasi model ML Demand Forecasting Person 2 (`.pkl` via `three_day_forecast.json` & endpoint `/api/forecast/products`) — demand LightGBM multi-horizon riil tersinkron ke visualisasi chart 3-hari dan input Rule Engine.
+- [x] Integrasi Cloud Database Supabase (Person 4):
+  - Terhubung langsung ke Supabase Cloud live (`batches` & `receivers`) via `@supabase/supabase-js`.
+  - Dilengkapi mekanisme hybrid fallback lokal instan (`inventory_master.json`) jika offline/gagal koneksi.
+  - Sinkronisasi mutasi 2 arah (*Two-Way Cloud Sync*): Setiap aksi **+ Add Batch**, **Edit Batch**, dan **Delete Batch** dari UI langsung meng-update file lokal dan Supabase Cloud secara *real-time* via Service Role Key di API middleware.
+- [x] Modul Sales Log Kasir Terintegrasi Penuh:
+  - Form pencatatan penjualan (+ Record Sale) dengan auto-increment ID dinamis (`getNextTxnId`) yang menjamin tidak ada ID duplikat bentrok saat server di-*reload*.
+  - Pemotongan kuantitas stok otomatis (*real-time stock deduction*) yang tersinkron langsung ke tabel `batches` Supabase Cloud & inventaris lokal.
+  - Audit log transaksi otomatis ke tabel `simulation_events` Supabase Cloud.
+  - Penggabungan riwayat 17 transaksi kasir lengkap dengan filter unit, pencarian, dan metrik revenue paid.
+  - Fitur ubah status (Paid/Pending/Refunded/Void), edit transaksi, dan hapus transaksi tersimpan permanen via backend endpoint `PATCH` & `DELETE /api/transactions/:id`.
 - [x] Paginasi inventaris FEFO (10 batch per halaman dengan tombol navigasi Prev/Next dan nomor halaman, sinkron dengan pencarian dan filter kategori).
+- [x] Perbaikan form Edit Batch anti-flickering (stabilisasi dependency hook animasi GSAP).
 - [x] API Layer Frontend mandiri: Vite Local API Middleware (BFF) aktif melayani endpoint `/api/batches`, `/api/recommend`, `/api/forecast/products`, dan `/api/transactions` secara instan tanpa perlu menyalakan server Uvicorn Python terpisah saat demo.
 - [ ] Bangun halaman Admin `/admin` dengan autentikasi cloud (Supabase Auth).
 - [ ] Desain template presentasi resmi tim di Canva.
@@ -167,8 +181,8 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 | **Charting Engine** | Recharts / Chart.js | **Custom Native SVG Charts** | Sangat ringan (zero external bundle weight), tidak ada lag re-render, responsif pixel-perfect, dan dapat dikustomisasi penuh sesuai kebutuhan retail. |
 | **Cakupan Halaman** | Hanya dashboard internal 1 halaman | **Ekosistem Aplikasi Penuh (Landing Page + Multi-tab Dashboard)** | Menyediakan tampilan web publik profesional untuk presentasi bisnis ke dosen/stakeholder, dilengkapi modul Sales Log dan detail Inventory interaktif. |
 | **Sistem State** | Static mock | **State Reaktif Tersinkronisasi (*Single Source of Truth*)** | Aksi yang dieksekusi pada tabel Inventory langsung memicu pembaruan serentak pada KPI Dashboard, Riwayat Aktivitas, dan kalkulasi profit. |
-| **Koneksi Backend / API** | FastAPI Server terpisah (Port 8000) | **Vite Local API Middleware (BFF — Backend-for-Frontend)** | Mengeliminasi kerumitan menjalankan 2 terminal terpisah & instalasi dependensi Python lokal saat demo; Node.js langsung memproses endpoint `/api/batches`, `/api/recommend`, dan `/api/forecast/products` secara instan bebas error CORS. Backend FastAPI Python di `backend/` tetap utuh sebagai deliverable Person 2. |
-| **Arsitektur Database** | Supabase Cloud Live | **JSON Single Source of Truth (`inventory_master.json`)** | Menjaga demo tetap 100% reliabel tanpa dependensi koneksi internet, bebas latency, dan kebal dari file-lock Excel. Skema `schema.sql` Supabase tetap tersedia lengkap di folder `database/` sebagai deliverable resmi Person 4. |
+| **Koneksi Backend / API** | FastAPI Server terpisah (Port 8000) | **Vite Local API Middleware (BFF — Backend-for-Frontend)** | Mengeliminasi kerumitan menjalankan 2 terminal terpisah & instalasi dependensi Python lokal saat demo; Node.js langsung memproses endpoint `/api/batches`, `/api/recommend`, `/api/transactions`, dan `/api/forecast/products` secara instan bebas error CORS. Backend FastAPI Python di `backend/` tetap utuh sebagai deliverable Person 2. |
+| **Arsitektur Database** | Supabase Cloud Live | **Hybrid Cloud Database (Supabase Cloud PostgreSQL + Local JSON Fallback)** | Dashboard membaca langsung dari Supabase Cloud live project `sccsbjlmpxjligwckqpp` (`batches`, `receivers`, `simulation_events`). Setiap mutasi (Add/Edit/Delete Batch dan POS Sales) disinkronkan secara 2 arah (*two-way sync*) ke Supabase Cloud secara *real-time* via Vite API middleware dengan Service Role Key. Jika koneksi offline/internet terputus, sistem secara otomatis beralih ke local JSON fallback tanpa downtime. |
 
 -
 

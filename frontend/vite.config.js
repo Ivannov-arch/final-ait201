@@ -113,6 +113,102 @@ function batchToRow(b) {
   }
 }
 
+// ── Supabase Cloud Sync Helper (Person 4 Architecture) ─────────────────────────
+function getEnvKey(key) {
+  if (process.env[key]) return process.env[key]
+  try {
+    const envPath = path.resolve(__dirname, '.env')
+    if (fs.existsSync(envPath)) {
+      const match = fs.readFileSync(envPath, 'utf8').match(new RegExp(`^${key}=(.*)$`, 'm'))
+      if (match) return match[1].trim()
+    }
+  } catch (_) {}
+  try {
+    const rootEnv = path.resolve(__dirname, '../.env')
+    if (fs.existsSync(rootEnv)) {
+      const match = fs.readFileSync(rootEnv, 'utf8').match(new RegExp(`^${key}=(.*)$`, 'm'))
+      if (match) return match[1].trim()
+    }
+  } catch (_) {}
+  return ''
+}
+
+const SUPABASE_URL = getEnvKey('VITE_SUPABASE_URL') || 'https://sccsbjlmpxjligwckqpp.supabase.co'
+const SUPABASE_KEY = getEnvKey('SUPABASE_SERVICE_ROLE_KEY')
+
+function parseDateIso(dStr, fallbackDays = 7) {
+  if (!dStr) {
+    const d = new Date(); d.setDate(d.getDate() + fallbackDays)
+    return d.toISOString().slice(0, 10)
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr
+  const parsed = new Date(dStr)
+  if (!isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10)
+  const d = new Date(); d.setDate(d.getDate() + fallbackDays)
+  return d.toISOString().slice(0, 10)
+}
+
+function rowToSupabase(r) {
+  const dte = Number(r.days_to_expiry) || 5
+  const qty = Number(r.quantity) || 0
+  const price = parseFloat(r.unit_price_myr) || 5.0
+  let riskLabel = 'LOW'
+  if (dte <= 2) riskLabel = 'HIGH'
+  else if (dte <= 5) riskLabel = 'MODERATE'
+
+  return {
+    batch_id: r.lot_id,
+    product_id: r.product_id || ('PRD-' + String(r.lot_id).replace(/\D/g, '')),
+    product_name: r.product_name,
+    category: r.category || 'Produce',
+    quantity: qty,
+    uom: r.uom || 'units',
+    expiry_date: parseDateIso(r.expiry_date, dte),
+    date_received: parseDateIso(r.date_received, -7),
+    shelf_life_days: Number(r.shelf_life_days) || (dte + 7),
+    days_to_expiry: dte,
+    turnover_ratio: parseFloat(r.turnover_ratio) || 1.5,
+    stock_pressure: parseFloat(r.stock_pressure) || 1.0,
+    reorder_level: Number(r.reorder_level) || 15,
+    unit_price_myr: price,
+    store_id: r.store_id || 'MY-KL-001',
+    risk_label: riskLabel,
+    recommended_route: dte <= 1 ? 'Donation' : dte <= 3 ? 'Dynamic Markdown' : 'Normal Sale'
+  }
+}
+
+async function syncToSupabase(action, payload) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return
+  try {
+    const headers = {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json'
+    }
+    if (action === 'UPSERT') {
+      await fetch(`${SUPABASE_URL}/rest/v1/batches`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify([payload])
+      })
+    } else if (action === 'DELETE') {
+      await fetch(`${SUPABASE_URL}/rest/v1/batches?batch_id=eq.${encodeURIComponent(payload)}`, {
+        method: 'DELETE',
+        headers
+      })
+    } else if (action === 'PATCH') {
+      const { batch_id, ...updates } = payload
+      await fetch(`${SUPABASE_URL}/rest/v1/batches?batch_id=eq.${encodeURIComponent(batch_id)}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(updates)
+      })
+    }
+  } catch (err) {
+    console.warn('[Vite API] Supabase sync notice:', err.message)
+  }
+}
+
 // ── Common API handler for both dev and preview servers ────────────────────────
 function createApiMiddleware() {
   return async (req, res, next) => {
@@ -129,7 +225,7 @@ function createApiMiddleware() {
       return
     }
 
-    // ── POST /api/batches → ADD / CREATE directly in inventory_master.json ─────
+    // ── POST /api/batches → ADD / CREATE in local JSON + SYNC to Supabase Cloud ─
     if (url === '/api/batches' && req.method === 'POST') {
       try {
         const batch   = await collectBody(req)
@@ -139,6 +235,8 @@ function createApiMiddleware() {
         if (idx >= 0) records[idx] = row
         else          records.unshift(row)
         writeJson(MASTER_JSON, records)
+        // Background sync to Supabase Cloud
+        syncToSupabase('UPSERT', rowToSupabase(row))
         sendJson(res, 200, { status: 'saved', batch: rowToBatch(row) })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
@@ -146,8 +244,8 @@ function createApiMiddleware() {
       return
     }
 
-    // ── PATCH /api/batches/:id → UPDATE quantity directly in inventory_master.json
-    // If quantity <= 0 → directly DELETE from inventory_master.json ─────────────
+    // ── PATCH /api/batches/:id → UPDATE quantity in local JSON + Supabase Cloud ─
+    // If quantity <= 0 → directly DELETE from local JSON + Supabase Cloud ────────
     const patchMatch = url.match(/^\/api\/batches\/([^?/]+)$/)
     if (patchMatch && req.method === 'PATCH') {
       try {
@@ -175,9 +273,15 @@ function createApiMiddleware() {
         if (Number(records[idx].quantity) <= 0) {
           records.splice(idx, 1)
           writeJson(MASTER_JSON, records)
+          syncToSupabase('DELETE', lotId)
           sendJson(res, 200, { status: 'deleted', lot_id: lotId, reason: 'stock_depleted' })
         } else {
           writeJson(MASTER_JSON, records)
+          const updates = { batch_id: lotId, quantity: Number(records[idx].quantity) }
+          if (records[idx].unit_price_myr) {
+            updates.unit_price_myr = parseFloat(records[idx].unit_price_myr)
+          }
+          syncToSupabase('PATCH', updates)
           sendJson(res, 200, { status: 'updated', lot_id: lotId, quantity: records[idx].quantity })
         }
       } catch (e) {
@@ -186,7 +290,7 @@ function createApiMiddleware() {
       return
     }
 
-    // ── DELETE /api/batches/:id → DELETE directly from inventory_master.json ───
+    // ── DELETE /api/batches/:id → DELETE from local JSON + Supabase Cloud ───────
     const delMatch = url.match(/^\/api\/batches\/([^?/]+)$/)
     if (delMatch && req.method === 'DELETE') {
       try {
@@ -195,6 +299,7 @@ function createApiMiddleware() {
         const before  = records.length
         const updated = records.filter(r => r.lot_id !== lotId)
         writeJson(MASTER_JSON, updated)
+        syncToSupabase('DELETE', lotId)
         sendJson(res, 200, { status: 'deleted', lot_id: lotId, removed: before - updated.length })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
@@ -202,16 +307,99 @@ function createApiMiddleware() {
       return
     }
 
-    // ── POST /api/transactions → save directly to transactions.json ────────────
+    // ── POST /api/transactions → save directly to transactions.json + Supabase ─
     if (url === '/api/transactions' && req.method === 'POST') {
       try {
         const txn     = await collectBody(req)
         const records = readJson(TXNS_JSON)
-        if (!records.some(r => r.id === txn.id)) {
+        const idx = records.findIndex(r => r.id === txn.id)
+        if (idx >= 0) {
+          records[idx] = txn
+        } else {
           records.unshift(txn)
         }
         writeJson(TXNS_JSON, records)
+
+        // Also sync to frontend bundled file if needed
+        try {
+          const unifiedPath = path.resolve(__dirname, 'src/data/unifiedSalesLog.json')
+          writeJson(unifiedPath, records)
+        } catch (_) {}
+
+        // Sync event to Supabase Cloud simulation_events
+        if (SUPABASE_URL && SUPABASE_KEY) {
+          fetch(`${SUPABASE_URL}/rest/v1/simulation_events`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify([{
+              event_id: `EVT-${txn.id}`,
+              batch_id: txn.batchId || 'UNKNOWN',
+              store_id: 'MY-KL-001',
+              event_type: 'sale',
+              timestamp: new Date().toISOString(),
+              quantity: Number(txn.qty) || 1,
+              metadata: {
+                txn_id: txn.id,
+                product: txn.product,
+                unit_price: txn.unitPrice,
+                total: txn.total,
+                pay_method: txn.payMethod,
+                discount: txn.discount
+              }
+            }])
+          }).catch(err => console.warn('[Supabase Sync] simulation_events notice:', err.message))
+        }
+
         sendJson(res, 200, { status: 'saved', id: txn.id })
+      } catch (e) {
+        sendJson(res, 500, { error: e.message })
+      }
+      return
+    }
+
+    // ── PATCH /api/transactions/:id → update status / details ───────────────────
+    const txnPatchMatch = url.match(/^\/api\/transactions\/([^?/]+)$/)
+    if (txnPatchMatch && req.method === 'PATCH') {
+      try {
+        const txnId   = decodeURIComponent(txnPatchMatch[1])
+        const payload = await collectBody(req)
+        const records = readJson(TXNS_JSON)
+        const idx     = records.findIndex(r => r.id === txnId)
+        if (idx >= 0) {
+          records[idx] = { ...records[idx], ...payload }
+          writeJson(TXNS_JSON, records)
+          try {
+            const unifiedPath = path.resolve(__dirname, 'src/data/unifiedSalesLog.json')
+            writeJson(unifiedPath, records)
+          } catch (_) {}
+          sendJson(res, 200, { status: 'updated', id: txnId })
+        } else {
+          sendJson(res, 404, { error: `Transaction ${txnId} not found` })
+        }
+      } catch (e) {
+        sendJson(res, 500, { error: e.message })
+      }
+      return
+    }
+
+    // ── DELETE /api/transactions/:id → delete transaction ──────────────────────
+    const txnDelMatch = url.match(/^\/api\/transactions\/([^?/]+)$/)
+    if (txnDelMatch && req.method === 'DELETE') {
+      try {
+        const txnId   = decodeURIComponent(txnDelMatch[1])
+        const records = readJson(TXNS_JSON)
+        const filtered = records.filter(r => r.id !== txnId)
+        writeJson(TXNS_JSON, filtered)
+        try {
+          const unifiedPath = path.resolve(__dirname, 'src/data/unifiedSalesLog.json')
+          writeJson(unifiedPath, filtered)
+        } catch (_) {}
+        sendJson(res, 200, { status: 'deleted', id: txnId })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }

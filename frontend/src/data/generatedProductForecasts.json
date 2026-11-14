@@ -1,0 +1,2082 @@
+{
+  "All-Purpose Flour": {
+    "status": "success",
+    "product": "All-Purpose Flour",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 55,
+    "daysToExpiry": 17,
+    "totalDemand": 49,
+    "surplusQty": 6,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (55 pack) with safe shelf-life (17d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 19,
+        "stockRemaining": 36,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 16,
+        "stockRemaining": 20,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 14,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Anchovies": {
+    "status": "success",
+    "product": "Anchovies",
+    "category": "Seafood",
+    "unit": "kg",
+    "currentStock": 164,
+    "daysToExpiry": 1,
+    "totalDemand": 147,
+    "surplusQty": 17,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Donate to Food Bank",
+    "actionReason": "Surplus of 17 kg expiring in 24h. Dispatch to NGO to prevent waste.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 57,
+        "stockRemaining": 107,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 49,
+        "stockRemaining": 58,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 41,
+        "stockRemaining": 17,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      }
+    ]
+  },
+  "Apricot": {
+    "status": "success",
+    "product": "Apricot",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 42,
+    "daysToExpiry": 10,
+    "totalDemand": 38,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (42 kg) with safe shelf-life (10d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 15,
+        "stockRemaining": 27,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 13,
+        "stockRemaining": 14,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 10,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Bell Pepper": {
+    "status": "success",
+    "product": "Bell Pepper",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 46,
+    "daysToExpiry": 1,
+    "totalDemand": 42,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Donate to Food Bank",
+    "actionReason": "Surplus of 4 kg expiring in 24h. Dispatch to NGO to prevent waste.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 16,
+        "stockRemaining": 30,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 14,
+        "stockRemaining": 16,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 12,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Black Coffee": {
+    "status": "success",
+    "product": "Black Coffee",
+    "category": "Beverages",
+    "unit": "bottle",
+    "currentStock": 78,
+    "daysToExpiry": 14,
+    "totalDemand": 70,
+    "surplusQty": 8,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (78 bottle) with safe shelf-life (14d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 27,
+        "stockRemaining": 51,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 23,
+        "stockRemaining": 28,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 20,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Black Rice": {
+    "status": "success",
+    "product": "Black Rice",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 15,
+    "daysToExpiry": 18,
+    "totalDemand": 13,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (15 pack) with safe shelf-life (18d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 5,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 4,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 4,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Black Tea": {
+    "status": "success",
+    "product": "Black Tea",
+    "category": "Beverages",
+    "unit": "bottle",
+    "currentStock": 35,
+    "daysToExpiry": 16,
+    "totalDemand": 31,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (35 bottle) with safe shelf-life (16d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 12,
+        "stockRemaining": 23,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 10,
+        "stockRemaining": 13,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 9,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Brown Rice": {
+    "status": "success",
+    "product": "Brown Rice",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 44,
+    "daysToExpiry": 16,
+    "totalDemand": 39,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (44 pack) with safe shelf-life (16d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 15,
+        "stockRemaining": 29,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 13,
+        "stockRemaining": 16,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 11,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Cabbage": {
+    "status": "success",
+    "product": "Cabbage",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 94,
+    "daysToExpiry": 1,
+    "totalDemand": 85,
+    "surplusQty": 9,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Donate to Food Bank",
+    "actionReason": "Surplus of 9 kg expiring in 24h. Dispatch to NGO to prevent waste.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 33,
+        "stockRemaining": 61,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 28,
+        "stockRemaining": 33,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 24,
+        "stockRemaining": 9,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Canola Oil": {
+    "status": "success",
+    "product": "Canola Oil",
+    "category": "Oils & Fats",
+    "unit": "bottle",
+    "currentStock": 79,
+    "daysToExpiry": 15,
+    "totalDemand": 72,
+    "surplusQty": 7,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (79 bottle) with safe shelf-life (15d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 28,
+        "stockRemaining": 51,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 24,
+        "stockRemaining": 27,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 20,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Carrot": {
+    "status": "success",
+    "product": "Carrot",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 51,
+    "daysToExpiry": 5,
+    "totalDemand": 46,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (51 kg) with safe shelf-life (5d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 18,
+        "stockRemaining": 33,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 15,
+        "stockRemaining": 18,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 13,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Cauliflower": {
+    "status": "success",
+    "product": "Cauliflower",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 34,
+    "daysToExpiry": 6,
+    "totalDemand": 30,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (34 kg) with safe shelf-life (6d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 12,
+        "stockRemaining": 22,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 10,
+        "stockRemaining": 12,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 8,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Cheddar Cheese": {
+    "status": "success",
+    "product": "Cheddar Cheese",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 60,
+    "daysToExpiry": 1,
+    "totalDemand": 54,
+    "surplusQty": 6,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Donate to Food Bank",
+    "actionReason": "Surplus of 6 pack expiring in 24h. Dispatch to NGO to prevent waste.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 21,
+        "stockRemaining": 39,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 18,
+        "stockRemaining": 21,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 15,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Cheese": {
+    "status": "success",
+    "product": "Cheese",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 181,
+    "daysToExpiry": 3,
+    "totalDemand": 162,
+    "surplusQty": 19,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 19 pack expiring in 3d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 63,
+        "stockRemaining": 118,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 54,
+        "stockRemaining": 64,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 45,
+        "stockRemaining": 19,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      }
+    ]
+  },
+  "Chocolate Biscuit": {
+    "status": "success",
+    "product": "Chocolate Biscuit",
+    "category": "Bakery",
+    "unit": "pack",
+    "currentStock": 100,
+    "daysToExpiry": 2,
+    "totalDemand": 90,
+    "surplusQty": 10,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 10 pack expiring in 2d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 35,
+        "stockRemaining": 65,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 30,
+        "stockRemaining": 35,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 25,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Cream": {
+    "status": "success",
+    "product": "Cream",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 82,
+    "daysToExpiry": 12,
+    "totalDemand": 74,
+    "surplusQty": 8,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (82 pack) with safe shelf-life (12d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 29,
+        "stockRemaining": 53,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 25,
+        "stockRemaining": 28,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 20,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Cucumber": {
+    "status": "success",
+    "product": "Cucumber",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 86,
+    "daysToExpiry": 2,
+    "totalDemand": 78,
+    "surplusQty": 8,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 8 kg expiring in 2d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 30,
+        "stockRemaining": 56,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 26,
+        "stockRemaining": 30,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 22,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Digestive Biscuit": {
+    "status": "success",
+    "product": "Digestive Biscuit",
+    "category": "Bakery",
+    "unit": "pack",
+    "currentStock": 77,
+    "daysToExpiry": 5,
+    "totalDemand": 69,
+    "surplusQty": 8,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (77 pack) with safe shelf-life (5d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 27,
+        "stockRemaining": 50,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 23,
+        "stockRemaining": 27,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 19,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Egg (Duck)": {
+    "status": "success",
+    "product": "Egg (Duck)",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 37,
+    "daysToExpiry": 2,
+    "totalDemand": 33,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 4 pack expiring in 2d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 13,
+        "stockRemaining": 24,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 11,
+        "stockRemaining": 13,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 9,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Egg (Turkey)": {
+    "status": "success",
+    "product": "Egg (Turkey)",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 76,
+    "daysToExpiry": 9,
+    "totalDemand": 69,
+    "surplusQty": 7,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (76 pack) with safe shelf-life (9d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 27,
+        "stockRemaining": 49,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 23,
+        "stockRemaining": 26,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 19,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Eggplant": {
+    "status": "success",
+    "product": "Eggplant",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 25,
+    "daysToExpiry": 11,
+    "totalDemand": 23,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (25 kg) with safe shelf-life (11d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 9,
+        "stockRemaining": 16,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 8,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 6,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Feta Cheese": {
+    "status": "success",
+    "product": "Feta Cheese",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 98,
+    "daysToExpiry": 9,
+    "totalDemand": 87,
+    "surplusQty": 11,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (98 pack) with safe shelf-life (9d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 34,
+        "stockRemaining": 64,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 29,
+        "stockRemaining": 35,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 24,
+        "stockRemaining": 11,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Garlic": {
+    "status": "success",
+    "product": "Garlic",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 27,
+    "daysToExpiry": 6,
+    "totalDemand": 24,
+    "surplusQty": 3,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (27 kg) with safe shelf-life (6d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 9,
+        "stockRemaining": 18,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 8,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 7,
+        "stockRemaining": 3,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Kale": {
+    "status": "success",
+    "product": "Kale",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 47,
+    "daysToExpiry": 5,
+    "totalDemand": 42,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (47 kg) with safe shelf-life (5d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 16,
+        "stockRemaining": 31,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 14,
+        "stockRemaining": 17,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 12,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Lemon": {
+    "status": "success",
+    "product": "Lemon",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 91,
+    "daysToExpiry": 7,
+    "totalDemand": 82,
+    "surplusQty": 9,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (91 kg) with safe shelf-life (7d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 32,
+        "stockRemaining": 59,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 27,
+        "stockRemaining": 32,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 23,
+        "stockRemaining": 9,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Lettuce": {
+    "status": "success",
+    "product": "Lettuce",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 58,
+    "daysToExpiry": 7,
+    "totalDemand": 51,
+    "surplusQty": 7,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (58 kg) with safe shelf-life (7d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 20,
+        "stockRemaining": 38,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 17,
+        "stockRemaining": 21,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 14,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Lime": {
+    "status": "success",
+    "product": "Lime",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 18,
+    "daysToExpiry": 6,
+    "totalDemand": 15,
+    "surplusQty": 3,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (18 kg) with safe shelf-life (6d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 6,
+        "stockRemaining": 12,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 5,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 4,
+        "stockRemaining": 3,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Long Grain Rice": {
+    "status": "success",
+    "product": "Long Grain Rice",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 15,
+    "daysToExpiry": 17,
+    "totalDemand": 13,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (15 pack) with safe shelf-life (17d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 5,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 4,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 4,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Mango": {
+    "status": "success",
+    "product": "Mango",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 89,
+    "daysToExpiry": 3,
+    "totalDemand": 80,
+    "surplusQty": 9,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 9 kg expiring in 3d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 31,
+        "stockRemaining": 58,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 27,
+        "stockRemaining": 31,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 22,
+        "stockRemaining": 9,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Milk": {
+    "status": "success",
+    "product": "Milk",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 15,
+    "daysToExpiry": 5,
+    "totalDemand": 13,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (15 pack) with safe shelf-life (5d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 5,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 4,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 4,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Olive Oil": {
+    "status": "success",
+    "product": "Olive Oil",
+    "category": "Oils & Fats",
+    "unit": "bottle",
+    "currentStock": 100,
+    "daysToExpiry": 17,
+    "totalDemand": 90,
+    "surplusQty": 10,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (100 bottle) with safe shelf-life (17d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 35,
+        "stockRemaining": 65,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 30,
+        "stockRemaining": 35,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 25,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Onion": {
+    "status": "success",
+    "product": "Onion",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 34,
+    "daysToExpiry": 9,
+    "totalDemand": 30,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (34 kg) with safe shelf-life (9d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 12,
+        "stockRemaining": 22,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 10,
+        "stockRemaining": 12,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 8,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Orange": {
+    "status": "success",
+    "product": "Orange",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 94,
+    "daysToExpiry": 3,
+    "totalDemand": 85,
+    "surplusQty": 9,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 9 kg expiring in 3d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 33,
+        "stockRemaining": 61,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 28,
+        "stockRemaining": 33,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 24,
+        "stockRemaining": 9,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Parmesan Cheese": {
+    "status": "success",
+    "product": "Parmesan Cheese",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 38,
+    "daysToExpiry": 3,
+    "totalDemand": 34,
+    "surplusQty": 4,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 4 pack expiring in 3d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 13,
+        "stockRemaining": 25,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 11,
+        "stockRemaining": 14,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 10,
+        "stockRemaining": 4,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Pear": {
+    "status": "success",
+    "product": "Pear",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 79,
+    "daysToExpiry": 7,
+    "totalDemand": 72,
+    "surplusQty": 7,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (79 kg) with safe shelf-life (7d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 28,
+        "stockRemaining": 51,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 24,
+        "stockRemaining": 27,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 20,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Powdered Sugar": {
+    "status": "success",
+    "product": "Powdered Sugar",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 68,
+    "daysToExpiry": 14,
+    "totalDemand": 61,
+    "surplusQty": 7,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (68 pack) with safe shelf-life (14d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 24,
+        "stockRemaining": 44,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 20,
+        "stockRemaining": 24,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 17,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Rice Flour": {
+    "status": "success",
+    "product": "Rice Flour",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 24,
+    "daysToExpiry": 14,
+    "totalDemand": 21,
+    "surplusQty": 3,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (24 pack) with safe shelf-life (14d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 8,
+        "stockRemaining": 16,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 7,
+        "stockRemaining": 9,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 6,
+        "stockRemaining": 3,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Ricotta Cheese": {
+    "status": "success",
+    "product": "Ricotta Cheese",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 50,
+    "daysToExpiry": 10,
+    "totalDemand": 45,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (50 pack) with safe shelf-life (10d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 18,
+        "stockRemaining": 32,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 15,
+        "stockRemaining": 17,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 12,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Sesame Oil": {
+    "status": "success",
+    "product": "Sesame Oil",
+    "category": "Oils & Fats",
+    "unit": "bottle",
+    "currentStock": 39,
+    "daysToExpiry": 15,
+    "totalDemand": 36,
+    "surplusQty": 3,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (39 bottle) with safe shelf-life (15d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 14,
+        "stockRemaining": 25,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 12,
+        "stockRemaining": 13,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 10,
+        "stockRemaining": 3,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Sour Cream": {
+    "status": "success",
+    "product": "Sour Cream",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 15,
+    "daysToExpiry": 11,
+    "totalDemand": 13,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (15 pack) with safe shelf-life (11d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 5,
+        "stockRemaining": 10,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 4,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 4,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Sourdough Bread": {
+    "status": "success",
+    "product": "Sourdough Bread",
+    "category": "Bakery",
+    "unit": "pack",
+    "currentStock": 120,
+    "daysToExpiry": 7,
+    "totalDemand": 108,
+    "surplusQty": 12,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (120 pack) with safe shelf-life (7d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 42,
+        "stockRemaining": 78,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 36,
+        "stockRemaining": 42,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 30,
+        "stockRemaining": 12,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Sunflower Oil": {
+    "status": "success",
+    "product": "Sunflower Oil",
+    "category": "Oils & Fats",
+    "unit": "bottle",
+    "currentStock": 23,
+    "daysToExpiry": 16,
+    "totalDemand": 21,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (23 bottle) with safe shelf-life (16d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 8,
+        "stockRemaining": 15,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 7,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 6,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Sushi Rice": {
+    "status": "success",
+    "product": "Sushi Rice",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 75,
+    "daysToExpiry": 18,
+    "totalDemand": 67,
+    "surplusQty": 8,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (75 pack) with safe shelf-life (18d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 26,
+        "stockRemaining": 49,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 22,
+        "stockRemaining": 27,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 19,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Sweet Potato": {
+    "status": "success",
+    "product": "Sweet Potato",
+    "category": "Produce",
+    "unit": "kg",
+    "currentStock": 49,
+    "daysToExpiry": 2,
+    "totalDemand": 44,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Dynamic Markdown (-30%)",
+    "actionReason": "Surplus of 5 kg expiring in 2d. Apply 30% discount in POS.",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 17,
+        "stockRemaining": 32,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 15,
+        "stockRemaining": 17,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 12,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Tilapia": {
+    "status": "success",
+    "product": "Tilapia",
+    "category": "Seafood",
+    "unit": "kg",
+    "currentStock": 30,
+    "daysToExpiry": 11,
+    "totalDemand": 27,
+    "surplusQty": 3,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (30 kg) with safe shelf-life (11d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 10,
+        "stockRemaining": 20,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 9,
+        "stockRemaining": 11,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 8,
+        "stockRemaining": 3,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Vegetable Oil": {
+    "status": "success",
+    "product": "Vegetable Oil",
+    "category": "Oils & Fats",
+    "unit": "bottle",
+    "currentStock": 51,
+    "daysToExpiry": 15,
+    "totalDemand": 46,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (51 bottle) with safe shelf-life (15d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 18,
+        "stockRemaining": 33,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 15,
+        "stockRemaining": 18,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 13,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "White Rice": {
+    "status": "success",
+    "product": "White Rice",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 20,
+    "daysToExpiry": 16,
+    "totalDemand": 18,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (20 pack) with safe shelf-life (16d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 7,
+        "stockRemaining": 13,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 6,
+        "stockRemaining": 7,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 5,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "White Tea": {
+    "status": "success",
+    "product": "White Tea",
+    "category": "Beverages",
+    "unit": "bottle",
+    "currentStock": 190,
+    "daysToExpiry": 18,
+    "totalDemand": 171,
+    "surplusQty": 19,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (190 bottle) with safe shelf-life (18d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 66,
+        "stockRemaining": 124,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 57,
+        "stockRemaining": 67,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 48,
+        "stockRemaining": 19,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      }
+    ]
+  },
+  "Whole Wheat Bread": {
+    "status": "success",
+    "product": "Whole Wheat Bread",
+    "category": "Bakery",
+    "unit": "pack",
+    "currentStock": 17,
+    "daysToExpiry": 12,
+    "totalDemand": 15,
+    "surplusQty": 2,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (17 pack) with safe shelf-life (12d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 6,
+        "stockRemaining": 11,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 5,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 4,
+        "stockRemaining": 2,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Whole Wheat Flour": {
+    "status": "success",
+    "product": "Whole Wheat Flour",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 86,
+    "daysToExpiry": 15,
+    "totalDemand": 78,
+    "surplusQty": 8,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (86 pack) with safe shelf-life (15d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 30,
+        "stockRemaining": 56,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 26,
+        "stockRemaining": 30,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 22,
+        "stockRemaining": 8,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Wild Rice": {
+    "status": "success",
+    "product": "Wild Rice",
+    "category": "Grains & Pulses",
+    "unit": "pack",
+    "currentStock": 41,
+    "daysToExpiry": 17,
+    "totalDemand": 36,
+    "surplusQty": 5,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (41 pack) with safe shelf-life (17d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 14,
+        "stockRemaining": 27,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 12,
+        "stockRemaining": 15,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 10,
+        "stockRemaining": 5,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  },
+  "Yogurt": {
+    "status": "success",
+    "product": "Yogurt",
+    "category": "Dairy",
+    "unit": "pack",
+    "currentStock": 55,
+    "daysToExpiry": 12,
+    "totalDemand": 49,
+    "surplusQty": 6,
+    "reorderNeeded": false,
+    "reorderQty": 0,
+    "recommendedAction": "Maintain Regular Sale (FEFO)",
+    "actionReason": "Adequate stock (55 pack) with safe shelf-life (12d).",
+    "points": [
+      {
+        "label": "Tomorrow",
+        "date": "Nov 15",
+        "demand": 19,
+        "stockRemaining": 36,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day After",
+        "date": "Nov 16",
+        "demand": 16,
+        "stockRemaining": 20,
+        "stockDeficit": 0,
+        "status": "Sufficient Stock"
+      },
+      {
+        "label": "Day 3",
+        "date": "Nov 17",
+        "demand": 14,
+        "stockRemaining": 6,
+        "stockDeficit": 0,
+        "status": "Low Stock"
+      }
+    ]
+  }
+}
