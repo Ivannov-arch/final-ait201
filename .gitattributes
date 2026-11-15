@@ -1,3 +1,4 @@
 data/raw/8.[[:space:]]store-sales-time-series-forecasting/train.csv filter=lfs diff=lfs merge=lfs -text
 data/raw/11.[[:space:]]pricecatcher_2026-10.csv filter=lfs diff=lfs merge=lfs -text
 data/raw/7.[[:space:]]perishable_goods_management.csv filter=lfs diff=lfs merge=lfs -text
+models/spoilage_classifier.pkl filter=lfs diff=lfs merge=lfs -text
