@@ -127,23 +127,17 @@ function batchToRow(b) {
   }
 }
 
-// ── Supabase Cloud Sync Helper (Person 4 Architecture) ─────────────────────────
+// ── Supabase Cloud Sync Helper ──────────────────────────────────────────────
 function getEnvKey(key) {
   if (process.env[key]) return process.env[key]
-  try {
-    const envPath = path.resolve(__dirname, '.env')
-    if (fs.existsSync(envPath)) {
-      const match = fs.readFileSync(envPath, 'utf8').match(new RegExp(`^${key}=(.*)$`, 'm'))
-      if (match) return match[1].trim()
-    }
-  } catch (_) {}
-  try {
-    const rootEnv = path.resolve(__dirname, '../.env')
-    if (fs.existsSync(rootEnv)) {
-      const match = fs.readFileSync(rootEnv, 'utf8').match(new RegExp(`^${key}=(.*)$`, 'm'))
-      if (match) return match[1].trim()
-    }
-  } catch (_) {}
+  for (const envPath of [path.resolve(__dirname, '.env'), path.resolve(__dirname, '../.env')]) {
+    try {
+      if (fs.existsSync(envPath)) {
+        const match = fs.readFileSync(envPath, 'utf8').match(new RegExp(`^${key}=(.*)$`, 'm'))
+        if (match) return match[1].trim()
+      }
+    } catch (_) {}
+  }
   return ''
 }
 

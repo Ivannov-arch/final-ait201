@@ -1,7 +1,6 @@
 
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
 
 from pathlib import Path
 from lightgbm import LGBMRegressor, early_stopping

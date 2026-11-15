@@ -98,7 +98,8 @@ def assign_route(
     -------
     dict with keys:
         recommended_route     : str   — "Normal Sale" | "Dynamic Markdown" | "Donation"
-        discount_percent      : float — 0.0–1.0 (e.g. 0.25 = 25 %)
+        discount_percent      : float — 0.0–100.0 (e.g. 25.0 = 25 %)
+        discount_fraction     : float — 0.0–1.0 (e.g. 0.25 = 25 %)
         discounted_price_myr  : float — effective per-unit price after discount
         expected_value_myr    : float — total financial realisation for the lot
         channel               : str   — "retail" | "closed_ngo"

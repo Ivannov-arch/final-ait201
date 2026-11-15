@@ -1,13 +1,12 @@
 
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
 import json
 
 from pathlib import Path
 from sklearn.model_selection import ParameterSampler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from lightgbm import LGBMRegressor, early_stopping
+from lightgbm import LGBMRegressor, early_stopping, log_evaluation
 
 # ==========================================
 # 1. PROJECT PATHS
@@ -151,7 +150,7 @@ for horizon in [1, 2, 3]:
             categorical_feature=["family"],
             callbacks=[
                 early_stopping(stopping_rounds=100),
-                lgb.log_evaluation(period=0)
+                log_evaluation(period=0)
             ]
         )
 

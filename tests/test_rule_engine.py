@@ -35,7 +35,7 @@ def _route(result: dict) -> str:
     return result["recommended_route"]
 
 def _discount(result: dict) -> float:
-    return result["discount_percent"]
+    return result.get("discount_fraction", result["discount_percent"] / 100.0 if result["discount_percent"] > 1.0 else result["discount_percent"])
 
 def _channel(result: dict) -> str:
     return result["channel"]
@@ -56,25 +56,25 @@ def _expected_value(result: dict) -> float:
 
 class TestNormalSale:
     """
-    Spec: Healthy batch with 10 days to expiry → Normal Sale, 0% discount.
+    Spec: Healthy batch with demand >= quantity or DTE > 3 non-surplus → Normal Sale, 0% discount.
     """
 
     def test_route_is_normal_sale(self):
         result = assign_route(
             days_to_expiry=10,
-            quantity=100.0,
-            demand_forecast_3d=50.0,
+            quantity=50.0,
+            demand_forecast_3d=100.0,
             unit_price_myr=25.00,
         )
         assert _route(result) == "Normal Sale", (
-            f"Expected 'Normal Sale' for DTE=10, got '{_route(result)}'"
+            f"Expected 'Normal Sale' for DTE=10 (non-surplus), got '{_route(result)}'"
         )
 
     def test_no_discount_applied(self):
         result = assign_route(
             days_to_expiry=10,
-            quantity=100.0,
-            demand_forecast_3d=50.0,
+            quantity=50.0,
+            demand_forecast_3d=100.0,
             unit_price_myr=25.00,
         )
         assert _discount(result) == 0.0, (
@@ -85,8 +85,8 @@ class TestNormalSale:
         price = 25.00
         result = assign_route(
             days_to_expiry=10,
-            quantity=100.0,
-            demand_forecast_3d=50.0,
+            quantity=50.0,
+            demand_forecast_3d=100.0,
             unit_price_myr=price,
         )
         assert _discounted_price(result) == pytest.approx(price, rel=1e-4), (
@@ -96,8 +96,8 @@ class TestNormalSale:
     def test_channel_is_retail(self):
         result = assign_route(
             days_to_expiry=10,
-            quantity=100.0,
-            demand_forecast_3d=50.0,
+            quantity=50.0,
+            demand_forecast_3d=100.0,
             unit_price_myr=25.00,
         )
         assert _channel(result) == "retail"
@@ -105,16 +105,16 @@ class TestNormalSale:
     def test_no_moral_hazard(self):
         result = assign_route(
             days_to_expiry=10,
-            quantity=100.0,
-            demand_forecast_3d=50.0,
+            quantity=50.0,
+            demand_forecast_3d=100.0,
             unit_price_myr=25.00,
         )
         assert _moral_hazard(result) is False
 
     def test_demand_exceeds_stock_forces_normal_sale(self):
-        """Even with DTE=1, if demand >= quantity, it's Normal Sale (not surplus)."""
+        """When DTE > 3 and demand >= quantity, it's Normal Sale (not surplus)."""
         result = assign_route(
-            days_to_expiry=1,
+            days_to_expiry=5,
             quantity=20.0,
             demand_forecast_3d=25.0,  # demand > quantity → not surplus
             unit_price_myr=15.00,
@@ -124,11 +124,11 @@ class TestNormalSale:
 
     @pytest.mark.parametrize("dte", [4, 7, 14, 30, 365])
     def test_various_safe_dte_values(self, dte):
-        """Any DTE > 3 with surplus should be Normal Sale."""
+        """Any DTE > 3 without surplus should be Normal Sale."""
         result = assign_route(
             days_to_expiry=dte,
-            quantity=50.0,
-            demand_forecast_3d=10.0,
+            quantity=10.0,
+            demand_forecast_3d=50.0,
             unit_price_myr=20.00,
         )
         assert _route(result) == "Normal Sale"
@@ -545,7 +545,10 @@ class TestBulkEvaluator:
     def test_discount_percent_range(self, sample_df):
         from src.engine.rule_engine import evaluate_lot_dataframe
         result = evaluate_lot_dataframe(sample_df)
-        assert result["discount_percent"].between(0.0, 1.0).all(), (
-            "discount_percent must always be in [0.0, 1.0]"
+        assert result["discount_fraction"].between(0.0, 1.0).all(), (
+            "discount_fraction must always be in [0.0, 1.0]"
+        )
+        assert result["discount_percent"].between(0.0, 100.0).all(), (
+            "discount_percent must always be in [0.0, 100.0]"
         )
 

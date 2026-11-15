@@ -1,5 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
+from fastapi import APIRouter, HTTPException
 
 from src.forecasting.forecast_service import (
     get_three_day_forecast,

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
 import DashboardHeader from './DashboardHeader'
+import AnimatedNumber from './AnimatedNumber'
 import './dispatchPage.css'
 
 const UNDO_WINDOW_MS = 10000 // 10-second undo window
@@ -87,54 +88,6 @@ const getCategoryColorClass = (cat) => {
   return 'default'
 }
 
-
-// GSAP Kinetic Counter Component (Respects prefers-reduced-motion)
-function GsapCounter({ value, prefix = '', suffix = '', decimals = 0 }) {
-  const nodeRef = useRef(null)
-  const prevValRef = useRef(0)
-  const mountedRef = useRef(false)
-
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (nodeRef.current) {
-        nodeRef.current.textContent = `${prefix}${Number(value || 0).toLocaleString('en-MY', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals
-        })}${suffix}`
-      }
-      return
-    }
-
-    const targetVal = Number(value || 0)
-    const startVal = mountedRef.current ? prevValRef.current : 0
-    mountedRef.current = true
-    prevValRef.current = targetVal
-
-    const obj = { val: startVal }
-    const tween = gsap.fromTo(
-      obj,
-      { val: startVal },
-      {
-        val: targetVal,
-        duration: 1.1,
-        ease: 'power3.out',
-        onUpdate: () => {
-          if (nodeRef.current) {
-            nodeRef.current.textContent = `${prefix}${Math.round(obj.val).toLocaleString('en-MY')}${suffix}`
-          }
-        }
-      }
-    )
-
-    return () => tween.kill()
-  }, [value, prefix, suffix, decimals])
-
-  return (
-    <span ref={nodeRef}>
-      {prefix}{Number(value || 0).toLocaleString('en-MY')}{suffix}
-    </span>
-  )
-}
 
 export default function DispatchPage({
   batches: externalBatches = [],
@@ -721,7 +674,7 @@ export default function DispatchPage({
             </div>
           </div>
           <div className="fg-dispatch-metric-card__value">
-            <GsapCounter value={criticalCount} suffix=" Lots" /> <span style={{ fontSize: '1rem', fontWeight: 600 }}>(<GsapCounter value={criticalWeight} suffix=" kg" />)</span>
+            <AnimatedNumber value={criticalCount} suffix=" Lots" /> <span style={{ fontSize: '1rem', fontWeight: 600 }}>(<AnimatedNumber value={criticalWeight} suffix=" kg" />)</span>
           </div>
           <div className="fg-dispatch-metric-card__sub">
             <span className="fg-dispatch-metric-card__trend">Waste Risk ≥ 80%</span>
@@ -743,7 +696,7 @@ export default function DispatchPage({
             </div>
           </div>
           <div className="fg-dispatch-metric-card__value">
-            <GsapCounter value={1670} suffix=" kg" />
+            <AnimatedNumber value={1670} suffix=" kg" />
           </div>
           <div className="fg-dispatch-metric-card__sub">
             <span className="fg-dispatch-metric-card__trend fg-dispatch-metric-card__trend--sky">4 Partner Hubs</span>

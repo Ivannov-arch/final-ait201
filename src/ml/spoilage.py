@@ -1,6 +1,9 @@
-# ─────────────────────────────────────────────
-# [CELL 18] Inference Functions & FEFO Sorter (INDEPENDENT & REUSABLE)
-# ─────────────────────────────────────────────
+"""
+Spoilage Classifier — Inference Functions & FEFO Sorter
+======================================================
+Person 1: ML Spoilage Model & Risk Prediction
+Predicts spoilage risk level (HIGH, MODERATE, LOW) using Random Forest.
+"""
 
 import os
 import pandas as pd

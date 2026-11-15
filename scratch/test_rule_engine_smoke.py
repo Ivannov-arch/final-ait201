@@ -1,6 +1,9 @@
 import sys, os
-os.chdir(r"c:\Users\evanc\Favorites\Projects\Applied Machine Learning Final\final-ait201")
-sys.path.insert(0, ".")
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+os.chdir(ROOT_DIR)
+sys.path.insert(0, str(ROOT_DIR))
 import pandas as pd
 from src.engine.rule_engine import assign_route, evaluate_lot_dataframe
 
