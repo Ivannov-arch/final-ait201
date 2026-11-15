@@ -38,6 +38,41 @@ DEFAULT_STORAGE_TEMPS = {
     "Oils & Fats": 24.0
 }
 
+def normalize_quantity_to_kg(qty: float, uom: str = "kg", category: str = "") -> float:
+    """Adapts heterogeneous retail packaging units (kg, pack, bottle, units, pcs) into physical mass (kg)."""
+    u = str(uom or "kg").strip().lower()
+    cat = str(category or "").lower()
+
+    if u in ("kg", "kilogram", "kgs"):
+        return max(0.1, float(qty))
+    if u in ("g", "gram", "grams"):
+        return max(0.01, round(float(qty) / 1000.0, 3))
+    if u in ("bottle", "bottles", "btl"):
+        # Liquid density ~ 1.0 kg/L
+        return max(0.5, round(float(qty) * 1.0, 2))
+    if u in ("pack", "packs", "pkt", "packets"):
+        if "grain" in cat or "flour" in cat or "rice" in cat or "pantry" in cat:
+            factor = 1.0
+        elif "dairy" in cat or "cheese" in cat:
+            factor = 0.5
+        elif "bakery" in cat:
+            factor = 0.4
+        else:
+            factor = 0.6
+        return max(0.2, round(float(qty) * factor, 2))
+    if u in ("unit", "units", "pcs", "piece", "pieces"):
+        if "meat" in cat or "poultry" in cat:
+            factor = 0.8
+        elif "bakery" in cat:
+            factor = 0.25
+        elif "produce" in cat or "fruit" in cat or "veg" in cat:
+            factor = 0.35
+        else:
+            factor = 0.4
+        return max(0.2, round(float(qty) * factor, 2))
+    return max(0.1, float(qty))
+
+
 def _load_cargo_package(model_path: str = DEFAULT_CARGO_MODEL_PATH) -> dict | None:
     """Loads and caches the cargo estimator model package."""
     global _CARGO_PACKAGE
@@ -61,34 +96,20 @@ def estimate_dispatch_cargo(
 ) -> dict:
     """Estimates surplus donation cargo weight, transport vehicle, and cold-chain specs.
 
-    Args:
-        lot: Inventory lot dictionary containing:
-            - initial_quantity / Stock_Quantity / quantity (float)
-            - daily_demand / Sales_Volume (float)
-            - shelf_life_days (float)
-            - category / Category (str)
-            - storage_temp / Storage_Temperature (optional float)
-            - is_promoted / Promotion (optional 0/1 or "Yes"/"No")
-        weather: Local atmospheric condition ("Sunny", "Cloudy", "Hot", "Rainy"). Default "Sunny".
-        business_type: Origin facility type ("Supermarket", "Restaurant", "Cafeteria"). Default "Supermarket".
-        model_path: Path to serialized model package.
-
-    Returns:
-        dict: {
-            "estimated_cargo_kg": float,
-            "recommended_vehicle": str,
-            "cold_chain_required": bool,
-            "transport_urgency": "CRITICAL" | "STANDARD",
-            "recommended_facility": str
-        }
+    Flexible adaptation across packaging units (kg, pack, bottle, units, pcs).
     """
     pkg = _load_cargo_package(model_path)
 
-    # 1. Standardize input fields
-    qty = float(lot.get("initial_quantity", lot.get("Stock_Quantity", lot.get("quantity", 50.0))))
-    demand = float(lot.get("daily_demand", lot.get("Sales_Volume", lot.get("demand", 15.0))))
-    shelf_life = float(lot.get("shelf_life_days", lot.get("calc_shelf_life", 14.0)))
+    # 1. Standardize input fields and units
+    raw_qty = float(lot.get("initial_quantity", lot.get("Stock_Quantity", lot.get("quantity", 50.0))))
+    uom = str(lot.get("uom", lot.get("unit", "kg"))).strip().lower()
     raw_cat = str(lot.get("category", lot.get("Category", "Fruits"))).strip()
+
+    # Convert to physical equivalent kg for model inference
+    qty_kg = normalize_quantity_to_kg(raw_qty, uom, raw_cat)
+    raw_demand = float(lot.get("daily_demand", lot.get("Sales_Volume", lot.get("demand", 15.0))))
+    demand_kg = normalize_quantity_to_kg(raw_demand, uom, raw_cat)
+    shelf_life = float(lot.get("shelf_life_days", lot.get("calc_shelf_life", 14.0)))
 
     # Map retail category to 11_food_waste categories
     cat_map = {
@@ -104,7 +125,6 @@ def estimate_dispatch_cargo(
 
     # Resolve storage temperature
     temp = float(lot.get("storage_temp", lot.get("Storage_Temperature", DEFAULT_STORAGE_TEMPS.get(raw_cat, 12.0))))
-
     promo = "Yes" if lot.get("is_promoted", 0) in [1, True, "Yes", "yes"] else "No"
 
     # 2. ML Model Prediction
@@ -115,8 +135,8 @@ def estimate_dispatch_cargo(
             scaler = pkg["scaler"]
 
             row = {col: 0.0 for col in feature_cols}
-            row["Purchase_Quantity"] = qty
-            row["Daily_Demand"] = demand
+            row["Purchase_Quantity"] = qty_kg
+            row["Daily_Demand"] = demand_kg
             row["Shelf_Life_Days"] = shelf_life
             row["Storage_Temperature"] = temp
 
@@ -137,18 +157,49 @@ def estimate_dispatch_cargo(
             predicted_kg = float(model.predict(X_scaled)[0])
             cargo_kg = max(0.5, round(predicted_kg, 2))
         except Exception:
-            cargo_kg = max(1.0, round(qty * 0.25, 2))
+            cargo_kg = max(1.0, round(qty_kg * 0.25, 2))
     else:
-        # Heuristic fallback if model unavailable
-        cargo_kg = max(1.0, round(qty * 0.25, 2))
+        cargo_kg = max(1.0, round(qty_kg * 0.25, 2))
 
-    # 3. Logistics & Vehicle Decision Logic
+    # 3. Flexible Vehicle Recommendation (Weight & Unit Adaptive)
+    unit_ratio = qty_kg / max(1.0, raw_qty)
     if cargo_kg <= 25.0:
-        vehicle = "Motorcycle Courier / Small Carrier (<=25 kg)"
+        vehicle_type = "motorcycle"
+        vehicle_title = "Motorcycle Courier"
+        if uom == "kg":
+            vehicle_capacity = "≤ 25 kg payload"
+        elif uom == "bottle":
+            vehicle_capacity = "≤ 25 kg (~25 bottles)"
+        elif uom == "pack":
+            vehicle_capacity = "≤ 25 kg (~40–50 packs)"
+        else:
+            equiv_units = max(10, int(25.0 / unit_ratio))
+            vehicle_capacity = f"≤ 25 kg (~{equiv_units} {uom})"
     elif cargo_kg <= 200.0:
-        vehicle = "Cargo Van / Pickup (25 - 200 kg)"
+        vehicle_type = "van"
+        vehicle_title = "Cargo Van / Pickup"
+        if uom == "kg":
+            vehicle_capacity = "25 – 200 kg payload"
+        elif uom == "bottle":
+            vehicle_capacity = "25 – 200 kg (~25–200 bottles)"
+        elif uom == "pack":
+            vehicle_capacity = "25 – 200 kg (~50–350 packs)"
+        else:
+            equiv_min = max(20, int(25.0 / unit_ratio))
+            equiv_max = max(equiv_min + 50, int(200.0 / unit_ratio))
+            vehicle_capacity = f"25 – 200 kg (~{equiv_min}–{equiv_max} {uom})"
     else:
-        vehicle = "Heavy Duty Food Bank Truck (>200 kg)"
+        vehicle_type = "truck"
+        vehicle_title = "Heavy Food Bank Truck"
+        if uom == "kg":
+            vehicle_capacity = "> 200 kg heavy freight"
+        elif uom == "bottle":
+            vehicle_capacity = "> 200 kg (> 200 bottles)"
+        elif uom == "pack":
+            vehicle_capacity = "> 200 kg (> 350 packs)"
+        else:
+            equiv_min = max(200, int(200.0 / unit_ratio))
+            vehicle_capacity = f"> 200 kg (> {equiv_min} {uom})"
 
     # Cold chain assessment
     is_cold_chain = (raw_cat in COLD_CHAIN_CATEGORIES) or (temp < 10.0)
@@ -162,12 +213,19 @@ def estimate_dispatch_cargo(
 
     return {
         "estimated_cargo_kg": cargo_kg,
-        "recommended_vehicle": vehicle,
+        "input_quantity": raw_qty,
+        "uom": uom,
+        "equivalent_mass_kg": qty_kg,
+        "vehicle_type": vehicle_type,
+        "vehicle_title": vehicle_title,
+        "vehicle_capacity": vehicle_capacity,
+        "recommended_vehicle": f"{vehicle_title} ({vehicle_capacity})",
         "cold_chain_required": is_cold_chain,
+        "cold_chain_type": "Refrigerated" if is_cold_chain else "Ambient",
+        "storage_temperature_c": temp,
         "recommended_facility": facility,
         "transport_urgency": urgency,
-        "food_category": raw_cat,
-        "storage_temperature_c": temp
+        "food_category": raw_cat
     }
 
 

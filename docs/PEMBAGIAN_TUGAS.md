@@ -128,18 +128,47 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 5 — Risk & Smart Dispatch Lead
+
+**Status Deliverables: 🟡 Model & API Ready (Backend complete, Frontend integration & physical CSV backlog pending)**
+
+#### ✅ Sudah Selesai (Completed):
 - [x] **Model Waste-Risk & Logistics Cargo Estimator (Goal 5):**
   - Latih model ML (XGBoost Regressor) pada dataset `11_food_waste_archive_cleaned.csv` 8K.
-  - Hasilkan estimasi presisi berat surplus kargo makanan (kg) dengan R² = 95.45% dan MAE = 1.37 kg.
-  - Sediakan rekomendasi armada otomatis (Motorcycle Courier, Cargo Van, Heavy Food Bank Truck), cold-chain requirement (Refrigerated vs Ambient), spesifikasi suhu (°C), dan target fasilitas penerima (Cold-Storage Food Bank vs Standard Pantry).
-  - Simpan ke `models/dispatch_cargo_estimator.pkl` dan sediakan modul inferensi `src/ml/dispatch_estimator.py`.
-- [ ] **Smart Dispatch & OSRM Engine (Goal 7):**
-  - Buat file `receivers_list.csv` (10–20 food bank, panti asuhan, dan dapur umum di Lembah Klang lengkap dengan lat/lng dan kapasitas).
-  - Buat fungsi matching seleksi penerima: cari food bank terdekat dengan kapasitas mencukupi.
-  - Panggil API OSRM publik via HTTP GET:
+  - Hasilkan estimasi presisi berat surplus kargo makanan (kg) dengan $R^2 = 95.45\%$ dan MAE = 1.37 kg.
+  - Sediakan logika rekomendasi armada otomatis:
+    - *Motorcycle Courier* ($\le 25\text{ kg}$)
+    - *Cargo Van / Pickup* ($25\text{--}200\text{ kg}$)
+    - *Heavy Food Bank Truck* ($> 200\text{ kg}$)
+  - Logika klasifikasi *cold-chain requirement* (*Refrigerated* vs *Ambient*), spesifikasi target suhu (°C), dan target fasilitas penerima (*Cold-Storage Food Bank & Freezer* vs *Community Pantry / Ambient Dry Goods Bank*).
+  - Simpan ke `models/dispatch_cargo_estimator.pkl` dan sediakan modul inferensi terpadu `src/ml/dispatch_estimator.py`.
+- [x] **Adaptasi Multi-Unit Kemasan Fleksibel (*Heterogeneous Packaging Normalizer*):**
+  - Mengatasi heterogenitas satuan inventaris toko retail (`kg`, `pack`, `bottle`, `units`, `pcs`).
+  - Fungsi `normalize_quantity_to_kg(qty, uom, category)` di `src/ml/dispatch_estimator.py` mengonversi kuantitas kemasan menjadi massa fisik riil (kg) berbasis densitas produk dan kategori barang (cth. `bottle` = 1.0 kg/L, `pack` Dairy = 0.5 kg, `pack` Bakery = 0.4 kg, `pcs` Meat = 0.8 kg, dsb.).
+  - Rekomendasi armada secara adaptif menampilkan kapasitas ganda (massa kg + estimasi kapasitas kemasan asli toko):
+    - `kg`: $\le 25\text{ kg payload}$ / $25\text{--}200\text{ kg payload}$ / $> 200\text{ kg heavy freight}$
+    - `bottle`: $\le 25\text{ kg (~25 bottles)}$ / $25\text{--}200\text{ kg (~25–200 bottles)}$ / $> 200\text{ kg (> 200 bottles)}$
+    - `pack`: $\le 25\text{ kg (~40–50 packs)}$ / $25\text{--}200\text{ kg (~50–350 packs)}$ / $> 200\text{ kg (> 350 packs)}$
+    - `units` / `pcs`: $\le 25\text{ kg (~60 pcs)}$ / $25\text{--}200\text{ kg (~60–500 pcs)}$ / $> 200\text{ kg (> 500 pcs)}$
+- [x] **Backend API & OSRM Engine (Goal 7 - Backend Core):**
+  - Konfigurasi master data mitra penerima donasi (`RECEIVERS` di `backend/routers/dispatch.py`): 4 mitra food bank Lembah Klang (Kechara Soup Kitchen, The Lost Food Project, Yayasan Food Bank Malaysia, Dapur Jalanan KL) lengkap dengan koordinat geospasial (`lat`/`lng`), kapasitas tampung (kg), dan kapabilitas cold storage.
+  - Bangun algoritma *Smart Receiver Matching*: mencocokkan kategori kargo surplus dan kebutuhan cold-chain dengan fasilitas penerima yang memiliki sisa kapasitas memadai.
+  - Integrasi API OSRM publik via HTTP GET:
     `requests.get(f"http://router.project-osrm.org/route/v1/driving/{lon_store},{lat_store};{lon_bank},{lat_bank}?overview=full&geometries=geojson")`
-  - Ekstrak: `distance_km`, `eta_minutes`, dan `geometry_coordinates` (polyline rute jalan riil).
-  - Simpan log pengiriman ke `dispatch_log.csv`.
+    dengan fallback otomatis ke formula geodesik Haversine.
+  - Ekstraksi telemetri rute riil: `distance_km`, `eta_minutes`, dan `geometry_coordinates` (polyline jalan raya Lembah Klang).
+  - Endpoint terpadu `GET /api/dispatch-route/{batch_id}` menyatukan model estimasi kargo Person 5, matching receiver, dan OSRM driving engine.
+
+#### ⏳ Belum Selesai / Sedang Berjalan (Pending / In Progress):
+- [ ] **Integrasi Visual ke Front End (`DispatchPage.jsx`):**
+  - Hubungkan hasil estimasi kargo & rekomendasi armada ke antarmuka kartu antrean dispatch (`DispatchPage.jsx`).
+  - Tampilkan badge armada cerdas adaptif (`🛵 Motorcycle`, `🚐 Cargo Van`, `🚛 Food Bank Truck`) beserta estimasi kemasan (`≤ 25 kg (~40–50 packs)`, `≤ 25 kg (~25 bottles)`, dsb.).
+  - Tampilkan badge indikator *Cold-Chain* (`❄️ Refrigerated 4°C` vs `📦 Ambient`).
+  - Tampilkan section khusus spesifikasi kargo ML Person 5 pada modal *Route & Manifest* (Estimasi massa surplus kg, armada terpilih, protokol suhu & target fasilitas).
+  - **Batasan Ketat / Constraint:** Wajib menjaga integritas kode routing OSRM yang sudah ada tanpa menyentuh, merusak, atau mengubah formula kalkulasi rute jalan raya OSRM.
+- [ ] **Penyusunan File Fisik `receivers_list.csv` (Goal 7 Spec):**
+  - Sediakan file fisik `receivers_list.csv` berisi 10–20 daftar food bank, panti asuhan, dan dapur umum di Lembah Klang lengkap dengan lat/lng dan kapasitas.
+- [ ] **Pencatatan Persistensi Serah Terima Fisik (`dispatch_log.csv` - Goal 7 Spec):**
+  - Implementasikan persistensi log serah terima fisik donasi ke file `dispatch_log.csv`.
 
 ---
 
