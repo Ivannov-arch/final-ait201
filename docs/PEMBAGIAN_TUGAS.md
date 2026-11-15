@@ -159,6 +159,12 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
   - Endpoint terpadu `GET /api/dispatch-route/{batch_id}` menyatukan model estimasi kargo Person 5, matching receiver, dan OSRM driving engine.
 
 #### ⏳ Belum Selesai / Sedang Berjalan (Pending / In Progress):
+- [ ] **Visualisasi Peta Interaktif Rute OSRM (*Interactive Route Map Component* - Goal 7):**
+  - Bangun komponen peta visual interaktif (Leaflet / OpenStreetMap) di dalam modal rute (*Route & Manifest Modal*).
+  - Gambar marker titik supermarket asal (*Origin Supermarket*) dan marker titik mitra food bank tujuan (*Target Food Bank*).
+  - Render garis jalur jalan raya riil (*OSRM Road Polyline*) berbasis koordinat `geometry.coordinates` yang ditarik dari endpoint OSRM `/api/dispatch-route/{batch_id}`.
+  - Tampilkan pop-up informasi pada marker & polyline: nama mitra, jarak tempuh (km), estimasi waktu transit (menit), dan kelayakan kargo.
+  - Terapkan teknik pemuatan ringan (*lazy-load / on-demand modal mount*) agar peta hanya aktif saat modal dibuka dan tidak membebani performa operasional kasir di dashboard utama (*solusi win-win arsitektur*).
 - [ ] **Integrasi Visual ke Front End (`DispatchPage.jsx`):**
   - Hubungkan hasil estimasi kargo & rekomendasi armada ke antarmuka kartu antrean dispatch (`DispatchPage.jsx`).
   - Tampilkan badge armada cerdas adaptif (`🛵 Motorcycle`, `🚐 Cargo Van`, `🚛 Food Bank Truck`) beserta estimasi kemasan (`≤ 25 kg (~40–50 packs)`, `≤ 25 kg (~25 bottles)`, dsb.).
