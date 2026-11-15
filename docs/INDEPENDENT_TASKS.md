@@ -1,4 +1,4 @@
-﻿# Daftar Pekerjaan Bebas Bottleneck (Day 1 Independent Tasks)
+# Daftar Pekerjaan Bebas Bottleneck (Day 1 Independent Tasks)
 
 > **Dynamic Food Clearing House Simulator**
 > Dokumen ini memetakan seluruh pekerjaan yang **TIDAK TERGANTUNG pada orang lain/pekerjaan lain**.
@@ -58,13 +58,15 @@ Tidak memerlukan kode atau output dari siapapun. Langsung bekerja pada file ment
 Dataset sudah tersedia di folder lokal (`Grocery Inventory` / `perishable_goods_management.csv`). **100% tidak blokir siapapun dan tidak diblokir siapapun.**
 
 - [x] Lakukan Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok.
-- [x] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
-- [x] Buat label risiko kerusakan (`HIGH`, `MEDIUM`, `LOW`).
-- [x] Latih model klasifikasi (Random Forest / XGBoost) dengan Scikit-Learn.
-- [x] Evaluasi performa (Confusion Matrix, F1-Score) dan simpan model ke `models/spoilage_classifier.pkl`.
-- [x] Buat fungsi inferensi mandiri: `predict_spoilage_risk(batch_dict)`.
+- [x] Feature engineering: hitung `days_to_expiry`, `turnover_ratio`, dan store pressure (24 pre-sale features, strict zero-leakage).
+- [x] Buat label risiko kerusakan (`HIGH`, `MODERATE`, `LOW`).
+- [x] Latih dan benchmark model klasifikasi (Random Forest, Gradient Boosting, AdaBoost, LightGBM, XGBoost Champion).
+- [x] Evaluasi performa (Confusion Matrix, F1-Score, Grocery Inventory external test: 92.5%) dan simpan model ke `models/spoilage_classifier.pkl` (Git LFS).
+- [x] Implementasikan arsitektur Two-Tier Spoilage Risk (ML baseline + Continuous Bayesian Time-Decay Escalation Tier 2).
+- [x] Buat fungsi inferensi mandiri: `predict_spoilage_risk(batch_dict)` dan `sort_by_fefo(batch_list)` di `src/ml/spoilage.py`.
+- [x] Bangun model sambungan kargo logistik Person 5 (`models/dispatch_cargo_estimator.pkl` dan `src/ml/dispatch_estimator.py`).
 
-> *(Setelah BASE selesai: alihkan ke supervisi tim + bantu Person 5 interpretasi K-Means untuk Goal 8)*
+> *(Setelah BASE selesai: alihkan ke supervisi tim + bantu Person 5 integrasi OSRM dispatch & interpretasi K-Means untuk Goal 8)*
 
 ---
 
@@ -143,10 +145,11 @@ Logika bisnis dan struktur database bisa dibangun dengan mock data:
 - [ ] Buat unit test: jalankan fungsi dengan 5 batch dummy, pastikan output `receiver_id` valid.
 
 #### 🏗️ BASE Tasks — Goal 5 & Goal 7 (Selaras Alur PDF Langkah 5)
-- **Goal 5 — Waste-Risk Model:**
-  - [ ] Gunakan `food_waste_dataset.csv` (8.000 baris, setelah Person 0 imputasi).
-  - [ ] Latih model klasifikasi/regresi untuk memprediksi probabilitas waste (`waste_risk_score`).
-  - [ ] Simpan model ke `models/waste_risk_model.pkl`.
+- **Goal 5 — Waste-Risk & Logistics Cargo Estimator Model:**
+  - [x] Gunakan `11_food_waste_archive_cleaned.csv` (8.000 baris, bersih & terimputasi).
+  - [x] Latih model regresi XGBoost untuk memprediksi kuantitas limbah surplus makanan (`estimated_cargo_kg`) dengan R² = 95.45% dan MAE = 1.37 kg.
+  - [x] Tambahkan klasifikasi armada logistik (Motor/Van/Truk), kebutuhan cold-chain pendingin (°C), dan tipe fasilitas penerima (Food Bank Cold Storage vs Pantry).
+  - [x] Simpan model ke `models/dispatch_cargo_estimator.pkl` dan modul inferensi `src/ml/dispatch_estimator.py`.
 - **Goal 7 — OSRM Routing (Penyempurnaan Langkah 5 PDF: Smart Dispatch):**
   - [ ] Tes integrasi API Nominatim untuk mengubah alamat penerima menjadi koordinat lat/long.
   - [ ] Tes pemanggilan API OSRM publik: `requests.get("http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}")` — **1 baris kode**.

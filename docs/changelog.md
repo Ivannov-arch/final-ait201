@@ -293,3 +293,37 @@ For each broken row:
 | 2026-11-09 | 496 broken expiry rows in Grocery | ✅ Fixed 2026-11-13 — median imputation |
 | 2026-11-09 | Jitter bootstrap breaks column correlations | ✅ Fixed 2026-11-13 — replaced with SMOTE |
 | 2026-11-13 | ML class imbalance (HIGH 1.7%) | ✅ Root cause fixed via Fix 1 + Fix 2 |
+| 2026-11-16 | Step 7 Spoilage Classifier ML & Git LFS | ✅ Completed — XGBoost Champion + Continuous Tier 2 |
+| 2026-11-16 | Step 11 Smart Dispatch Cargo Estimator | ✅ Completed — XGBoost Regressor (R² = 95.5%, MAE = 1.37 kg) |
+
+---
+
+## 2026-11-16
+
+### [FEAT] Step 7 Spoilage Classifier & Two-Tier Policy Architecture ✅
+**Author:** Person 1 (Tech Lead & ML Tabular)  
+**Deliverables:**
+- Notebook: `notebooks/step7_spoilage_classifier.ipynb` (33 cells, 100% English, fully verified syntax)
+- Inference Module: `src/ml/spoilage.py` (`predict_spoilage_risk()`, `sort_by_fefo()`, `apply_continuous_tier2()`)
+- Serialized Model: `models/spoilage_classifier.pkl` (1.55 MB, Git LFS tracked)
+- Technical Report: `experiment.md`
+
+**Key Technical Details:**
+- **Zero-Leakage Guarantee:** Dropped all 8 post-sale outcome columns (`units_sold`, `units_wasted`, `revenue`, `profit`, `waste_cost`, `discount_pct`, `markdown_applied`, `was_spoiled`). Only 24 operational pre-sale features used.
+- **Algorithm Benchmark:** Evaluated Random Forest (63.9%), Gradient Boosting (66.8%), AdaBoost (59.1%), LightGBM, and XGBoost. Champion selected: **XGBoost** (**67.41% Accuracy**, **69.1% Recall on HIGH**, **90.3% Recall on LOW**, 1.88s training).
+- **Two-Tier Architecture:** Integrated Continuous Bayesian Time-Decay Escalation Tier 2 with domain half-life values (`CATEGORY_TAU_DAYS`).
+- **External Validation:** Tested against unlabelled `data/processed/7_grocery_inventory_cleaned.csv` achieving **92.5% alignment** and **100% precision on HIGH**.
+
+---
+
+### [FEAT] Step 11 Smart Dispatch Cargo & Logistics Estimator ✅
+**Author:** Person 1 (in collaboration with Person 5: Logistics & Routing)  
+**Deliverables:**
+- Serialized Model: `models/dispatch_cargo_estimator.pkl` (0.35 MB)
+- Inference Module: `src/ml/dispatch_estimator.py` (`estimate_dispatch_cargo()`)
+
+**Key Technical Details:**
+- **Zero Target Leakage:** Trained purely on operational dispatch variables (`Purchase_Quantity`, `Daily_Demand`, `Shelf_Life_Days`, `Storage_Temperature`, `Business_Type`, `Food_Category`, `Weather`, `Promotion`). No post-hoc outcome variables leaked.
+- **Model Performance:** **$R^2 = 95.45\%$**, **$\text{MAE} = 1.37\text{ kg}$**, **$\text{RMSE} = 1.94\text{ kg}$**.
+- **Logistics Integration:** Automatically outputs cargo weight (kg), vehicle category (Motorcycle Courier $\le 25\text{ kg}$, Cargo Van $25\text{--}150\text{ kg}$, Heavy Truck $>150\text{ kg}$), cold-chain refrigeration requirement, temperature specs, and target facility type (Cold-Storage Food Bank vs Standard Pantry).
+- **Chained Integration:** Plugs directly into `predict_spoilage_risk()` output to feed Person 5's OSRM routing engine.

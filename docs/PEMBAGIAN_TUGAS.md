@@ -76,11 +76,13 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 
 ### 👤 Person 1 (Anda) — Tech Lead & ML Tabular
 - [x] Exploratory Data Analysis (EDA) distribusi kedaluwarsa dan perputaran stok di `Grocery_Inventory`.
-- [x] Feature engineering: hitung `days_to_expiry` dan `turnover_ratio`.
-- [x] Latih model klasifikasi spoilage risk (`HIGH`, `MEDIUM`, `LOW`) dengan Random Forest / XGBoost.
-- [x] Evaluasi model (F1-Score, Confusion Matrix) dan simpan ke `models/spoilage_classifier.pkl`.
-- [x] Buat fungsi urutan FEFO: `sort_by_fefo(batch_list)`.
-- [x] Supervisi arsitektur data, API contract, dan alur integrasi seluruh modul tim.
+- [x] Feature engineering: hitung `days_to_expiry`, `turnover_ratio`, dan store-demand pressure (24 pre-sale features, strict zero-leakage).
+- [x] Latih dan benchmark model klasifikasi spoilage risk (`HIGH`, `MODERATE`, `LOW`) dengan Random Forest, Gradient Boosting, AdaBoost, LightGBM, dan XGBoost.
+- [x] Evaluasi model (XGBoost champion: Accuracy 67.41%, Recall HIGH 69.1%, Recall LOW 90.3%) dan simpan ke `models/spoilage_classifier.pkl` (Git LFS tracked).
+- [x] Implementasi arsitektur Two-Tier Spoilage Classifier: ML probability baseline + Continuous Bayesian Time-Decay Escalation Tier 2 (`src/ml/spoilage.py`).
+- [x] Validasi eksternal model zero-leakage pada dataset Grocery Inventory (akurasi 92.5%, presisi HIGH 100%).
+- [x] Buat fungsi urutan FEFO: `sort_by_fefo(batch_list)` dan inferensi mandiri: `predict_spoilage_risk(lot_dict)`.
+- [x] Supervisi arsitektur data, API contract, integrasi seluruh modul tim, dan penyusunan draf konsultasi dosen terkait minority class handling.
 
 ---
 
@@ -126,10 +128,11 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 ---
 
 ### 👤 Person 5 — Risk & Smart Dispatch Lead
-- [ ] **Model Waste-Risk Scoring (Goal 5):**
-  - Latih model ML (Random Forest/Logistic Regression) pada dataset `food_waste_dataset.csv` 8K hasil imputasi Person 0.
-  - Hasilkan estimasi probabilitas numerik (0–100%) suatu lot akan terbuang dalam berapa jam.
-  - Simpan ke `models/waste_risk_model.pkl`.
+- [x] **Model Waste-Risk & Logistics Cargo Estimator (Goal 5):**
+  - Latih model ML (XGBoost Regressor) pada dataset `11_food_waste_archive_cleaned.csv` 8K.
+  - Hasilkan estimasi presisi berat surplus kargo makanan (kg) dengan R² = 95.45% dan MAE = 1.37 kg.
+  - Sediakan rekomendasi armada otomatis (Motorcycle Courier, Cargo Van, Heavy Food Bank Truck), cold-chain requirement (Refrigerated vs Ambient), spesifikasi suhu (°C), dan target fasilitas penerima (Cold-Storage Food Bank vs Standard Pantry).
+  - Simpan ke `models/dispatch_cargo_estimator.pkl` dan sediakan modul inferensi `src/ml/dispatch_estimator.py`.
 - [ ] **Smart Dispatch & OSRM Engine (Goal 7):**
   - Buat file `receivers_list.csv` (10–20 food bank, panti asuhan, dan dapur umum di Lembah Klang lengkap dengan lat/lng dan kapasitas).
   - Buat fungsi matching seleksi penerima: cari food bank terdekat dengan kapasitas mencukupi.

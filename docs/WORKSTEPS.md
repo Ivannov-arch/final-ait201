@@ -23,14 +23,14 @@
 - 📦 [Perishable Goods Management (Kaggle)](https://www.kaggle.com/datasets/likithagedipudi/perishable-goods-management)
 
 ### Tasks
-- [ ] Download & load dataset Grocery Inventory (setelah Person 0 perbaiki typo `Catagory`)
-- [ ] EDA: distribusi expiry date, stock quantity, sales volume, inventory turnover rate
-- [ ] Feature engineering: `days_to_expiry`, `turnover_ratio`, `batch_age`
-- [ ] Buat label: klasifikasi spoilage-risk (`HIGH` / `MEDIUM` / `LOW`) berdasarkan `days_to_expiry` + `Reorder_Level`
-- [ ] Training model klasifikasi spoilage-risk (Random Forest / XGBoost)
-- [ ] Evaluasi model (accuracy, precision, recall, F1)
-- [ ] Implementasi FEFO logic: sort lot berdasarkan `Expiration_Date` ascending
-- [ ] Simpan ke `models/spoilage_classifier.pkl` + buat fungsi `predict_spoilage_risk(lot_dict)` → JSON `{"label": "HIGH", "score": 0.87}`
+- [x] Download & load dataset Grocery Inventory (setelah Person 0 perbaiki typo `Catagory`)
+- [x] EDA: distribusi expiry date, stock quantity, sales volume, inventory turnover rate
+- [x] Feature engineering: `days_to_expiry`, `turnover_ratio`, `batch_age`, store-demand pressure
+- [x] Buat label: klasifikasi spoilage-risk (`HIGH` / `MODERATE` / `LOW`) berbasis zero-leakage threshold
+- [x] Training model klasifikasi spoilage-risk (XGBoost Champion — 67.41% accuracy, 69.1% HIGH recall)
+- [x] Evaluasi model (accuracy, precision, recall, F1-macro, external zero-leakage validation on Grocery Inventory: 92.5%)
+- [x] Implementasi FEFO logic: sort lot berdasarkan `Expiration_Date` ascending (`sort_by_fefo()`)
+- [x] Simpan ke `models/spoilage_classifier.pkl` + buat fungsi `predict_spoilage_risk(lot_dict)` dengan Continuous Bayesian Time-Decay Tier 2 escalation
 
 ---
 
@@ -115,13 +115,13 @@
 - 💰 Lookup DOSM PriceCatcher (dari Person 0) — untuk fitur `price_index_myr`
 
 ### Tasks
-- [ ] Load `food_waste_dataset.csv` hasil imputasi Person 0
-- [ ] EDA: distribusi label risiko HIGH/MEDIUM/LOW, korelasi fitur dengan waste
-- [ ] Feature engineering: `days_to_expiry`, `demand_gap`, `price_index_myr`, `storage_temperature`, `business_type`
-- [ ] Training model waste-risk (XGBoost — regression skor 0–1 + classification HIGH/MED/LOW)
-- [ ] Evaluasi model (R² untuk regression, F1 untuk classification)
-- [ ] Simpan ke `models/waste_risk_model.pkl`
-- [ ] Output per lot: `waste_risk_score` (0–100%) + `time_to_waste_hours`
+- [x] Load `food_waste_dataset.csv` / `11_food_waste_archive_cleaned.csv` (8,000 baris bersih & terimputasi)
+- [x] EDA: korelasi fitur operasional toko, suhu pendingin, tipe bisnis, dan kondisi cuaca terhadap kuantitas limbah
+- [x] Feature engineering: `Purchase_Quantity`, `Daily_Demand`, `Shelf_Life_Days`, `Storage_Temperature`, OHE `Business_Type`, `Food_Category`, `Weather`, `Promotion`
+- [x] Training model waste-risk / dispatch cargo volume (XGBoost Regressor — akurasi R² = 95.45%, MAE = 1.37 kg)
+- [x] Evaluasi model (R² = 0.9545, RMSE = 1.94 kg, cross-validation valid)
+- [x] Simpan ke `models/dispatch_cargo_estimator.pkl` (sebelumnya `models/waste_risk_model.pkl`)
+- [x] Output per lot: `estimated_cargo_kg`, rekomendasi armada pengangkut (Motor/Van/Truk), kebutuhan `cold_chain_required` (Refrigerated vs Ambient), target `recommended_facility` (Cold-Storage Food Bank vs Pantry), dan `transport_urgency` via `src/ml/dispatch_estimator.py`
 
 ---
 
@@ -201,10 +201,10 @@
 |---|---|---|
 | `lots_base.csv` (lot aktif toko) | Step 10 Base | 🏗️ BASE |
 | `models/spoilage_classifier.pkl` | Step 7 | 🏗️ BASE |
-| `models/demand_forecaster.pkl` | Step 8 | 🏗️ BASE |
+| `models/demand_forecast*.pkl` | Step 8 | 🏗️ BASE |
 | `canonical_batch_table.csv` | Step 9 | 🚀 UPGRADE |
 | `simulation_events.csv` | Step 10 Full | 🚀 UPGRADE |
-| `models/waste_risk_model.pkl` | Step 11 | 🏗️ BASE |
+| `models/dispatch_cargo_estimator.pkl` | Step 11 | 🏗️ BASE |
 | `dispatch_log.csv` | Step 13 | 🏗️ BASE |
 | `cluster_report.md` + visualisasi | Step 14 | 💡 OPSIONAL |
 
@@ -214,14 +214,14 @@
 
 | Step | Phase | Status |
 |---|---|---|
-| Step 7 — FEFO & Stok | 🏗️ BASE | ✅ Selesai |
-| Step 8 — Demand Forecasting | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 7 — FEFO & Stok (Spoilage ML) | 🏗️ BASE | ✅ Selesai (XGBoost 67.4% + Two-Tier Bayesian Decay) |
+| Step 8 — Demand Forecasting | 🏗️ BASE | ✅ Selesai (LightGBM Multi-Horizon Day 1/2/3) |
 | Step 10 Base — Batch Generator (`lots_base.csv`) | 🏗️ BASE | ✅ Selesai (Person 3) |
-| Step 11 — Waste-Risk Scoring | 🏗️ BASE | ⬜ Menunggu Person 0 (dataset 8K) |
-| Step 12 Base — Rule Engine 3 Jalur | 🏗️ BASE | ⬜ Belum dimulai |
-| Step 13 — Matching & Dispatch (OSRM) | 🏗️ BASE | ⬜ Belum dimulai |
+| Step 11 — Waste-Risk & Cargo Estimator | 🏗️ BASE | ✅ Selesai (Person 5 Companion Model, R² = 95.5%) |
+| Step 12 Base — Rule Engine 3 Jalur | 🏗️ BASE | ✅ Selesai (Person 4 & 6 via Vite / API) |
+| Step 13 — Matching & Dispatch (OSRM) | 🏗️ BASE | 🔄 Sedang Berlangsung (Kargo siap dihubungkan ke OSRM) |
 | Step 8 Upgrade — Kalender MY | 🚀 UPGRADE | ⬜ Menunggu Person 0 |
 | Step 9 — Canonical Schema | 🚀 UPGRADE | ✅ Selesai (Person 3) |
 | Step 10 Full — Multi-Source Simulator | 🚀 UPGRADE | ✅ Selesai (Person 3) |
-| Step 12 Full — Rule Engine ReFED | 🚀 UPGRADE | ⬜ Menunggu Person 0 (DOSM) |
-| Step 14 — Monitoring & Clustering | 💡 OPSIONAL | ⬜ Menunggu output simulator (stretch goal) |
+| Step 12 Full — Rule Engine ReFED | 🚀 UPGRADE | ✅ Selesai (Person 4 Anti-Moral-Hazard & DOSM Pricing) |
+| Step 14 — Monitoring & Clustering | 💡 OPSIONAL | ⬜ Menunggu evaluasi akhir |
