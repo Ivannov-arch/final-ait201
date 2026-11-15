@@ -279,12 +279,12 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
                     }}
                     className={`fg-fc-dropdown-item ${isSelected ? 'is-selected' : ''}`}
                   >
-                    <div>
-                      <span style={{ fontWeight: 800, color: '#0c1f15' }}>{p}</span>
-                      <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '6px' }}>({item?.category})</span>
+                    <div className="fg-fc-item-meta">
+                      <span className="fg-fc-item-name">{p}</span>
+                      <span className="fg-fc-item-cat">{item?.category}</span>
                     </div>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: (item?.currentStock || 0) === 0 ? '#dc2626' : '#147b43' }}>
-                      {item?.currentStock || 0} {item?.unit || ''}
+                    <span className={`fg-fc-item-stock ${(item?.currentStock || 0) === 0 ? 'is-zero' : ''}`}>
+                      {(item?.currentStock || 0) === 0 ? 'Stockout' : `${item?.currentStock || 0} ${item?.unit || ''}`}
                     </span>
                   </button>
                 )
