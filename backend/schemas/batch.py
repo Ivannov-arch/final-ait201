@@ -8,6 +8,9 @@ class Batch(BaseModel):
     quantity: float
     unit: str
     status: str
+    category: str = "Produce"
+    unit_price_myr: float = 5.0
+    days_to_expiry: int = 5
 
 
 class BatchResponse(BaseModel):

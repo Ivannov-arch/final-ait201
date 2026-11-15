@@ -65,26 +65,18 @@ def load_forecast():
 
 
 def _get_env_var(name: str) -> str:
-    if os.getenv(name):
-        return os.getenv(name)
-    env_file = ROOT / ".env"
-    if env_file.exists():
-        try:
-            with open(env_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.startswith(f"{name}="):
-                        return line.split("=", 1)[1].strip().strip('"').strip("'")
-        except Exception:
-            pass
-    fe_env = ROOT / "frontend" / ".env"
-    if fe_env.exists():
-        try:
-            with open(fe_env, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.startswith(f"{name}="):
-                        return line.split("=", 1)[1].strip().strip('"').strip("'")
-        except Exception:
-            pass
+    val = os.getenv(name)
+    if val:
+        return val
+    for env_path in (ROOT / ".env", ROOT / "frontend" / ".env"):
+        if env_path.exists():
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.startswith(f"{name}="):
+                            return line.split("=", 1)[1].strip().strip('"').strip("'")
+            except Exception:
+                pass
     return ""
 
 

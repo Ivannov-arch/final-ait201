@@ -2,52 +2,7 @@ import initialSalesData from '../../data/unifiedSalesLog.json'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import gsap from 'gsap'
 import DashboardHeader from './DashboardHeader'
-
-function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
-  const nodeRef = useRef(null)
-  const prevValRef = useRef(0)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (nodeRef.current) {
-        nodeRef.current.textContent = `${prefix}${Number(value || 0).toLocaleString('en-MY', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals
-        })}${suffix}`
-      }
-      return
-    }
-
-    const obj = { val: prevValRef.current }
-    const tween = gsap.to(obj, {
-      val: Number(value || 0),
-      duration: 1.1,
-      ease: 'power3.out',
-      onUpdate: () => {
-        if (nodeRef.current) {
-          nodeRef.current.textContent = `${prefix}${obj.val.toLocaleString('en-MY', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-          })}${suffix}`
-        }
-      }
-    })
-    prevValRef.current = Number(value || 0)
-
-    return () => tween.kill()
-  }, [value, prefix, suffix, decimals])
-
-  return (
-    <span ref={nodeRef}>
-      {prefix}
-      {Number(value || 0).toLocaleString('en-MY', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-      })}
-      {suffix}
-    </span>
-  )
-}
+import AnimatedNumber from './AnimatedNumber'
 
 // Seed data: shown on first load until /api/transactions responds
 const INITIAL_SALES = initialSalesData
@@ -86,7 +41,8 @@ export default function SalesLogPage({
   batches = [],
   onUpdateBatches,
   onSaleRecorded,
-  onToggleSidebar
+  onToggleSidebar,
+  onSalesUpdated
 }) {
   const [sales, setSales] = useState(INITIAL_SALES)
   const [searchTerm, setSearchTerm] = useState('')
@@ -470,6 +426,13 @@ export default function SalesLogPage({
   const totalUnitsSold = sales.filter(s => s.status === 'paid').reduce((sum, s) => sum + (Number(s.qty) || 0), 0)
   const paidCount = sales.filter(s => s.status === 'paid').length
   const averageSaleValue = paidCount > 0 ? totalRevenue / paidCount : 0
+
+  // Notify parent dashboard of live revenue/profit updates
+  useEffect(() => {
+    if (typeof onSalesUpdated === 'function' && totalRevenue > 0) {
+      onSalesUpdated(Math.round(totalRevenue * 100) / 100)
+    }
+  }, [totalRevenue, onSalesUpdated])
 
   // Staggered entrance for table rows and mobile card items
   useEffect(() => {

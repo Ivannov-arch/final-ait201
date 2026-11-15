@@ -38,6 +38,7 @@ Dokumen ini merangkum seluruh perbaikan bug, penyesuaian arsitektur, dan refacto
 | **BUG-KPI-01** | Dashboard KPI Strip | Default Values & Dynamic Tag | 🟡 LOW | **[x] ✅ FIXED** |
 | **BUG-CHART-01**| Dashboard Charts | Live Realized Profit Link | 🟡 LOW | **[x] ✅ FIXED** |
 | **BUG-CHART-02**| Dashboard Charts | Dynamic Weighting & Greeting | 🟡 LOW | **[x] ✅ FIXED** |
+| **BUG-PROFIT-01**| Dashboard KPI Strip | Persistent Realized Profit Sync | 🟠 MEDIUM | **[x] ✅ FIXED** |
 
 ---
 
@@ -130,6 +131,11 @@ Dokumen ini merangkum seluruh perbaikan bug, penyesuaian arsitektur, dan refacto
    * **Solusi:** Mengubah default menjadi `0` dan membuat label status monitoring bersifat kondisional dinamis.
 4. **Grafik Real-Time & Personalisasi Sidebar (`BUG-CHART-01` & `BUG-CHART-02`):**
    * **Solusi:** Menghubungkan grafik `ProfitDailyChart` dengan akumulasi penjualan kasir rolling 7 hari serta menghitung proporsi berat riil per kategori pada `ReasonForRecoveryChart`.
+5. **Persistensi & Sinkronisasi Realized Profit Dashboard (`BUG-PROFIT-01`):**
+   * **Masalah:** State `profit` di `DashboardPage.jsx` berawal dari `0`, sehingga kartu KPI "Realized Profit" selalu menampilkan `RM 0.00` saat awal buka atau refresh halaman dan tidak merefleksikan 18 transaksi kasir berstatus `paid` yang sudah tersimpan.
+   * **Solusi:**
+     * Menambahkan `useEffect` pada [`frontend/src/components/dashboard/DashboardPage.jsx`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/DashboardPage.jsx) untuk memuat riwayat transaksi dari `/api/transactions` saat pertama kali dimuat dan mengakumulasikan seluruh transaksi `status === 'paid'` (total **RM 2,244.02**).
+     * Meneruskan callback `onSalesUpdated` dari `DashboardPage` ke `SalesLogPage` agar saat transaksi diedit atau dihapus di modul POS, angka Realized Profit dan bar grafik di Dashboard otomatis tersinkronisasi secara real-time.
 
 ---
 

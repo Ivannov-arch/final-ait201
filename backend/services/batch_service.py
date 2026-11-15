@@ -7,26 +7,32 @@ INVENTORY_MASTER_PATH = ROOT / "data" / "processed" / "inventory_master.csv"
 INVENTORY_MASTER_JSON = ROOT / "data" / "processed" / "inventory_master.json"
 
 
+def _format_batch_record(record: dict) -> dict:
+    """Format an inventory record dict into the standardized batch response shape."""
+    try:
+        dte = int(record.get("days_to_expiry", 5))
+    except (ValueError, TypeError):
+        dte = 5
+    status = "Near Expiry" if dte <= 2 else "Available"
+    return {
+        "batch_id": str(record.get("lot_id", "N/A")),
+        "food_name": str(record.get("product_name", "Unknown")),
+        "quantity": float(record.get("quantity", 0.0)),
+        "unit": str(record.get("uom", "units")),
+        "status": status,
+        "category": str(record.get("category", "Produce")),
+        "unit_price_myr": float(record.get("unit_price_myr", 5.0)),
+        "days_to_expiry": dte
+    }
+
+
 def get_batches():
-    # Prefer reading json if csv is locked, or csv
+    # Prefer reading json if available, with csv fallback
     if INVENTORY_MASTER_JSON.exists():
         try:
             with open(INVENTORY_MASTER_JSON, "r", encoding="utf-8") as f:
                 records = json.load(f)
-            batches = []
-            for row in records[:100]:
-                dte = row.get("days_to_expiry", 5)
-                status = "Near Expiry" if dte <= 2 else "Available"
-                batches.append({
-                    "batch_id": str(row.get("lot_id", "N/A")),
-                    "food_name": str(row.get("product_name", "Unknown")),
-                    "quantity": float(row.get("quantity", 0.0)),
-                    "unit": str(row.get("uom", "units")),
-                    "status": status,
-                    "category": str(row.get("category", "Produce")),
-                    "unit_price_myr": float(row.get("unit_price_myr", 5.0)),
-                    "days_to_expiry": int(dte)
-                })
+            batches = [_format_batch_record(row) for row in records[:100]]
             return {
                 "status": "success",
                 "is_mock_data": False,
@@ -45,20 +51,7 @@ def get_batches():
         }
 
     df = pd.read_csv(INVENTORY_MASTER_PATH)
-    batches = []
-    for _, row in df.head(100).iterrows():
-        dte = row.get("days_to_expiry", 5)
-        status = "Near Expiry" if dte <= 2 else "Available"
-        batches.append({
-            "batch_id": str(row.get("lot_id", "N/A")),
-            "food_name": str(row.get("product_name", "Unknown")),
-            "quantity": float(row.get("quantity", 0.0)),
-            "unit": str(row.get("uom", "kg" if str(row.get("category", "")).lower() in ["produce", "seafood", "meat"] else "units")),
-            "status": status,
-            "category": str(row.get("category", "Produce")),
-            "unit_price_myr": float(row.get("unit_price_myr", 5.0)),
-            "days_to_expiry": int(dte)
-        })
+    batches = [_format_batch_record(row) for row in df.head(100).to_dict(orient="records")]
 
     return {
         "status": "success",

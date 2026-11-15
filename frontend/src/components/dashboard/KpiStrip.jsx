@@ -1,51 +1,6 @@
 import { useRef, useEffect } from 'react'
 import gsap from 'gsap'
-
-function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }) {
-  const nodeRef = useRef(null)
-  const prevValRef = useRef(0)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (nodeRef.current) {
-        nodeRef.current.textContent = `${prefix}${Number(value || 0).toLocaleString('en-MY', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals
-        })}${suffix}`
-      }
-      return
-    }
-
-    const obj = { val: prevValRef.current }
-    const tween = gsap.to(obj, {
-      val: Number(value || 0),
-      duration: 1.1,
-      ease: 'power3.out',
-      onUpdate: () => {
-        if (nodeRef.current) {
-          nodeRef.current.textContent = `${prefix}${obj.val.toLocaleString('en-MY', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-          })}${suffix}`
-        }
-      }
-    })
-    prevValRef.current = Number(value || 0)
-
-    return () => tween.kill()
-  }, [value, prefix, suffix, decimals])
-
-  return (
-    <span ref={nodeRef}>
-      {prefix}
-      {Number(value || 0).toLocaleString('en-MY', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-      })}
-      {suffix}
-    </span>
-  )
-}
+import AnimatedNumber from './AnimatedNumber'
 
 export default function KpiStrip({
   totalAssets = 0,

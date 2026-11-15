@@ -9,11 +9,9 @@ from __future__ import annotations
 import csv
 from datetime import datetime, timedelta
 import os
-import re
 from typing import Any
 
 LOTS_BASE_PATH = os.path.join("data", "processed", "lots_base.csv")
-PERISHABLE_PATH = os.path.join("data", "raw", "7. perishable_goods_management.csv")
 OUTPUT_CANONICAL_PATH = os.path.join("data", "processed", "canonical_batch_table.csv")
 OUTPUT_MIRROR_PATH = os.path.join("output", "canonical_batch_table.csv")
 
