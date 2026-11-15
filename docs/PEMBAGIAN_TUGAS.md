@@ -206,8 +206,6 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 - [x] Paginasi inventaris FEFO (10 batch per halaman dengan tombol navigasi Prev/Next dan nomor halaman, sinkron dengan pencarian dan filter kategori).
 - [x] Perbaikan form Edit Batch anti-flickering (stabilisasi dependency hook animasi GSAP).
 - [x] API Layer Frontend mandiri: Vite Local API Middleware (BFF) aktif melayani endpoint `/api/batches`, `/api/recommend`, `/api/forecast/products`, dan `/api/transactions` secara instan tanpa perlu menyalakan server Uvicorn Python terpisah saat demo.
-- [ ] Bangun halaman Admin `/admin` dengan autentikasi cloud (Supabase Auth).
-- [ ] Desain template presentasi resmi tim di Canva.
 
 ---
 
