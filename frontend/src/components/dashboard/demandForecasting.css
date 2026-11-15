@@ -1,0 +1,448 @@
+/* ==========================================================================
+   FreshGuard Demand Forecasting — Distilled & Simplified Stylesheet
+   Pure clarity. Zero clutter. Designed for instant comprehension in 3 seconds.
+   ========================================================================== */
+
+.fg-fc-distill-root {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 2.5rem;
+  font-family: var(--ff-body, "Figtree", sans-serif);
+  color: var(--c-ink, #0c1f15);
+}
+
+/* ── Top Selector Bar ── */
+.fg-fc-distill-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.fg-fc-select-wrap {
+  position: relative;
+  flex: 1 1 320px;
+  max-width: 440px;
+}
+
+.fg-fc-select-input-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 1rem;
+  background: #ffffff;
+  border: 1.5px solid #d8e5dc;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(12, 31, 21, 0.04);
+  transition: all 0.15s ease;
+}
+
+.fg-fc-select-input-box:focus-within {
+  border-color: #1b9b55;
+  box-shadow: 0 0 0 3px rgba(27, 155, 85, 0.12);
+}
+
+.fg-fc-select-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #0c1f15;
+  background: transparent;
+}
+
+.fg-fc-select-input::placeholder {
+  color: #88a293;
+  font-weight: 400;
+}
+
+.fg-fc-quick-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+}
+
+.fg-fc-quick-picker::-webkit-scrollbar {
+  display: none;
+}
+
+.fg-fc-quick-chip {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--r-pill, 999px);
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1.5px solid #d8e5dc;
+  background: #ffffff;
+  color: #334e3f;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.fg-fc-quick-chip:hover {
+  border-color: #1b9b55;
+  background: #f4faf6;
+}
+
+.fg-fc-quick-chip.is-active {
+  background: #1b9b55;
+  color: #ffffff;
+  border-color: #147b43;
+  box-shadow: 0 2px 8px rgba(27, 155, 85, 0.25);
+}
+
+/* ── Card 1: Core Forecast & Action ── */
+.fg-fc-card-main {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e1ece5;
+  box-shadow: 0 4px 20px rgba(12, 31, 21, 0.04);
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.fg-fc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #edf4f0;
+}
+
+.fg-fc-card-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.fg-fc-product-name {
+  font-family: var(--ff-head, "Nunito", sans-serif);
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #0c1f15;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.fg-fc-product-cat {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #147b43;
+  background: #edf8f1;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--r-pill, 999px);
+}
+
+.fg-fc-product-lot {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.fg-fc-dte-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--r-pill, 999px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fg-fc-dte-badge.is-safe {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.fg-fc-dte-badge.is-warning {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.fg-fc-dte-badge.is-critical {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* ── 3 Big Figures (Stock vs Demand vs Ending) ── */
+.fg-fc-numbers-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .fg-fc-numbers-row {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+}
+
+.fg-fc-number-tile {
+  background: #fafcfb;
+  border: 1.5px solid #e7f0e9;
+  border-radius: 16px;
+  padding: 1.15rem 1.25rem;
+  text-align: center;
+}
+
+.fg-fc-tile-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.4rem;
+}
+
+.fg-fc-tile-value {
+  font-family: var(--ff-head, "Nunito", sans-serif);
+  font-size: 1.9rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #0c1f15;
+}
+
+.fg-fc-tile-unit {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.fg-fc-tile-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 0.35rem;
+  font-weight: 500;
+}
+
+/* ── Action Recommendation Banner ── */
+.fg-fc-action-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.15rem 1.35rem;
+  border-radius: 16px;
+  border: 1.5px solid;
+  transition: all 0.2s ease;
+}
+
+.fg-fc-banner-mascot {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.fg-fc-banner-body {
+  flex: 1;
+}
+
+.fg-fc-banner-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fg-fc-banner-desc {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin: 0;
+  color: #334e3f;
+}
+
+/* ── Card 2: 3-Day Depletion Progression ── */
+.fg-fc-card-timeline {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e1ece5;
+  box-shadow: 0 4px 20px rgba(12, 31, 21, 0.04);
+  padding: 1.75rem;
+}
+
+.fg-fc-timeline-title-row {
+  margin-bottom: 1.25rem;
+}
+
+.fg-fc-timeline-heading {
+  font-family: var(--ff-head, "Nunito", sans-serif);
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #0c1f15;
+  margin: 0 0 0.2rem;
+}
+
+.fg-fc-timeline-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.fg-fc-days-linear {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 680px) {
+  .fg-fc-days-linear {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fg-fc-day-step {
+  background: #fafcfb;
+  border: 1.5px solid #e7f0e9;
+  border-radius: 16px;
+  padding: 1.15rem;
+}
+
+.fg-fc-step-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.fg-fc-step-day {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #0c1f15;
+}
+
+.fg-fc-step-status {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--r-pill, 999px);
+}
+
+.fg-fc-step-status.is-ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.fg-fc-step-status.is-low {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.fg-fc-step-status.is-out {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.fg-fc-step-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  margin-bottom: 0.75rem;
+}
+
+.fg-fc-stat-sales {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.fg-fc-stat-stock {
+  font-weight: 800;
+}
+
+/* Simple visual stock bar */
+.fg-fc-step-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #e2ede5;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.45rem;
+}
+
+.fg-fc-step-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.fg-fc-step-footer {
+  font-size: 0.72rem;
+  color: #64748b;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* ── Clean 3-Day Depletion Graph ── */
+.fg-fc-graph-section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #edf4f0;
+}
+
+.fg-fc-graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.fg-fc-graph-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0c1f15;
+}
+
+.fg-fc-graph-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.fg-fc-legend-dot-stock {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1b9b55;
+  margin-right: 5px;
+}
+
+.fg-fc-legend-dot-demand {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2563eb;
+  margin-right: 5px;
+}
+
+.fg-fc-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
