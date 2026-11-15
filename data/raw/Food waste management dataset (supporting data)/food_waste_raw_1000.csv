@@ -1,0 +1,1001 @@
+date,product,quantity,price,expiry_days,temperature,day_of_week,is_weekend,predicted_demand,risk_level,recommended_action
+2026-01-28,Chicken,65,203,3,1.98,2,0,43,MEDIUM,Apply 10-15% discount
+2026-02-21,Bread,51,26,3,21.78,5,1,37,MEDIUM,Apply 10-15% discount
+2026-03-24,Milk,169,54,1,3.88,1,0,129,HIGH,Apply 25% discount + Send to NGO
+2026-04-19,Milk,74,64,2,4.24,6,1,65,HIGH,Apply 25% discount + Send to NGO
+2026-01-24,Banana,187,50,1,22.37,5,1,180,HIGH,Apply 25% discount + Send to NGO
+2026-03-15,Rice,65,62,78,21.79,6,1,42,LOW,Normal selling
+2026-01-20,Eggs,68,82,6,9.39,1,0,45,LOW,Normal selling
+2026-05-04,Banana,115,50,2,22.88,0,0,111,HIGH,Apply 25% discount + Send to NGO
+2026-01-07,Eggs,93,66,8,5.16,2,0,90,LOW,Normal selling
+2026-04-06,Banana,83,72,2,18.75,0,0,58,HIGH,Apply 25% discount + Send to NGO
+2026-06-13,Tomato,167,53,6,16.86,5,1,119,LOW,Normal selling
+2026-02-25,Apple,123,127,4,15.8,2,0,59,LOW,Normal selling
+2026-06-13,Rice,140,84,80,21.74,5,1,62,LOW,Normal selling
+2026-03-27,Rice,103,55,65,24.29,4,0,46,LOW,Normal selling
+2026-06-01,Apple,120,119,1,17.8,0,0,61,HIGH,Apply 25% discount + Send to NGO
+2026-02-09,Bread,75,16,4,19.03,0,0,60,LOW,Normal selling
+2026-04-20,Rice,156,73,52,33.64,0,0,64,LOW,Normal selling
+2026-06-22,Banana,194,63,5,12.79,0,0,159,LOW,Normal selling
+2026-01-16,Apple,52,118,4,19.25,4,0,29,LOW,Normal selling
+2026-06-15,Bread,147,20,2,22.63,0,0,102,HIGH,Apply 25% discount + Send to NGO
+2026-04-21,Chicken,87,193,1,2.17,1,0,63,HIGH,Apply 25% discount + Send to NGO
+2026-03-11,Apple,163,113,3,14.98,2,0,112,MEDIUM,Apply 10-15% discount
+2026-04-24,Milk,129,57,4,3.04,4,0,93,LOW,Normal selling
+2026-02-10,Tomato,100,55,5,19.57,1,0,61,LOW,Normal selling
+2026-03-29,Tomato,138,46,1,22.57,6,1,99,HIGH,Apply 25% discount + Send to NGO
+2026-06-21,Banana,149,68,5,16.78,6,1,115,LOW,Normal selling
+2026-06-03,Rice,59,60,59,28.99,2,0,22,LOW,Normal selling
+2026-01-02,Banana,98,46,3,15.03,4,0,105,MEDIUM,Apply 10-15% discount
+2026-04-11,Milk,119,51,4,2.11,5,1,89,LOW,Normal selling
+2026-05-10,Banana,111,61,2,15.88,6,1,127,MEDIUM,Apply 10-15% discount
+2026-01-23,Rice,130,77,48,27.09,4,0,46,LOW,Normal selling
+2026-03-25,Bread,99,39,4,19.46,2,0,53,LOW,Normal selling
+2026-04-01,Bread,131,31,3,22.78,2,0,69,MEDIUM,Apply 10-15% discount
+2026-04-14,Tomato,193,39,2,15.28,1,0,110,HIGH,Apply 25% discount + Send to NGO
+2026-05-26,Eggs,71,89,7,6.06,1,0,49,LOW,Normal selling
+2026-02-27,Bread,198,28,3,24.73,4,0,115,MEDIUM,Apply 10-15% discount
+2026-01-31,Rice,167,84,37,30.49,5,1,91,LOW,Normal selling
+2026-03-15,Tomato,61,41,4,21.33,6,1,45,LOW,Normal selling
+2026-05-16,Chicken,160,188,3,1.13,5,1,97,MEDIUM,Apply 10-15% discount
+2026-02-08,Rice,192,59,41,20.32,6,1,94,LOW,Normal selling
+2026-05-10,Apple,77,122,7,13.33,6,1,44,LOW,Normal selling
+2026-01-04,Eggs,108,89,9,5.09,6,1,99,LOW,Normal selling
+2026-05-24,Apple,194,118,4,18.52,6,1,147,LOW,Normal selling
+2026-06-09,Eggs,175,87,4,9.34,1,0,131,LOW,Normal selling
+2026-05-27,Eggs,165,85,8,4.59,2,0,119,LOW,Normal selling
+2026-05-29,Eggs,161,67,5,5.33,4,0,135,LOW,Normal selling
+2026-03-09,Chicken,140,192,3,1.17,0,0,86,MEDIUM,Apply 10-15% discount
+2026-03-20,Apple,149,126,7,14.59,4,0,65,LOW,Normal selling
+2026-02-20,Tomato,191,51,4,21.48,4,0,109,LOW,Normal selling
+2026-05-11,Bread,161,36,2,19.11,0,0,81,HIGH,Apply 25% discount + Send to NGO
+2026-06-26,Rice,117,66,65,34.9,4,0,42,LOW,Normal selling
+2026-06-14,Banana,105,46,1,21.37,6,1,136,MEDIUM,Apply 10-15% discount
+2026-06-22,Rice,161,85,72,33.7,0,0,56,LOW,Normal selling
+2026-03-07,Banana,184,74,2,16.49,5,1,182,HIGH,Apply 25% discount + Send to NGO
+2026-05-27,Rice,131,80,81,26.8,2,0,49,LOW,Normal selling
+2026-05-19,Banana,137,61,4,12.59,1,0,112,LOW,Normal selling
+2026-01-05,Tomato,101,40,4,22.04,0,0,70,LOW,Normal selling
+2026-02-18,Eggs,54,72,6,8.56,2,0,39,LOW,Normal selling
+2026-01-19,Milk,110,62,4,3.6,0,0,75,LOW,Normal selling
+2026-06-04,Milk,101,35,1,4.05,3,0,100,HIGH,Apply 25% discount + Send to NGO
+2026-02-04,Apple,55,123,4,13.68,2,0,24,LOW,Normal selling
+2026-03-06,Eggs,69,79,8,6.12,4,0,56,LOW,Normal selling
+2026-01-09,Apple,158,125,4,14.44,4,0,63,LOW,Normal selling
+2026-03-19,Bread,101,41,4,18.65,3,0,62,LOW,Normal selling
+2026-03-08,Eggs,159,86,5,7.25,6,1,131,LOW,Normal selling
+2026-01-13,Rice,146,80,67,32.24,1,0,61,LOW,Normal selling
+2026-06-15,Rice,182,84,46,20.78,0,0,59,LOW,Normal selling
+2026-05-18,Banana,158,70,3,15.21,0,0,140,MEDIUM,Apply 10-15% discount
+2026-06-13,Banana,76,68,4,13.0,5,1,75,LOW,Normal selling
+2026-05-04,Apple,102,110,6,16.31,0,0,64,LOW,Normal selling
+2026-03-20,Bread,117,31,5,18.42,4,0,67,LOW,Normal selling
+2026-05-23,Chicken,159,187,3,1.68,5,1,105,MEDIUM,Apply 10-15% discount
+2026-05-16,Rice,97,75,27,33.48,5,1,41,LOW,Normal selling
+2026-04-12,Chicken,178,188,1,3.87,6,1,124,HIGH,Apply 25% discount + Send to NGO
+2026-06-07,Bread,130,42,5,18.04,6,1,75,LOW,Normal selling
+2026-02-18,Rice,197,79,69,20.92,2,0,63,LOW,Normal selling
+2026-06-18,Chicken,126,186,1,2.25,3,0,88,HIGH,Apply 25% discount + Send to NGO
+2026-03-04,Milk,186,62,4,5.36,2,0,125,LOW,Normal selling
+2026-02-17,Eggs,51,65,6,6.54,1,0,49,LOW,Normal selling
+2026-02-12,Tomato,129,35,6,17.09,3,0,91,LOW,Normal selling
+2026-01-29,Apple,61,132,7,10.4,3,0,24,LOW,Normal selling
+2026-03-04,Tomato,65,42,2,16.08,2,0,40,HIGH,Apply 25% discount + Send to NGO
+2026-01-25,Tomato,70,52,2,16.22,6,1,57,HIGH,Apply 25% discount + Send to NGO
+2026-06-03,Tomato,141,29,1,23.13,2,0,86,HIGH,Apply 25% discount + Send to NGO
+2026-02-02,Rice,154,61,40,27.53,0,0,72,LOW,Normal selling
+2026-04-05,Eggs,80,80,8,5.94,6,1,70,LOW,Normal selling
+2026-03-22,Rice,186,70,45,28.99,6,1,92,LOW,Normal selling
+2026-03-06,Tomato,104,25,1,23.78,4,0,64,HIGH,Apply 25% discount + Send to NGO
+2026-06-20,Apple,65,109,2,15.47,5,1,56,HIGH,Apply 25% discount + Send to NGO
+2026-01-12,Apple,62,131,5,17.86,0,0,28,LOW,Normal selling
+2026-03-14,Rice,72,59,61,24.22,5,1,49,LOW,Normal selling
+2026-01-22,Banana,200,52,1,24.53,3,0,144,HIGH,Apply 25% discount + Send to NGO
+2026-01-14,Rice,166,84,46,33.85,2,0,60,LOW,Normal selling
+2026-03-11,Eggs,190,87,6,8.51,2,0,120,LOW,Normal selling
+2026-06-17,Bread,128,31,3,19.99,2,0,69,MEDIUM,Apply 10-15% discount
+2026-04-06,Tomato,178,28,3,20.87,0,0,146,MEDIUM,Apply 10-15% discount
+2026-02-15,Tomato,68,48,3,20.43,6,1,45,MEDIUM,Apply 10-15% discount
+2026-04-25,Bread,160,41,4,19.77,5,1,100,LOW,Normal selling
+2026-02-14,Eggs,158,74,8,4.97,5,1,170,LOW,Normal selling
+2026-01-02,Bread,80,34,2,21.32,4,0,38,HIGH,Apply 25% discount + Send to NGO
+2026-03-20,Apple,175,132,5,15.48,4,0,73,LOW,Normal selling
+2026-04-22,Milk,98,48,5,2.39,2,0,87,LOW,Normal selling
+2026-03-25,Bread,106,37,4,19.27,2,0,57,LOW,Normal selling
+2026-02-11,Eggs,61,75,9,8.72,2,0,40,LOW,Normal selling
+2026-05-27,Eggs,169,78,5,4.13,2,0,154,LOW,Normal selling
+2026-05-06,Milk,85,44,3,4.11,2,0,54,MEDIUM,Apply 10-15% discount
+2026-03-27,Milk,181,59,2,4.52,4,0,116,HIGH,Apply 25% discount + Send to NGO
+2026-03-10,Eggs,193,92,8,7.11,1,0,114,LOW,Normal selling
+2026-05-22,Rice,200,58,42,34.37,4,0,83,LOW,Normal selling
+2026-04-24,Milk,153,58,1,5.03,4,0,108,HIGH,Apply 25% discount + Send to NGO
+2026-03-08,Eggs,181,76,7,5.01,6,1,183,LOW,Normal selling
+2026-04-19,Chicken,66,208,2,1.53,6,1,51,HIGH,Apply 25% discount + Send to NGO
+2026-04-03,Rice,138,85,67,23.13,4,0,43,LOW,Normal selling
+2026-04-07,Bread,84,37,2,24.71,1,0,50,HIGH,Apply 25% discount + Send to NGO
+2026-03-10,Milk,113,44,4,5.49,1,0,83,LOW,Normal selling
+2026-04-22,Rice,101,75,37,24.44,2,0,49,LOW,Normal selling
+2026-02-10,Chicken,108,194,1,0.28,1,0,70,HIGH,Apply 25% discount + Send to NGO
+2026-03-19,Milk,105,63,2,4.97,3,0,69,HIGH,Apply 25% discount + Send to NGO
+2026-03-09,Milk,97,62,3,4.79,0,0,60,MEDIUM,Apply 10-15% discount
+2026-02-09,Rice,187,67,80,27.16,0,0,75,LOW,Normal selling
+2026-05-18,Apple,111,127,5,18.59,0,0,50,LOW,Normal selling
+2026-04-06,Apple,134,125,2,19.9,0,0,66,HIGH,Apply 25% discount + Send to NGO
+2026-06-02,Tomato,112,26,6,18.84,1,0,85,LOW,Normal selling
+2026-05-01,Eggs,65,85,7,6.28,4,0,45,LOW,Normal selling
+2026-02-15,Eggs,78,87,5,4.22,6,1,73,LOW,Normal selling
+2026-02-18,Chicken,156,198,2,0.51,2,0,113,HIGH,Apply 25% discount + Send to NGO
+2026-06-11,Eggs,65,92,8,4.23,3,0,41,LOW,Normal selling
+2026-02-11,Apple,111,118,7,12.84,2,0,48,LOW,Normal selling
+2026-05-28,Tomato,125,42,1,24.83,3,0,67,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Tomato,149,53,3,17.22,4,0,80,MEDIUM,Apply 10-15% discount
+2026-06-14,Eggs,94,90,10,6.76,6,1,75,LOW,Normal selling
+2026-02-26,Banana,64,74,1,21.36,3,0,36,HIGH,Apply 25% discount + Send to NGO
+2026-01-04,Apple,73,129,5,18.54,6,1,43,LOW,Normal selling
+2026-02-03,Apple,163,133,3,11.72,1,0,78,MEDIUM,Apply 10-15% discount
+2026-01-14,Chicken,81,192,1,2.98,2,0,61,HIGH,Apply 25% discount + Send to NGO
+2026-04-23,Milk,57,53,4,2.21,3,0,31,LOW,Normal selling
+2026-04-25,Eggs,70,92,5,8.74,5,1,57,LOW,Normal selling
+2026-06-20,Apple,98,105,7,14.48,5,1,73,LOW,Normal selling
+2026-02-12,Milk,59,38,2,5.45,3,0,46,HIGH,Apply 25% discount + Send to NGO
+2026-04-23,Apple,99,135,3,13.09,3,0,42,MEDIUM,Apply 10-15% discount
+2026-06-01,Milk,157,57,3,5.94,0,0,93,MEDIUM,Apply 10-15% discount
+2026-06-13,Apple,130,119,7,11.85,5,1,79,LOW,Normal selling
+2026-02-28,Apple,170,133,7,13.34,5,1,99,LOW,Normal selling
+2026-02-22,Rice,52,56,45,23.65,6,1,36,LOW,Normal selling
+2026-04-03,Milk,84,46,3,3.46,4,0,67,MEDIUM,Apply 10-15% discount
+2026-05-30,Tomato,171,43,1,21.97,5,1,132,HIGH,Apply 25% discount + Send to NGO
+2026-02-06,Banana,163,75,2,22.81,4,0,122,HIGH,Apply 25% discount + Send to NGO
+2026-06-08,Milk,89,38,4,2.24,0,0,57,LOW,Normal selling
+2026-06-27,Banana,120,66,3,16.57,5,1,110,MEDIUM,Apply 10-15% discount
+2026-03-23,Rice,173,59,52,32.56,0,0,100,LOW,Normal selling
+2026-05-17,Milk,137,42,4,4.2,6,1,142,LOW,Normal selling
+2026-05-10,Tomato,72,49,1,20.15,6,1,52,HIGH,Apply 25% discount + Send to NGO
+2026-06-23,Tomato,128,32,3,21.54,1,0,75,MEDIUM,Apply 10-15% discount
+2026-02-11,Rice,135,63,46,23.35,2,0,62,LOW,Normal selling
+2026-02-01,Rice,64,56,85,20.56,6,1,42,LOW,Normal selling
+2026-02-09,Apple,96,129,4,13.96,0,0,39,LOW,Normal selling
+2026-04-03,Tomato,75,54,6,17.45,4,0,43,LOW,Normal selling
+2026-04-23,Tomato,150,34,1,22.6,3,0,107,HIGH,Apply 25% discount + Send to NGO
+2026-04-29,Eggs,110,67,5,4.36,2,0,115,LOW,Normal selling
+2026-06-04,Banana,54,73,3,21.51,3,0,37,MEDIUM,Apply 10-15% discount
+2026-02-09,Banana,200,52,4,12.9,0,0,182,LOW,Normal selling
+2026-05-29,Milk,75,63,1,2.85,4,0,53,HIGH,Apply 25% discount + Send to NGO
+2026-06-24,Banana,180,56,1,19.86,2,0,123,HIGH,Apply 25% discount + Send to NGO
+2026-02-07,Eggs,145,67,7,6.59,5,1,182,LOW,Normal selling
+2026-03-16,Eggs,148,87,5,7.3,0,0,106,LOW,Normal selling
+2026-03-19,Banana,114,66,1,21.38,3,0,78,HIGH,Apply 25% discount + Send to NGO
+2026-03-30,Apple,110,133,1,18.67,0,0,48,HIGH,Apply 25% discount + Send to NGO
+2026-01-08,Tomato,98,48,3,18.57,3,0,62,MEDIUM,Apply 10-15% discount
+2026-03-26,Eggs,117,72,5,9.92,3,0,109,LOW,Normal selling
+2026-01-27,Rice,59,84,35,29.47,1,0,23,LOW,Normal selling
+2026-06-06,Tomato,99,35,3,24.61,5,1,73,MEDIUM,Apply 10-15% discount
+2026-05-02,Chicken,127,207,2,3.94,5,1,68,HIGH,Apply 25% discount + Send to NGO
+2026-06-22,Eggs,177,95,6,7.55,0,0,102,LOW,Normal selling
+2026-05-11,Rice,120,80,53,31.55,0,0,48,LOW,Normal selling
+2026-03-04,Apple,184,127,1,19.04,2,0,83,HIGH,Apply 25% discount + Send to NGO
+2026-03-06,Banana,103,52,2,18.66,4,0,87,HIGH,Apply 25% discount + Send to NGO
+2026-02-01,Chicken,188,200,1,0.2,6,1,142,HIGH,Apply 25% discount + Send to NGO
+2026-01-01,Tomato,190,49,5,18.9,3,0,120,LOW,Normal selling
+2026-01-11,Banana,162,57,2,21.4,6,1,164,MEDIUM,Apply 10-15% discount
+2026-06-19,Milk,140,57,1,2.95,4,0,97,HIGH,Apply 25% discount + Send to NGO
+2026-05-25,Bread,98,45,1,21.65,0,0,51,HIGH,Apply 25% discount + Send to NGO
+2026-02-13,Apple,148,135,4,10.63,4,0,57,LOW,Normal selling
+2026-06-18,Apple,172,117,5,12.54,3,0,75,LOW,Normal selling
+2026-04-06,Rice,107,84,51,23.71,0,0,34,LOW,Normal selling
+2026-02-05,Tomato,175,25,1,24.22,3,0,135,HIGH,Apply 25% discount + Send to NGO
+2026-06-16,Eggs,61,71,3,9.77,1,0,57,MEDIUM,Apply 10-15% discount
+2026-06-12,Bread,104,29,3,18.56,4,0,52,MEDIUM,Apply 10-15% discount
+2026-04-21,Bread,74,26,6,21.25,1,0,56,LOW,Normal selling
+2026-05-14,Eggs,67,76,10,5.7,3,0,42,LOW,Normal selling
+2026-03-19,Milk,154,60,2,3.82,3,0,87,HIGH,Apply 25% discount + Send to NGO
+2026-01-18,Apple,84,112,7,12.86,6,1,52,LOW,Normal selling
+2026-02-13,Eggs,192,87,9,7.66,4,0,109,LOW,Normal selling
+2026-04-08,Banana,158,61,3,18.7,2,0,119,MEDIUM,Apply 10-15% discount
+2026-02-27,Bread,94,30,3,24.92,4,0,61,MEDIUM,Apply 10-15% discount
+2026-02-22,Apple,137,106,4,19.72,6,1,116,LOW,Normal selling
+2026-01-06,Bread,198,33,3,22.06,1,0,96,MEDIUM,Apply 10-15% discount
+2026-01-27,Apple,178,124,3,13.59,1,0,77,MEDIUM,Apply 10-15% discount
+2026-05-14,Chicken,103,209,3,1.95,3,0,56,MEDIUM,Apply 10-15% discount
+2026-06-12,Banana,129,65,4,14.75,4,0,95,LOW,Normal selling
+2026-04-15,Eggs,176,93,7,8.36,2,0,126,LOW,Normal selling
+2026-05-26,Banana,194,53,1,24.77,1,0,139,HIGH,Apply 25% discount + Send to NGO
+2026-05-11,Eggs,177,83,8,4.06,0,0,151,LOW,Normal selling
+2026-05-22,Rice,169,76,50,32.38,4,0,62,LOW,Normal selling
+2026-03-06,Bread,76,16,2,24.79,4,0,50,HIGH,Apply 25% discount + Send to NGO
+2026-02-01,Bread,153,15,3,24.58,6,1,130,MEDIUM,Apply 10-15% discount
+2026-02-01,Eggs,125,90,7,9.53,6,1,122,LOW,Normal selling
+2026-01-06,Chicken,182,196,2,3.28,1,0,103,HIGH,Apply 25% discount + Send to NGO
+2026-04-14,Eggs,74,88,5,6.29,1,0,57,LOW,Normal selling
+2026-03-11,Chicken,194,203,1,1.5,2,0,118,HIGH,Apply 25% discount + Send to NGO
+2026-04-25,Eggs,133,87,8,4.74,5,1,121,LOW,Normal selling
+2026-01-01,Banana,165,49,1,24.11,3,0,115,HIGH,Apply 25% discount + Send to NGO
+2026-02-21,Bread,130,44,4,22.08,5,1,79,LOW,Normal selling
+2026-05-27,Rice,52,66,63,26.58,2,0,20,LOW,Normal selling
+2026-06-03,Eggs,122,78,6,7.94,2,0,94,LOW,Normal selling
+2026-04-27,Banana,122,69,1,24.41,0,0,83,HIGH,Apply 25% discount + Send to NGO
+2026-03-21,Bread,143,36,4,20.59,5,1,115,LOW,Normal selling
+2026-02-18,Tomato,166,53,2,17.13,2,0,95,HIGH,Apply 25% discount + Send to NGO
+2026-03-19,Eggs,101,80,3,9.97,3,0,83,MEDIUM,Apply 10-15% discount
+2026-06-13,Banana,72,71,5,12.87,5,1,74,LOW,Normal selling
+2026-01-02,Apple,87,128,6,12.69,4,0,50,LOW,Normal selling
+2026-02-10,Milk,122,63,3,2.91,1,0,73,MEDIUM,Apply 10-15% discount
+2026-04-26,Banana,78,60,5,17.2,6,1,70,LOW,Normal selling
+2026-02-01,Chicken,78,201,1,0.45,6,1,53,HIGH,Apply 25% discount + Send to NGO
+2026-04-06,Eggs,140,79,5,7.91,0,0,113,LOW,Normal selling
+2026-04-08,Rice,181,79,38,31.33,2,0,86,LOW,Normal selling
+2026-03-27,Milk,158,65,5,2.16,4,0,92,LOW,Normal selling
+2026-02-17,Banana,177,56,4,12.65,1,0,123,LOW,Normal selling
+2026-02-10,Apple,126,120,3,15.88,1,0,61,MEDIUM,Apply 10-15% discount
+2026-04-13,Bread,110,39,5,20.33,0,0,72,LOW,Normal selling
+2026-02-01,Banana,131,68,1,23.88,6,1,123,HIGH,Apply 25% discount + Send to NGO
+2026-05-02,Bread,190,37,5,23.24,5,1,150,LOW,Normal selling
+2026-03-10,Milk,67,44,1,4.48,1,0,58,HIGH,Apply 25% discount + Send to NGO
+2026-01-25,Bread,122,27,4,18.2,6,1,112,LOW,Normal selling
+2026-02-04,Milk,63,57,1,4.73,2,0,34,HIGH,Apply 25% discount + Send to NGO
+2026-03-14,Tomato,157,35,2,15.06,5,1,126,HIGH,Apply 25% discount + Send to NGO
+2026-01-06,Rice,81,80,62,27.2,1,0,37,LOW,Normal selling
+2026-05-27,Rice,149,79,45,29.92,2,0,73,LOW,Normal selling
+2026-05-18,Apple,116,128,5,17.41,0,0,50,LOW,Normal selling
+2026-03-04,Chicken,171,205,1,3.88,2,0,104,HIGH,Apply 25% discount + Send to NGO
+2026-02-13,Banana,90,72,1,22.95,4,0,66,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Rice,137,56,48,20.92,4,0,56,LOW,Normal selling
+2026-05-10,Apple,135,132,3,12.97,6,1,65,MEDIUM,Apply 10-15% discount
+2026-03-12,Tomato,200,46,3,23.65,3,0,143,MEDIUM,Apply 10-15% discount
+2026-02-02,Chicken,196,199,1,1.75,0,0,113,HIGH,Apply 25% discount + Send to NGO
+2026-01-10,Tomato,147,42,2,15.8,5,1,118,HIGH,Apply 25% discount + Send to NGO
+2026-01-23,Tomato,192,35,2,24.03,4,0,137,HIGH,Apply 25% discount + Send to NGO
+2026-06-26,Chicken,155,204,2,1.61,4,0,98,HIGH,Apply 25% discount + Send to NGO
+2026-05-05,Banana,173,70,4,17.67,1,0,153,LOW,Normal selling
+2026-02-10,Milk,85,62,5,3.08,1,0,46,LOW,Normal selling
+2026-02-26,Chicken,83,213,2,1.8,3,0,46,HIGH,Apply 25% discount + Send to NGO
+2026-04-18,Milk,180,57,4,3.6,5,1,160,LOW,Normal selling
+2026-04-10,Rice,68,73,59,21.52,4,0,30,LOW,Normal selling
+2026-06-23,Apple,155,109,4,10.75,1,0,91,LOW,Normal selling
+2026-03-10,Banana,71,58,5,13.02,1,0,62,LOW,Normal selling
+2026-03-10,Chicken,123,206,1,0.41,1,0,59,HIGH,Apply 25% discount + Send to NGO
+2026-06-03,Milk,92,37,3,4.53,2,0,68,MEDIUM,Apply 10-15% discount
+2026-01-09,Eggs,172,85,9,4.76,4,0,99,LOW,Normal selling
+2026-03-11,Banana,113,67,3,21.72,2,0,83,MEDIUM,Apply 10-15% discount
+2026-06-21,Milk,116,63,1,5.92,6,1,91,HIGH,Apply 25% discount + Send to NGO
+2026-03-20,Apple,88,111,1,19.94,4,0,56,HIGH,Apply 25% discount + Send to NGO
+2026-04-24,Tomato,170,32,3,17.96,4,0,151,MEDIUM,Apply 10-15% discount
+2026-05-15,Tomato,96,43,2,19.7,4,0,62,HIGH,Apply 25% discount + Send to NGO
+2026-04-23,Eggs,117,78,5,8.9,3,0,104,LOW,Normal selling
+2026-02-11,Apple,192,116,2,18.97,2,0,125,HIGH,Apply 25% discount + Send to NGO
+2026-06-02,Tomato,143,55,5,15.29,1,0,84,LOW,Normal selling
+2026-03-04,Banana,173,63,3,17.85,2,0,108,MEDIUM,Apply 10-15% discount
+2026-03-20,Eggs,62,85,8,7.17,4,0,43,LOW,Normal selling
+2026-03-11,Tomato,58,29,5,17.95,2,0,43,LOW,Normal selling
+2026-03-17,Milk,172,35,1,2.68,1,0,165,HIGH,Apply 25% discount + Send to NGO
+2026-06-08,Bread,150,25,3,22.45,0,0,120,MEDIUM,Apply 10-15% discount
+2026-03-07,Eggs,55,81,5,4.31,5,1,48,LOW,Normal selling
+2026-05-02,Chicken,127,199,1,3.04,5,1,75,HIGH,Apply 25% discount + Send to NGO
+2026-05-04,Eggs,125,90,10,4.47,0,0,67,LOW,Normal selling
+2026-02-02,Apple,139,110,2,15.28,0,0,96,HIGH,Apply 25% discount + Send to NGO
+2026-04-09,Eggs,197,95,7,8.23,3,0,132,LOW,Normal selling
+2026-01-12,Milk,168,40,2,4.15,0,0,133,HIGH,Apply 25% discount + Send to NGO
+2026-04-12,Apple,193,117,5,13.61,6,1,110,LOW,Normal selling
+2026-03-13,Milk,150,56,4,5.28,4,0,116,LOW,Normal selling
+2026-01-10,Bread,53,16,2,24.52,5,1,42,HIGH,Apply 25% discount + Send to NGO
+2026-01-06,Chicken,152,209,1,3.04,1,0,81,HIGH,Apply 25% discount + Send to NGO
+2026-05-12,Apple,98,119,5,11.11,1,0,48,LOW,Normal selling
+2026-06-24,Eggs,172,93,9,6.94,2,0,108,LOW,Normal selling
+2026-06-25,Eggs,98,77,5,8.04,3,0,84,LOW,Normal selling
+2026-01-16,Chicken,155,187,1,2.03,4,0,83,HIGH,Apply 25% discount + Send to NGO
+2026-06-05,Banana,51,63,3,19.09,4,0,39,MEDIUM,Apply 10-15% discount
+2026-06-21,Tomato,99,36,3,17.41,6,1,82,MEDIUM,Apply 10-15% discount
+2026-05-06,Eggs,91,93,6,6.6,2,0,50,LOW,Normal selling
+2026-05-14,Chicken,54,192,2,3.68,3,0,39,HIGH,Apply 25% discount + Send to NGO
+2026-04-22,Bread,131,22,1,21.62,2,0,103,HIGH,Apply 25% discount + Send to NGO
+2026-04-14,Chicken,76,191,1,3.95,1,0,39,HIGH,Apply 25% discount + Send to NGO
+2026-06-18,Rice,130,84,60,21.4,3,0,41,LOW,Normal selling
+2026-05-22,Rice,140,59,52,33.47,4,0,65,LOW,Normal selling
+2026-05-05,Eggs,166,65,9,4.68,1,0,124,LOW,Normal selling
+2026-05-29,Banana,164,62,2,23.72,4,0,142,HIGH,Apply 25% discount + Send to NGO
+2026-04-03,Banana,78,45,3,18.66,4,0,56,MEDIUM,Apply 10-15% discount
+2026-04-19,Milk,52,46,2,2.24,6,1,47,HIGH,Apply 25% discount + Send to NGO
+2026-06-02,Tomato,115,54,6,17.26,1,0,54,LOW,Normal selling
+2026-06-15,Banana,129,70,3,20.34,0,0,86,MEDIUM,Apply 10-15% discount
+2026-01-28,Rice,136,76,80,31.34,2,0,45,LOW,Normal selling
+2026-03-10,Eggs,85,78,7,9.73,1,0,77,LOW,Normal selling
+2026-01-08,Milk,80,42,1,5.58,3,0,51,HIGH,Apply 25% discount + Send to NGO
+2026-03-08,Bread,164,21,4,21.49,6,1,129,LOW,Normal selling
+2026-01-22,Chicken,118,190,1,1.57,3,0,59,HIGH,Apply 25% discount + Send to NGO
+2026-06-15,Tomato,166,44,2,17.92,0,0,98,HIGH,Apply 25% discount + Send to NGO
+2026-06-05,Tomato,85,45,5,21.89,4,0,66,LOW,Normal selling
+2026-06-20,Rice,117,70,42,28.62,5,1,73,LOW,Normal selling
+2026-04-15,Chicken,160,194,1,0.91,2,0,85,HIGH,Apply 25% discount + Send to NGO
+2026-02-13,Rice,110,60,72,33.56,4,0,49,LOW,Normal selling
+2026-01-21,Chicken,131,211,1,2.47,2,0,75,HIGH,Apply 25% discount + Send to NGO
+2026-03-15,Apple,74,134,3,14.92,6,1,36,MEDIUM,Apply 10-15% discount
+2026-03-20,Milk,131,57,3,5.29,4,0,93,MEDIUM,Apply 10-15% discount
+2026-06-17,Tomato,73,26,5,19.65,2,0,55,LOW,Normal selling
+2026-02-04,Rice,56,75,52,33.44,2,0,20,LOW,Normal selling
+2026-01-18,Bread,86,36,5,18.73,6,1,67,LOW,Normal selling
+2026-05-06,Banana,94,52,3,14.45,2,0,96,MEDIUM,Apply 10-15% discount
+2026-04-26,Eggs,116,84,5,8.75,6,1,114,LOW,Normal selling
+2026-04-20,Rice,66,56,48,32.74,0,0,29,LOW,Normal selling
+2026-05-03,Rice,53,70,51,24.77,6,1,32,LOW,Normal selling
+2026-06-12,Eggs,56,67,8,5.0,4,0,54,LOW,Normal selling
+2026-04-23,Tomato,182,49,6,18.83,3,0,104,LOW,Normal selling
+2026-06-01,Bread,173,31,1,24.31,0,0,123,HIGH,Apply 25% discount + Send to NGO
+2026-02-07,Rice,161,55,49,34.3,5,1,97,LOW,Normal selling
+2026-03-30,Eggs,102,90,7,5.52,0,0,76,LOW,Normal selling
+2026-04-09,Banana,56,53,5,13.5,3,0,46,LOW,Normal selling
+2026-03-23,Banana,54,71,1,22.4,0,0,42,HIGH,Apply 25% discount + Send to NGO
+2026-03-13,Milk,179,63,2,5.04,4,0,99,HIGH,Apply 25% discount + Send to NGO
+2026-02-06,Eggs,60,69,4,9.17,4,0,44,LOW,Normal selling
+2026-02-03,Chicken,197,205,2,2.95,1,0,125,HIGH,Apply 25% discount + Send to NGO
+2026-05-29,Chicken,143,196,1,0.92,4,0,78,HIGH,Apply 25% discount + Send to NGO
+2026-02-02,Banana,98,70,5,16.53,0,0,72,LOW,Normal selling
+2026-03-30,Chicken,189,198,1,0.27,0,0,100,HIGH,Apply 25% discount + Send to NGO
+2026-06-13,Milk,70,47,1,5.13,5,1,71,MEDIUM,Apply 10-15% discount
+2026-06-13,Eggs,51,88,8,5.27,5,1,51,LOW,Normal selling
+2026-03-20,Eggs,50,70,8,8.38,4,0,38,LOW,Normal selling
+2026-01-13,Chicken,53,189,2,0.85,1,0,28,HIGH,Apply 25% discount + Send to NGO
+2026-01-26,Eggs,125,74,9,5.45,0,0,79,LOW,Normal selling
+2026-06-12,Banana,128,69,3,12.62,4,0,102,MEDIUM,Apply 10-15% discount
+2026-03-30,Chicken,185,189,1,1.56,0,0,146,HIGH,Apply 25% discount + Send to NGO
+2026-03-23,Eggs,116,94,7,5.92,0,0,89,LOW,Normal selling
+2026-06-19,Apple,139,120,4,19.37,4,0,77,LOW,Normal selling
+2026-03-21,Eggs,156,86,9,5.59,5,1,120,LOW,Normal selling
+2026-04-08,Eggs,108,76,6,5.03,2,0,73,LOW,Normal selling
+2026-05-23,Milk,132,59,4,3.27,5,1,96,LOW,Normal selling
+2026-01-01,Apple,100,123,5,10.17,3,0,42,LOW,Normal selling
+2026-05-14,Bread,196,42,6,19.64,3,0,108,LOW,Normal selling
+2026-02-10,Bread,118,27,5,22.36,1,0,69,LOW,Normal selling
+2026-01-30,Milk,173,46,1,5.35,4,0,134,HIGH,Apply 25% discount + Send to NGO
+2026-05-18,Eggs,197,90,7,5.51,0,0,147,LOW,Normal selling
+2026-06-24,Bread,191,28,4,21.43,2,0,115,LOW,Normal selling
+2026-05-22,Chicken,200,197,2,0.32,4,0,143,HIGH,Apply 25% discount + Send to NGO
+2026-05-28,Rice,163,60,51,28.92,3,0,80,LOW,Normal selling
+2026-05-02,Milk,156,41,1,2.36,5,1,168,MEDIUM,Apply 10-15% discount
+2026-06-28,Apple,166,116,5,10.93,6,1,122,LOW,Normal selling
+2026-06-01,Bread,138,29,4,19.0,0,0,104,LOW,Normal selling
+2026-04-24,Chicken,197,203,3,1.38,4,0,108,MEDIUM,Apply 10-15% discount
+2026-06-05,Chicken,105,190,3,0.47,4,0,62,MEDIUM,Apply 10-15% discount
+2026-03-18,Chicken,55,207,2,2.38,2,0,28,HIGH,Apply 25% discount + Send to NGO
+2026-02-13,Apple,56,133,2,18.51,4,0,29,HIGH,Apply 25% discount + Send to NGO
+2026-02-19,Banana,146,52,2,22.15,3,0,142,HIGH,Apply 25% discount + Send to NGO
+2026-06-12,Apple,89,107,3,12.97,4,0,43,MEDIUM,Apply 10-15% discount
+2026-06-26,Eggs,50,70,5,4.55,4,0,34,LOW,Normal selling
+2026-03-28,Tomato,105,52,2,21.03,5,1,65,HIGH,Apply 25% discount + Send to NGO
+2026-03-05,Chicken,187,214,3,0.86,3,0,98,MEDIUM,Apply 10-15% discount
+2026-03-29,Eggs,195,90,9,8.93,6,1,134,LOW,Normal selling
+2026-04-24,Chicken,94,195,1,0.77,4,0,64,HIGH,Apply 25% discount + Send to NGO
+2026-03-09,Bread,146,30,2,23.34,0,0,108,HIGH,Apply 25% discount + Send to NGO
+2026-03-30,Chicken,142,205,2,2.22,0,0,75,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Rice,60,85,77,24.17,4,0,23,LOW,Normal selling
+2026-02-23,Banana,145,74,4,19.3,0,0,106,LOW,Normal selling
+2026-04-17,Tomato,149,49,4,22.05,4,0,97,LOW,Normal selling
+2026-04-20,Eggs,72,89,7,4.17,0,0,42,LOW,Normal selling
+2026-01-21,Eggs,149,85,10,6.86,2,0,109,LOW,Normal selling
+2026-01-31,Bread,197,43,3,19.25,5,1,143,MEDIUM,Apply 10-15% discount
+2026-03-10,Tomato,69,47,2,22.13,1,0,43,HIGH,Apply 25% discount + Send to NGO
+2026-06-24,Rice,187,66,64,31.13,2,0,84,LOW,Normal selling
+2026-05-30,Tomato,161,37,6,19.67,5,1,111,LOW,Normal selling
+2026-05-09,Banana,173,69,2,21.66,5,1,162,HIGH,Apply 25% discount + Send to NGO
+2026-04-21,Milk,52,65,5,2.61,1,0,37,LOW,Normal selling
+2026-04-08,Rice,74,73,84,24.78,2,0,27,LOW,Normal selling
+2026-03-29,Banana,167,49,1,21.81,6,1,192,MEDIUM,Apply 10-15% discount
+2026-03-11,Apple,95,135,6,16.7,2,0,37,LOW,Normal selling
+2026-04-29,Chicken,169,204,2,2.78,2,0,91,HIGH,Apply 25% discount + Send to NGO
+2026-01-27,Tomato,143,50,5,18.36,1,0,75,LOW,Normal selling
+2026-06-27,Eggs,71,78,8,9.88,5,1,65,LOW,Normal selling
+2026-04-04,Banana,123,60,2,18.15,5,1,107,HIGH,Apply 25% discount + Send to NGO
+2026-06-30,Milk,179,52,5,2.25,1,0,150,LOW,Normal selling
+2026-02-25,Apple,180,127,7,14.12,2,0,94,LOW,Normal selling
+2026-05-26,Tomato,134,53,3,17.02,1,0,81,MEDIUM,Apply 10-15% discount
+2026-05-04,Banana,80,68,2,20.54,0,0,53,HIGH,Apply 25% discount + Send to NGO
+2026-06-12,Tomato,53,46,2,23.52,4,0,28,HIGH,Apply 25% discount + Send to NGO
+2026-05-23,Eggs,100,74,5,4.06,5,1,77,LOW,Normal selling
+2026-06-25,Apple,103,128,2,18.52,3,0,41,HIGH,Apply 25% discount + Send to NGO
+2026-04-29,Tomato,118,31,1,22.7,2,0,71,HIGH,Apply 25% discount + Send to NGO
+2026-05-07,Rice,119,77,34,22.84,3,0,42,LOW,Normal selling
+2026-01-12,Apple,89,108,4,11.16,0,0,59,LOW,Normal selling
+2026-03-07,Banana,82,48,1,23.85,5,1,71,HIGH,Apply 25% discount + Send to NGO
+2026-05-05,Tomato,171,25,2,20.58,1,0,158,HIGH,Apply 25% discount + Send to NGO
+2026-01-21,Tomato,50,36,3,23.05,2,0,39,MEDIUM,Apply 10-15% discount
+2026-03-14,Rice,119,63,43,34.79,5,1,64,LOW,Normal selling
+2026-02-07,Milk,190,64,1,3.06,5,1,153,HIGH,Apply 25% discount + Send to NGO
+2026-02-11,Bread,181,32,4,22.93,2,0,101,LOW,Normal selling
+2026-02-08,Apple,164,112,3,18.42,6,1,112,MEDIUM,Apply 10-15% discount
+2026-01-27,Eggs,154,90,7,5.29,1,0,117,LOW,Normal selling
+2026-03-13,Bread,77,33,3,20.08,4,0,38,MEDIUM,Apply 10-15% discount
+2026-02-16,Eggs,131,81,6,8.09,0,0,117,LOW,Normal selling
+2026-06-13,Banana,78,52,2,12.09,5,1,77,HIGH,Apply 25% discount + Send to NGO
+2026-06-22,Chicken,165,196,1,3.24,0,0,109,HIGH,Apply 25% discount + Send to NGO
+2026-02-17,Eggs,143,71,7,8.65,1,0,95,LOW,Normal selling
+2026-01-16,Bread,109,37,5,22.93,4,0,64,LOW,Normal selling
+2026-02-26,Bread,143,30,1,24.25,3,0,71,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Chicken,107,215,2,2.43,4,0,55,HIGH,Apply 25% discount + Send to NGO
+2026-02-25,Chicken,149,195,3,0.93,2,0,106,MEDIUM,Apply 10-15% discount
+2026-01-02,Eggs,173,68,7,5.7,4,0,171,LOW,Normal selling
+2026-02-25,Chicken,131,205,1,0.09,2,0,60,HIGH,Apply 25% discount + Send to NGO
+2026-02-17,Bread,194,35,6,20.9,1,0,134,LOW,Normal selling
+2026-06-05,Milk,76,65,3,2.35,4,0,44,MEDIUM,Apply 10-15% discount
+2026-04-15,Chicken,83,191,2,1.75,2,0,49,HIGH,Apply 25% discount + Send to NGO
+2026-02-19,Tomato,147,40,1,24.58,3,0,111,HIGH,Apply 25% discount + Send to NGO
+2026-03-02,Eggs,194,79,10,5.18,0,0,134,LOW,Normal selling
+2026-01-20,Milk,116,58,1,4.64,1,0,81,HIGH,Apply 25% discount + Send to NGO
+2026-04-01,Banana,79,45,5,16.43,2,0,72,LOW,Normal selling
+2026-01-10,Eggs,85,81,7,6.0,5,1,67,LOW,Normal selling
+2026-05-18,Rice,167,79,65,20.52,0,0,82,LOW,Normal selling
+2026-05-21,Eggs,128,83,6,7.77,3,0,96,LOW,Normal selling
+2026-05-08,Rice,83,61,80,21.27,4,0,37,LOW,Normal selling
+2026-03-07,Rice,144,64,68,34.1,5,1,89,LOW,Normal selling
+2026-03-08,Tomato,168,36,5,16.81,6,1,131,LOW,Normal selling
+2026-01-14,Apple,59,131,3,14.3,2,0,33,MEDIUM,Apply 10-15% discount
+2026-05-20,Banana,50,56,2,23.94,2,0,41,HIGH,Apply 25% discount + Send to NGO
+2026-03-22,Tomato,158,49,2,15.46,6,1,115,HIGH,Apply 25% discount + Send to NGO
+2026-01-11,Eggs,113,92,6,8.86,6,1,83,LOW,Normal selling
+2026-04-03,Banana,144,49,4,17.9,4,0,101,LOW,Normal selling
+2026-04-26,Chicken,108,190,2,1.62,6,1,96,HIGH,Apply 25% discount + Send to NGO
+2026-01-14,Banana,137,71,1,24.5,2,0,102,HIGH,Apply 25% discount + Send to NGO
+2026-03-16,Eggs,74,78,5,9.71,0,0,58,LOW,Normal selling
+2026-06-16,Apple,132,113,3,10.51,1,0,92,MEDIUM,Apply 10-15% discount
+2026-02-18,Chicken,63,211,2,0.16,2,0,29,HIGH,Apply 25% discount + Send to NGO
+2026-05-09,Rice,110,82,84,20.91,5,1,52,LOW,Normal selling
+2026-03-18,Chicken,118,213,2,1.67,2,0,72,HIGH,Apply 25% discount + Send to NGO
+2026-06-09,Bread,78,27,3,22.29,1,0,51,MEDIUM,Apply 10-15% discount
+2026-06-20,Banana,110,68,4,17.52,5,1,89,LOW,Normal selling
+2026-03-21,Bread,143,34,4,22.0,5,1,85,LOW,Normal selling
+2026-02-08,Milk,60,42,1,2.31,6,1,44,HIGH,Apply 25% discount + Send to NGO
+2026-01-17,Eggs,191,82,10,4.25,5,1,152,LOW,Normal selling
+2026-04-08,Tomato,114,50,4,22.95,2,0,67,LOW,Normal selling
+2026-05-07,Eggs,175,77,5,7.82,3,0,156,LOW,Normal selling
+2026-01-24,Eggs,111,93,5,9.73,5,1,80,LOW,Normal selling
+2026-02-11,Tomato,186,48,2,20.23,2,0,112,HIGH,Apply 25% discount + Send to NGO
+2026-04-26,Tomato,138,50,2,19.19,6,1,110,HIGH,Apply 25% discount + Send to NGO
+2026-02-25,Milk,157,43,3,2.36,2,0,101,MEDIUM,Apply 10-15% discount
+2026-03-11,Apple,67,116,3,11.96,2,0,42,MEDIUM,Apply 10-15% discount
+2026-06-16,Banana,99,63,4,18.99,1,0,90,LOW,Normal selling
+2026-03-22,Banana,66,70,5,12.61,6,1,45,LOW,Normal selling
+2026-02-04,Banana,172,64,5,16.59,2,0,142,LOW,Normal selling
+2026-03-21,Apple,73,125,5,12.68,5,1,39,LOW,Normal selling
+2026-05-18,Rice,197,74,34,20.47,0,0,81,LOW,Normal selling
+2026-02-23,Eggs,54,72,9,5.24,0,0,53,LOW,Normal selling
+2026-02-26,Chicken,128,215,2,3.86,3,0,76,HIGH,Apply 25% discount + Send to NGO
+2026-01-02,Rice,172,83,46,23.91,4,0,62,LOW,Normal selling
+2026-05-03,Milk,134,35,4,3.1,6,1,118,LOW,Normal selling
+2026-04-11,Banana,96,47,1,21.32,5,1,122,MEDIUM,Apply 10-15% discount
+2026-04-02,Eggs,148,74,8,4.03,3,0,106,LOW,Normal selling
+2026-06-04,Bread,183,42,4,23.28,3,0,109,LOW,Normal selling
+2026-01-16,Banana,127,58,5,15.29,4,0,95,LOW,Normal selling
+2026-01-24,Milk,127,41,1,4.99,5,1,133,MEDIUM,Apply 10-15% discount
+2026-04-17,Apple,141,135,4,12.55,4,0,59,LOW,Normal selling
+2026-05-08,Rice,199,74,84,25.38,4,0,97,LOW,Normal selling
+2026-06-26,Banana,196,56,2,12.77,4,0,144,HIGH,Apply 25% discount + Send to NGO
+2026-03-11,Tomato,84,55,4,23.87,2,0,55,LOW,Normal selling
+2026-05-27,Bread,150,16,1,24.88,2,0,101,HIGH,Apply 25% discount + Send to NGO
+2026-03-14,Bread,101,22,3,20.37,5,1,92,MEDIUM,Apply 10-15% discount
+2026-06-09,Chicken,69,210,1,2.75,1,0,30,HIGH,Apply 25% discount + Send to NGO
+2026-03-11,Chicken,69,189,3,0.85,2,0,45,MEDIUM,Apply 10-15% discount
+2026-05-27,Eggs,67,70,9,8.1,2,0,55,LOW,Normal selling
+2026-01-11,Chicken,139,211,1,3.38,6,1,77,HIGH,Apply 25% discount + Send to NGO
+2026-04-14,Eggs,51,88,6,7.37,1,0,41,LOW,Normal selling
+2026-06-16,Chicken,80,190,1,2.27,1,0,47,HIGH,Apply 25% discount + Send to NGO
+2026-06-18,Bread,53,35,1,24.53,3,0,37,HIGH,Apply 25% discount + Send to NGO
+2026-01-18,Tomato,100,32,3,20.18,6,1,95,MEDIUM,Apply 10-15% discount
+2026-03-30,Eggs,54,73,10,6.43,0,0,38,LOW,Normal selling
+2026-05-23,Tomato,68,53,5,19.07,5,1,41,LOW,Normal selling
+2026-06-12,Apple,121,115,4,18.22,4,0,83,LOW,Normal selling
+2026-05-16,Rice,102,65,68,20.33,5,1,49,LOW,Normal selling
+2026-03-17,Banana,50,48,2,18.24,1,0,49,HIGH,Apply 25% discount + Send to NGO
+2026-04-12,Rice,131,57,49,33.32,6,1,62,LOW,Normal selling
+2026-04-10,Banana,146,67,3,13.2,4,0,93,MEDIUM,Apply 10-15% discount
+2026-06-03,Bread,110,35,5,18.19,2,0,77,LOW,Normal selling
+2026-02-23,Bread,73,38,5,18.2,0,0,38,LOW,Normal selling
+2026-04-14,Bread,50,24,4,22.06,1,0,36,LOW,Normal selling
+2026-05-11,Rice,97,65,46,32.61,0,0,45,LOW,Normal selling
+2026-06-23,Chicken,75,192,2,3.61,1,0,50,HIGH,Apply 25% discount + Send to NGO
+2026-01-11,Milk,86,48,4,4.38,6,1,85,LOW,Normal selling
+2026-04-26,Chicken,150,188,3,1.55,6,1,142,MEDIUM,Apply 10-15% discount
+2026-01-28,Banana,76,45,4,14.27,2,0,77,LOW,Normal selling
+2026-06-26,Rice,106,77,58,20.03,4,0,35,LOW,Normal selling
+2026-05-31,Eggs,124,68,8,9.13,6,1,133,LOW,Normal selling
+2026-03-18,Banana,68,70,4,13.28,2,0,50,LOW,Normal selling
+2026-06-23,Tomato,112,53,3,20.07,1,0,56,MEDIUM,Apply 10-15% discount
+2026-06-13,Eggs,129,70,5,6.65,5,1,147,LOW,Normal selling
+2026-03-02,Banana,157,55,2,24.06,0,0,116,HIGH,Apply 25% discount + Send to NGO
+2026-02-10,Rice,188,62,81,27.54,1,0,90,LOW,Normal selling
+2026-05-20,Tomato,119,29,3,17.51,2,0,77,MEDIUM,Apply 10-15% discount
+2026-06-23,Eggs,179,87,6,4.99,1,0,115,LOW,Normal selling
+2026-01-30,Eggs,172,70,7,8.11,4,0,115,LOW,Normal selling
+2026-04-02,Rice,87,80,79,21.2,3,0,38,LOW,Normal selling
+2026-05-24,Eggs,59,73,9,7.13,6,1,64,LOW,Normal selling
+2026-02-16,Tomato,88,26,1,24.85,0,0,74,HIGH,Apply 25% discount + Send to NGO
+2026-02-14,Chicken,88,210,1,2.86,5,1,62,HIGH,Apply 25% discount + Send to NGO
+2026-04-19,Chicken,116,199,1,3.9,6,1,91,HIGH,Apply 25% discount + Send to NGO
+2026-02-21,Eggs,105,94,8,6.11,5,1,71,LOW,Normal selling
+2026-02-18,Tomato,111,34,4,16.76,2,0,63,LOW,Normal selling
+2026-01-21,Bread,101,28,1,24.75,2,0,54,HIGH,Apply 25% discount + Send to NGO
+2026-03-28,Apple,119,113,4,19.28,5,1,79,LOW,Normal selling
+2026-05-20,Bread,81,36,4,24.81,2,0,50,LOW,Normal selling
+2026-02-07,Tomato,73,39,5,15.91,5,1,69,LOW,Normal selling
+2026-03-31,Bread,60,33,4,23.21,1,0,38,LOW,Normal selling
+2026-02-27,Rice,165,71,59,23.2,4,0,78,LOW,Normal selling
+2026-01-12,Eggs,70,72,7,5.15,0,0,46,LOW,Normal selling
+2026-04-06,Bread,200,42,1,22.62,0,0,106,HIGH,Apply 25% discount + Send to NGO
+2026-03-26,Apple,170,130,4,15.17,3,0,72,LOW,Normal selling
+2026-05-08,Rice,134,65,43,30.96,4,0,65,LOW,Normal selling
+2026-04-20,Rice,113,83,72,26.7,0,0,34,LOW,Normal selling
+2026-05-24,Eggs,98,72,6,5.12,6,1,84,LOW,Normal selling
+2026-02-11,Apple,50,123,5,18.38,2,0,30,LOW,Normal selling
+2026-05-10,Tomato,81,47,1,20.93,6,1,67,HIGH,Apply 25% discount + Send to NGO
+2026-04-11,Banana,140,64,5,16.82,5,1,129,LOW,Normal selling
+2026-04-09,Rice,131,82,50,29.11,3,0,50,LOW,Normal selling
+2026-05-02,Rice,110,76,88,23.24,5,1,66,LOW,Normal selling
+2026-03-12,Rice,171,76,87,22.48,3,0,57,LOW,Normal selling
+2026-02-08,Eggs,170,80,6,9.48,6,1,173,LOW,Normal selling
+2026-05-28,Chicken,70,203,2,0.06,3,0,46,HIGH,Apply 25% discount + Send to NGO
+2026-03-03,Banana,103,73,3,19.51,1,0,83,MEDIUM,Apply 10-15% discount
+2026-06-21,Rice,83,61,62,24.48,6,1,56,LOW,Normal selling
+2026-02-08,Apple,182,109,5,13.32,6,1,133,LOW,Normal selling
+2026-04-18,Tomato,137,26,1,23.15,5,1,115,HIGH,Apply 25% discount + Send to NGO
+2026-02-05,Apple,182,125,1,19.82,3,0,91,HIGH,Apply 25% discount + Send to NGO
+2026-05-21,Chicken,112,192,1,3.81,3,0,59,HIGH,Apply 25% discount + Send to NGO
+2026-01-20,Eggs,95,82,8,8.45,1,0,78,LOW,Normal selling
+2026-05-11,Rice,183,59,53,29.61,0,0,85,LOW,Normal selling
+2026-05-19,Milk,112,47,5,2.16,1,0,73,LOW,Normal selling
+2026-05-11,Rice,194,73,60,22.49,0,0,102,LOW,Normal selling
+2026-06-16,Eggs,54,90,7,9.92,1,0,32,LOW,Normal selling
+2026-02-06,Banana,146,60,2,12.05,4,0,121,HIGH,Apply 25% discount + Send to NGO
+2026-05-02,Milk,50,43,1,4.28,5,1,53,MEDIUM,Apply 10-15% discount
+2026-06-09,Apple,196,110,6,12.96,1,0,110,LOW,Normal selling
+2026-01-31,Milk,57,49,2,2.03,5,1,50,HIGH,Apply 25% discount + Send to NGO
+2026-02-27,Banana,55,62,3,18.86,4,0,38,MEDIUM,Apply 10-15% discount
+2026-05-05,Eggs,141,79,7,4.37,1,0,95,LOW,Normal selling
+2026-02-02,Bread,84,40,2,20.98,0,0,42,HIGH,Apply 25% discount + Send to NGO
+2026-05-04,Tomato,197,26,4,18.48,0,0,164,LOW,Normal selling
+2026-01-14,Tomato,111,25,1,24.97,2,0,102,HIGH,Apply 25% discount + Send to NGO
+2026-04-12,Bread,117,19,3,19.83,6,1,100,MEDIUM,Apply 10-15% discount
+2026-01-03,Banana,185,68,4,13.35,5,1,178,LOW,Normal selling
+2026-03-17,Bread,152,17,3,22.17,1,0,128,MEDIUM,Apply 10-15% discount
+2026-02-05,Chicken,194,199,1,0.6,3,0,136,HIGH,Apply 25% discount + Send to NGO
+2026-01-28,Milk,112,35,4,2.14,2,0,89,LOW,Normal selling
+2026-01-02,Banana,104,69,2,16.55,4,0,92,HIGH,Apply 25% discount + Send to NGO
+2026-03-03,Milk,187,36,3,2.5,1,0,157,MEDIUM,Apply 10-15% discount
+2026-01-11,Milk,129,41,4,2.77,6,1,115,LOW,Normal selling
+2026-02-26,Rice,130,77,46,20.42,3,0,61,LOW,Normal selling
+2026-06-15,Apple,149,117,5,10.17,0,0,88,LOW,Normal selling
+2026-05-16,Tomato,82,36,3,19.34,5,1,68,MEDIUM,Apply 10-15% discount
+2026-02-21,Chicken,161,185,2,1.76,5,1,133,HIGH,Apply 25% discount + Send to NGO
+2026-01-26,Bread,141,35,4,18.3,0,0,74,LOW,Normal selling
+2026-06-23,Eggs,123,84,7,6.65,1,0,101,LOW,Normal selling
+2026-05-20,Milk,102,37,2,3.2,2,0,76,HIGH,Apply 25% discount + Send to NGO
+2026-03-02,Rice,137,56,79,31.94,0,0,62,LOW,Normal selling
+2026-04-11,Eggs,97,92,5,7.38,5,1,94,LOW,Normal selling
+2026-01-25,Eggs,153,84,8,6.12,6,1,105,LOW,Normal selling
+2026-01-13,Banana,184,61,3,20.19,1,0,171,MEDIUM,Apply 10-15% discount
+2026-01-22,Rice,65,75,88,27.72,3,0,26,LOW,Normal selling
+2026-01-05,Banana,82,63,1,18.64,0,0,59,HIGH,Apply 25% discount + Send to NGO
+2026-04-08,Chicken,62,211,3,0.47,2,0,32,MEDIUM,Apply 10-15% discount
+2026-05-07,Apple,102,126,5,18.72,3,0,60,LOW,Normal selling
+2026-05-22,Rice,97,60,46,28.82,4,0,54,LOW,Normal selling
+2026-02-05,Rice,69,59,77,32.45,3,0,39,LOW,Normal selling
+2026-02-24,Banana,178,66,4,16.84,1,0,138,LOW,Normal selling
+2026-02-06,Chicken,108,200,1,2.68,4,0,63,HIGH,Apply 25% discount + Send to NGO
+2026-02-02,Rice,50,58,53,22.79,0,0,27,LOW,Normal selling
+2026-04-05,Milk,102,36,1,3.83,6,1,86,HIGH,Apply 25% discount + Send to NGO
+2026-06-06,Chicken,94,202,1,1.56,5,1,63,HIGH,Apply 25% discount + Send to NGO
+2026-03-11,Banana,180,53,2,21.56,2,0,159,HIGH,Apply 25% discount + Send to NGO
+2026-05-06,Tomato,195,39,4,19.98,2,0,120,LOW,Normal selling
+2026-04-20,Milk,200,39,1,4.53,0,0,189,HIGH,Apply 25% discount + Send to NGO
+2026-01-16,Apple,137,121,6,12.64,4,0,85,LOW,Normal selling
+2026-06-09,Chicken,111,198,1,2.71,1,0,80,HIGH,Apply 25% discount + Send to NGO
+2026-06-14,Eggs,142,87,8,6.59,6,1,96,LOW,Normal selling
+2026-03-03,Chicken,133,209,2,1.22,1,0,82,HIGH,Apply 25% discount + Send to NGO
+2026-04-20,Rice,114,80,69,34.92,0,0,40,LOW,Normal selling
+2026-02-13,Chicken,99,201,1,3.79,4,0,50,HIGH,Apply 25% discount + Send to NGO
+2026-01-09,Tomato,101,48,3,22.69,4,0,63,MEDIUM,Apply 10-15% discount
+2026-05-07,Bread,99,45,1,24.33,3,0,45,HIGH,Apply 25% discount + Send to NGO
+2026-04-29,Eggs,186,78,7,9.17,2,0,159,LOW,Normal selling
+2026-05-12,Chicken,158,193,1,3.45,1,0,86,HIGH,Apply 25% discount + Send to NGO
+2026-05-12,Apple,186,124,6,13.0,1,0,94,LOW,Normal selling
+2026-05-18,Eggs,173,82,9,6.9,0,0,110,LOW,Normal selling
+2026-06-23,Bread,52,32,5,22.91,1,0,29,LOW,Normal selling
+2026-04-05,Apple,78,116,3,15.78,6,1,56,MEDIUM,Apply 10-15% discount
+2026-01-17,Bread,76,25,5,19.05,5,1,52,LOW,Normal selling
+2026-01-15,Chicken,180,211,2,0.51,3,0,110,HIGH,Apply 25% discount + Send to NGO
+2026-01-22,Tomato,113,54,3,18.55,3,0,74,MEDIUM,Apply 10-15% discount
+2026-04-25,Rice,63,64,45,25.01,5,1,29,LOW,Normal selling
+2026-04-05,Apple,136,105,5,10.11,6,1,84,LOW,Normal selling
+2026-03-11,Rice,62,83,48,27.19,2,0,25,LOW,Normal selling
+2026-04-20,Milk,92,61,2,3.56,0,0,65,HIGH,Apply 25% discount + Send to NGO
+2026-06-06,Bread,199,34,3,24.06,5,1,166,MEDIUM,Apply 10-15% discount
+2026-05-30,Rice,65,61,63,27.69,5,1,36,LOW,Normal selling
+2026-02-24,Tomato,152,29,1,24.75,1,0,114,HIGH,Apply 25% discount + Send to NGO
+2026-04-27,Banana,194,67,2,13.1,0,0,138,HIGH,Apply 25% discount + Send to NGO
+2026-02-05,Apple,81,127,5,17.85,3,0,44,LOW,Normal selling
+2026-01-12,Tomato,169,25,1,24.77,0,0,116,HIGH,Apply 25% discount + Send to NGO
+2026-04-15,Milk,55,43,3,5.5,2,0,43,MEDIUM,Apply 10-15% discount
+2026-05-28,Bread,156,36,2,24.95,3,0,94,HIGH,Apply 25% discount + Send to NGO
+2026-04-19,Eggs,70,71,5,7.02,6,1,85,LOW,Normal selling
+2026-05-31,Bread,173,23,5,19.38,6,1,140,LOW,Normal selling
+2026-04-16,Rice,184,65,56,32.41,3,0,67,LOW,Normal selling
+2026-02-26,Banana,109,51,2,18.46,3,0,112,MEDIUM,Apply 10-15% discount
+2026-03-27,Banana,152,54,5,13.26,4,0,156,LOW,Normal selling
+2026-03-02,Rice,85,82,66,32.35,0,0,35,LOW,Normal selling
+2026-02-02,Milk,71,47,2,4.8,0,0,41,HIGH,Apply 25% discount + Send to NGO
+2026-03-29,Milk,90,55,4,2.68,6,1,75,LOW,Normal selling
+2026-03-21,Banana,158,68,2,24.29,5,1,161,MEDIUM,Apply 10-15% discount
+2026-01-28,Eggs,181,93,8,4.61,2,0,108,LOW,Normal selling
+2026-06-29,Apple,157,133,4,11.18,0,0,86,LOW,Normal selling
+2026-04-14,Banana,95,50,1,22.73,1,0,74,HIGH,Apply 25% discount + Send to NGO
+2026-05-01,Bread,165,26,1,24.92,4,0,123,HIGH,Apply 25% discount + Send to NGO
+2026-03-23,Milk,143,45,2,5.75,0,0,97,HIGH,Apply 25% discount + Send to NGO
+2026-05-25,Bread,86,31,1,22.72,0,0,43,HIGH,Apply 25% discount + Send to NGO
+2026-04-19,Chicken,180,196,1,2.16,6,1,114,HIGH,Apply 25% discount + Send to NGO
+2026-06-23,Rice,68,59,41,30.28,1,0,35,LOW,Normal selling
+2026-01-11,Chicken,181,209,1,3.17,6,1,102,HIGH,Apply 25% discount + Send to NGO
+2026-05-02,Eggs,134,88,8,6.81,5,1,110,LOW,Normal selling
+2026-04-26,Eggs,69,71,6,5.2,6,1,68,LOW,Normal selling
+2026-01-19,Apple,167,114,6,11.58,0,0,95,LOW,Normal selling
+2026-02-21,Bread,186,40,3,23.02,5,1,137,MEDIUM,Apply 10-15% discount
+2026-01-05,Bread,127,42,4,20.23,0,0,65,LOW,Normal selling
+2026-05-09,Banana,166,71,5,14.49,5,1,122,LOW,Normal selling
+2026-02-27,Banana,126,47,4,18.4,4,0,112,LOW,Normal selling
+2026-06-15,Rice,126,79,34,34.18,0,0,48,LOW,Normal selling
+2026-03-08,Eggs,177,78,7,4.82,6,1,197,LOW,Normal selling
+2026-04-01,Banana,110,54,2,12.78,2,0,90,HIGH,Apply 25% discount + Send to NGO
+2026-03-17,Bread,158,20,5,19.55,1,0,115,LOW,Normal selling
+2026-01-26,Tomato,85,55,2,19.9,0,0,45,HIGH,Apply 25% discount + Send to NGO
+2026-04-28,Apple,62,116,4,17.06,1,0,34,LOW,Normal selling
+2026-01-11,Banana,123,49,2,18.64,6,1,141,MEDIUM,Apply 10-15% discount
+2026-05-20,Rice,141,58,78,21.09,2,0,64,LOW,Normal selling
+2026-06-10,Eggs,169,94,5,6.8,2,0,117,LOW,Normal selling
+2026-06-07,Milk,152,55,3,3.54,6,1,121,MEDIUM,Apply 10-15% discount
+2026-01-10,Eggs,87,73,7,6.82,5,1,96,LOW,Normal selling
+2026-01-21,Bread,135,27,5,19.74,2,0,102,LOW,Normal selling
+2026-02-27,Eggs,109,88,8,7.22,4,0,60,LOW,Normal selling
+2026-01-30,Milk,145,55,1,2.63,4,0,104,HIGH,Apply 25% discount + Send to NGO
+2026-06-13,Milk,113,38,2,5.16,5,1,125,MEDIUM,Apply 10-15% discount
+2026-03-31,Banana,103,45,4,13.38,1,0,112,LOW,Normal selling
+2026-05-16,Apple,130,111,6,12.29,5,1,71,LOW,Normal selling
+2026-01-18,Chicken,170,197,1,3.59,6,1,141,HIGH,Apply 25% discount + Send to NGO
+2026-04-30,Bread,145,18,4,19.03,3,0,86,LOW,Normal selling
+2026-06-12,Bread,180,26,5,22.06,4,0,134,LOW,Normal selling
+2026-03-11,Rice,55,85,34,24.59,2,0,23,LOW,Normal selling
+2026-01-08,Rice,50,62,66,34.38,3,0,25,LOW,Normal selling
+2026-02-23,Rice,64,73,60,29.63,0,0,26,LOW,Normal selling
+2026-02-25,Milk,177,63,1,4.7,2,0,130,HIGH,Apply 25% discount + Send to NGO
+2026-06-23,Banana,134,73,1,20.75,1,0,74,HIGH,Apply 25% discount + Send to NGO
+2026-03-01,Rice,183,70,56,25.08,6,1,77,LOW,Normal selling
+2026-03-18,Chicken,70,190,2,0.53,2,0,41,HIGH,Apply 25% discount + Send to NGO
+2026-02-19,Chicken,165,210,2,1.7,3,0,67,HIGH,Apply 25% discount + Send to NGO
+2026-02-08,Bread,108,38,1,24.27,6,1,84,HIGH,Apply 25% discount + Send to NGO
+2026-06-28,Banana,126,55,3,16.51,6,1,110,MEDIUM,Apply 10-15% discount
+2026-05-07,Tomato,95,25,1,20.53,3,0,64,HIGH,Apply 25% discount + Send to NGO
+2026-06-22,Milk,195,36,1,5.41,0,0,126,HIGH,Apply 25% discount + Send to NGO
+2026-04-17,Bread,113,39,5,21.93,4,0,54,LOW,Normal selling
+2026-06-19,Chicken,82,195,1,1.92,4,0,47,HIGH,Apply 25% discount + Send to NGO
+2026-03-09,Rice,181,70,65,28.69,0,0,73,LOW,Normal selling
+2026-02-03,Rice,59,60,37,29.48,1,0,26,LOW,Normal selling
+2026-02-28,Tomato,162,36,2,21.94,5,1,136,HIGH,Apply 25% discount + Send to NGO
+2026-06-20,Milk,84,54,1,5.28,5,1,78,HIGH,Apply 25% discount + Send to NGO
+2026-06-30,Banana,134,54,4,18.94,1,0,93,LOW,Normal selling
+2026-04-29,Banana,120,50,3,20.37,2,0,110,MEDIUM,Apply 10-15% discount
+2026-01-30,Chicken,164,207,1,1.45,4,0,97,HIGH,Apply 25% discount + Send to NGO
+2026-01-30,Eggs,126,83,6,8.17,4,0,77,LOW,Normal selling
+2026-01-05,Bread,85,41,1,23.52,0,0,49,HIGH,Apply 25% discount + Send to NGO
+2026-06-01,Rice,111,73,40,28.62,0,0,42,LOW,Normal selling
+2026-06-22,Eggs,129,91,4,8.77,0,0,74,LOW,Normal selling
+2026-03-13,Rice,115,67,76,22.7,4,0,63,LOW,Normal selling
+2026-03-03,Eggs,139,89,7,6.24,1,0,78,LOW,Normal selling
+2026-02-07,Banana,169,56,2,17.27,5,1,204,MEDIUM,Apply 10-15% discount
+2026-06-01,Apple,199,132,5,15.61,0,0,76,LOW,Normal selling
+2026-02-07,Tomato,145,47,3,24.73,5,1,87,MEDIUM,Apply 10-15% discount
+2026-05-18,Rice,89,80,42,20.86,0,0,40,LOW,Normal selling
+2026-02-18,Eggs,108,65,7,7.81,2,0,104,LOW,Normal selling
+2026-01-13,Bread,155,21,3,24.64,1,0,127,MEDIUM,Apply 10-15% discount
+2026-03-06,Milk,134,42,2,2.09,4,0,100,HIGH,Apply 25% discount + Send to NGO
+2026-04-21,Apple,61,119,6,10.18,1,0,29,LOW,Normal selling
+2026-03-21,Rice,190,79,77,28.12,5,1,110,LOW,Normal selling
+2026-04-16,Tomato,93,44,2,24.24,3,0,48,HIGH,Apply 25% discount + Send to NGO
+2026-04-24,Eggs,111,83,10,4.29,4,0,66,LOW,Normal selling
+2026-06-25,Chicken,148,215,2,0.95,3,0,80,HIGH,Apply 25% discount + Send to NGO
+2026-03-04,Tomato,109,55,3,15.24,2,0,56,MEDIUM,Apply 10-15% discount
+2026-02-27,Banana,177,49,3,19.67,4,0,150,MEDIUM,Apply 10-15% discount
+2026-03-08,Apple,181,115,2,17.93,6,1,143,HIGH,Apply 25% discount + Send to NGO
+2026-04-04,Rice,184,79,49,32.44,5,1,73,LOW,Normal selling
+2026-06-20,Banana,143,63,4,19.76,5,1,162,LOW,Normal selling
+2026-02-17,Rice,134,60,48,20.09,1,0,64,LOW,Normal selling
+2026-01-07,Tomato,174,36,2,22.37,2,0,129,HIGH,Apply 25% discount + Send to NGO
+2026-04-14,Rice,126,73,49,20.49,1,0,54,LOW,Normal selling
+2026-04-23,Milk,83,51,1,2.55,3,0,67,HIGH,Apply 25% discount + Send to NGO
+2026-02-09,Milk,76,49,3,3.1,0,0,46,MEDIUM,Apply 10-15% discount
+2026-01-17,Tomato,59,27,3,15.16,5,1,58,MEDIUM,Apply 10-15% discount
+2026-03-22,Milk,166,36,2,4.07,6,1,195,MEDIUM,Apply 10-15% discount
+2026-01-07,Apple,123,123,2,16.74,2,0,71,HIGH,Apply 25% discount + Send to NGO
+2026-06-05,Rice,125,83,51,28.88,4,0,41,LOW,Normal selling
+2026-03-01,Chicken,50,190,2,3.45,6,1,31,HIGH,Apply 25% discount + Send to NGO
+2026-01-11,Milk,155,46,1,5.15,6,1,120,HIGH,Apply 25% discount + Send to NGO
+2026-05-23,Banana,103,60,2,13.83,5,1,118,MEDIUM,Apply 10-15% discount
+2026-02-20,Eggs,135,89,4,7.17,4,0,104,LOW,Normal selling
+2026-02-03,Tomato,183,45,4,18.83,1,0,112,LOW,Normal selling
+2026-03-26,Chicken,75,198,2,3.75,3,0,43,HIGH,Apply 25% discount + Send to NGO
+2026-04-05,Eggs,133,78,6,7.02,6,1,110,LOW,Normal selling
+2026-03-25,Banana,73,57,5,17.12,2,0,72,LOW,Normal selling
+2026-01-16,Milk,176,53,1,2.47,4,0,98,HIGH,Apply 25% discount + Send to NGO
+2026-02-19,Apple,171,113,6,11.89,3,0,96,LOW,Normal selling
+2026-05-15,Apple,100,111,7,13.66,4,0,60,LOW,Normal selling
+2026-01-23,Bread,82,21,4,20.56,4,0,45,LOW,Normal selling
+2026-05-01,Chicken,87,193,1,0.69,4,0,52,HIGH,Apply 25% discount + Send to NGO
+2026-05-15,Bread,154,15,2,20.39,4,0,103,HIGH,Apply 25% discount + Send to NGO
+2026-04-18,Bread,117,41,3,24.93,5,1,74,MEDIUM,Apply 10-15% discount
+2026-01-14,Bread,73,24,5,21.15,2,0,54,LOW,Normal selling
+2026-01-15,Eggs,52,90,9,4.69,3,0,43,LOW,Normal selling
+2026-02-17,Tomato,100,36,1,22.6,1,0,57,HIGH,Apply 25% discount + Send to NGO
+2026-03-01,Chicken,56,210,1,2.02,6,1,27,HIGH,Apply 25% discount + Send to NGO
+2026-02-14,Milk,125,58,4,5.96,5,1,80,LOW,Normal selling
+2026-02-11,Banana,110,73,4,17.54,2,0,81,LOW,Normal selling
+2026-02-20,Chicken,148,211,1,1.21,4,0,69,HIGH,Apply 25% discount + Send to NGO
+2026-05-31,Chicken,114,207,2,2.74,6,1,88,HIGH,Apply 25% discount + Send to NGO
+2026-02-07,Rice,98,57,89,24.82,5,1,47,LOW,Normal selling
+2026-03-20,Bread,120,16,2,19.13,4,0,100,HIGH,Apply 25% discount + Send to NGO
+2026-01-01,Tomato,136,48,3,18.41,3,0,102,MEDIUM,Apply 10-15% discount
+2026-01-01,Banana,55,49,5,17.13,3,0,44,LOW,Normal selling
+2026-05-02,Milk,80,57,3,4.94,5,1,56,MEDIUM,Apply 10-15% discount
+2026-01-10,Milk,143,63,4,3.29,5,1,119,LOW,Normal selling
+2026-06-07,Chicken,145,205,1,1.23,6,1,95,HIGH,Apply 25% discount + Send to NGO
+2026-03-05,Apple,152,113,2,18.06,3,0,77,HIGH,Apply 25% discount + Send to NGO
+2026-03-15,Chicken,113,213,1,1.47,6,1,54,HIGH,Apply 25% discount + Send to NGO
+2026-04-04,Apple,87,121,6,16.87,5,1,43,LOW,Normal selling
+2026-06-21,Eggs,94,66,3,9.58,6,1,102,MEDIUM,Apply 10-15% discount
+2026-01-26,Apple,116,122,6,12.41,0,0,60,LOW,Normal selling
+2026-04-03,Eggs,197,67,6,7.11,4,0,180,LOW,Normal selling
+2026-05-14,Apple,77,122,3,12.87,3,0,34,MEDIUM,Apply 10-15% discount
+2026-01-15,Bread,93,43,1,24.7,3,0,41,HIGH,Apply 25% discount + Send to NGO
+2026-06-19,Eggs,166,91,5,9.99,4,0,106,LOW,Normal selling
+2026-05-10,Apple,114,116,7,11.91,6,1,83,LOW,Normal selling
+2026-01-26,Milk,61,52,3,2.86,0,0,38,MEDIUM,Apply 10-15% discount
+2026-01-31,Tomato,62,29,2,24.47,5,1,53,HIGH,Apply 25% discount + Send to NGO
+2026-01-10,Chicken,169,200,2,0.45,5,1,119,HIGH,Apply 25% discount + Send to NGO
+2026-02-03,Bread,76,26,4,23.22,1,0,45,LOW,Normal selling
+2026-01-25,Chicken,61,211,1,2.59,6,1,34,HIGH,Apply 25% discount + Send to NGO
+2026-06-23,Rice,120,65,71,33.33,1,0,57,LOW,Normal selling
+2026-05-07,Chicken,199,209,3,1.35,3,0,117,MEDIUM,Apply 10-15% discount
+2026-04-29,Bread,74,26,1,24.97,2,0,42,HIGH,Apply 25% discount + Send to NGO
+2026-01-11,Chicken,79,189,1,2.78,6,1,62,HIGH,Apply 25% discount + Send to NGO
+2026-03-13,Eggs,186,74,8,4.23,4,0,160,LOW,Normal selling
+2026-02-09,Milk,160,37,1,4.38,0,0,134,HIGH,Apply 25% discount + Send to NGO
+2026-06-05,Tomato,160,54,5,15.58,4,0,91,LOW,Normal selling
+2026-06-25,Apple,129,106,3,15.85,3,0,73,MEDIUM,Apply 10-15% discount
+2026-02-24,Chicken,106,201,2,1.67,1,0,58,HIGH,Apply 25% discount + Send to NGO
+2026-05-09,Tomato,101,54,2,20.33,5,1,75,HIGH,Apply 25% discount + Send to NGO
+2026-05-26,Eggs,61,67,5,8.14,1,0,60,LOW,Normal selling
+2026-06-06,Tomato,164,29,3,15.77,5,1,172,MEDIUM,Apply 10-15% discount
+2026-02-11,Rice,79,60,57,27.95,2,0,47,LOW,Normal selling
+2026-05-28,Eggs,153,81,10,6.05,3,0,135,LOW,Normal selling
+2026-01-09,Banana,61,75,5,12.76,4,0,37,LOW,Normal selling
+2026-01-09,Tomato,165,26,2,16.25,4,0,103,HIGH,Apply 25% discount + Send to NGO
+2026-04-25,Tomato,114,50,5,21.49,5,1,94,LOW,Normal selling
+2026-02-18,Banana,75,50,1,23.47,2,0,55,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Eggs,66,80,8,8.37,4,0,39,LOW,Normal selling
+2026-05-13,Banana,122,66,2,21.84,2,0,87,HIGH,Apply 25% discount + Send to NGO
+2026-06-09,Bread,117,38,2,20.85,1,0,73,HIGH,Apply 25% discount + Send to NGO
+2026-05-07,Rice,106,79,85,21.93,3,0,43,LOW,Normal selling
+2026-03-20,Eggs,81,69,4,8.46,4,0,69,LOW,Normal selling
+2026-02-26,Milk,153,52,2,4.65,3,0,103,HIGH,Apply 25% discount + Send to NGO
+2026-01-03,Apple,109,123,6,14.4,5,1,79,LOW,Normal selling
+2026-04-04,Apple,182,117,2,18.31,5,1,126,HIGH,Apply 25% discount + Send to NGO
+2026-04-14,Chicken,81,202,3,1.08,1,0,49,MEDIUM,Apply 10-15% discount
+2026-05-08,Tomato,116,25,1,24.92,4,0,79,HIGH,Apply 25% discount + Send to NGO
+2026-03-05,Apple,60,125,6,12.47,3,0,31,LOW,Normal selling
+2026-01-22,Tomato,191,41,1,22.96,3,0,137,HIGH,Apply 25% discount + Send to NGO
+2026-05-21,Rice,164,81,65,34.99,3,0,63,LOW,Normal selling
+2026-02-10,Apple,175,113,4,12.04,1,0,80,LOW,Normal selling
+2026-02-27,Milk,173,60,1,2.23,4,0,112,HIGH,Apply 25% discount + Send to NGO
+2026-03-20,Banana,173,66,5,16.73,4,0,108,LOW,Normal selling
+2026-03-22,Apple,150,135,7,11.08,6,1,83,LOW,Normal selling
+2026-04-13,Eggs,178,71,5,4.01,0,0,150,LOW,Normal selling
+2026-02-21,Chicken,66,195,1,3.42,5,1,41,HIGH,Apply 25% discount + Send to NGO
+2026-02-25,Apple,151,108,5,11.22,2,0,99,LOW,Normal selling
+2026-05-06,Bread,69,20,3,21.56,2,0,43,MEDIUM,Apply 10-15% discount
+2026-03-02,Milk,174,54,3,5.63,0,0,146,MEDIUM,Apply 10-15% discount
+2026-05-30,Tomato,137,39,3,21.53,5,1,130,MEDIUM,Apply 10-15% discount
+2026-03-08,Tomato,133,37,2,20.38,6,1,130,HIGH,Apply 25% discount + Send to NGO
+2026-02-04,Tomato,169,27,3,17.59,2,0,109,MEDIUM,Apply 10-15% discount
+2026-01-16,Chicken,120,195,1,1.46,4,0,67,HIGH,Apply 25% discount + Send to NGO
+2026-01-17,Bread,136,38,1,24.62,5,1,101,HIGH,Apply 25% discount + Send to NGO
+2026-03-09,Eggs,98,81,9,5.05,0,0,88,LOW,Normal selling
+2026-03-24,Apple,52,131,2,18.02,1,0,26,HIGH,Apply 25% discount + Send to NGO
+2026-02-06,Bread,118,15,1,24.21,4,0,86,HIGH,Apply 25% discount + Send to NGO
+2026-01-21,Tomato,176,43,5,16.88,2,0,108,LOW,Normal selling
+2026-01-07,Bread,138,39,3,23.44,2,0,91,MEDIUM,Apply 10-15% discount
+2026-04-05,Bread,151,15,1,22.25,6,1,149,HIGH,Apply 25% discount + Send to NGO
+2026-01-12,Bread,161,15,2,18.88,0,0,93,HIGH,Apply 25% discount + Send to NGO
+2026-05-21,Tomato,199,43,4,23.88,3,0,141,LOW,Normal selling
+2026-03-02,Rice,140,67,58,25.18,0,0,56,LOW,Normal selling
+2026-03-09,Rice,79,77,63,27.6,0,0,31,LOW,Normal selling
+2026-02-21,Banana,59,67,5,15.53,5,1,42,LOW,Normal selling
+2026-01-08,Apple,79,133,3,18.72,3,0,37,MEDIUM,Apply 10-15% discount
+2026-06-13,Rice,140,61,51,24.55,5,1,93,LOW,Normal selling
+2026-06-07,Apple,90,113,4,11.75,6,1,70,LOW,Normal selling
+2026-01-01,Apple,88,132,4,13.75,3,0,33,LOW,Normal selling
+2026-05-07,Apple,177,111,4,14.26,3,0,102,LOW,Normal selling
+2026-06-27,Eggs,198,87,5,4.07,5,1,178,LOW,Normal selling
+2026-01-29,Milk,114,37,2,5.57,3,0,111,HIGH,Apply 25% discount + Send to NGO
+2026-01-23,Banana,160,71,5,13.11,4,0,123,LOW,Normal selling
+2026-06-05,Chicken,167,199,1,3.2,4,0,99,HIGH,Apply 25% discount + Send to NGO
+2026-01-01,Rice,121,72,50,32.52,3,0,47,LOW,Normal selling
+2026-06-16,Milk,132,42,5,3.85,1,0,100,LOW,Normal selling
+2026-06-28,Eggs,94,65,9,5.52,6,1,91,LOW,Normal selling
+2026-06-04,Bread,200,33,5,20.32,3,0,98,LOW,Normal selling
+2026-02-24,Bread,84,25,6,21.46,1,0,67,LOW,Normal selling
+2026-04-12,Rice,87,62,31,32.48,6,1,53,LOW,Normal selling
+2026-01-18,Bread,124,29,5,19.29,6,1,81,LOW,Normal selling
+2026-03-22,Tomato,119,30,5,21.63,6,1,97,LOW,Normal selling
+2026-01-19,Bread,170,24,3,23.15,0,0,122,MEDIUM,Apply 10-15% discount
+2026-06-11,Eggs,177,80,9,4.58,3,0,158,LOW,Normal selling
+2026-04-14,Tomato,83,29,3,21.57,1,0,62,MEDIUM,Apply 10-15% discount
+2026-05-13,Chicken,157,205,1,2.17,2,0,71,HIGH,Apply 25% discount + Send to NGO
+2026-01-18,Rice,176,56,37,26.91,6,1,86,LOW,Normal selling
+2026-02-09,Bread,110,43,4,21.12,0,0,71,LOW,Normal selling
+2026-05-30,Eggs,178,95,10,6.59,5,1,132,LOW,Normal selling
+2026-02-21,Apple,184,124,3,11.77,5,1,116,MEDIUM,Apply 10-15% discount
+2026-02-13,Bread,71,26,2,22.77,4,0,54,HIGH,Apply 25% discount + Send to NGO
+2026-05-15,Chicken,73,208,1,2.24,4,0,36,HIGH,Apply 25% discount + Send to NGO
+2026-01-03,Milk,58,54,3,3.92,5,1,52,MEDIUM,Apply 10-15% discount
+2026-05-21,Milk,163,53,2,2.92,3,0,117,HIGH,Apply 25% discount + Send to NGO
+2026-03-15,Bread,90,25,3,20.27,6,1,58,MEDIUM,Apply 10-15% discount
+2026-02-18,Bread,87,33,2,21.12,2,0,51,HIGH,Apply 25% discount + Send to NGO
+2026-01-09,Eggs,83,85,3,9.64,4,0,64,MEDIUM,Apply 10-15% discount
+2026-01-11,Eggs,180,78,8,4.02,6,1,197,LOW,Normal selling
+2026-03-24,Tomato,92,32,3,22.05,1,0,58,MEDIUM,Apply 10-15% discount
+2026-04-08,Chicken,77,188,2,1.29,2,0,44,HIGH,Apply 25% discount + Send to NGO
+2026-06-17,Bread,50,29,4,22.13,2,0,30,LOW,Normal selling
+2026-06-29,Chicken,75,207,3,1.34,0,0,33,MEDIUM,Apply 10-15% discount
+2026-05-21,Tomato,154,40,6,19.22,3,0,107,LOW,Normal selling
+2026-05-23,Chicken,145,207,2,3.29,5,1,87,HIGH,Apply 25% discount + Send to NGO
+2026-06-02,Rice,107,62,34,28.12,1,0,58,LOW,Normal selling
+2026-06-16,Bread,102,44,6,21.1,1,0,62,LOW,Normal selling
+2026-02-05,Banana,121,49,4,15.4,3,0,101,LOW,Normal selling
+2026-01-10,Chicken,167,201,3,0.06,5,1,139,MEDIUM,Apply 10-15% discount
+2026-01-17,Banana,80,50,2,17.41,5,1,104,MEDIUM,Apply 10-15% discount
+2026-03-06,Banana,182,72,1,24.96,4,0,129,HIGH,Apply 25% discount + Send to NGO
+2026-02-02,Tomato,146,35,4,17.92,0,0,108,LOW,Normal selling
+2026-03-01,Chicken,87,199,1,3.72,6,1,65,HIGH,Apply 25% discount + Send to NGO
+2026-05-16,Banana,93,63,5,14.33,5,1,84,LOW,Normal selling
+2026-04-01,Eggs,51,69,5,9.15,2,0,44,LOW,Normal selling
+2026-03-24,Eggs,82,65,5,5.57,1,0,79,LOW,Normal selling
+2026-03-08,Bread,50,27,2,20.83,6,1,36,HIGH,Apply 25% discount + Send to NGO
+2026-04-21,Chicken,96,197,1,0.44,1,0,59,HIGH,Apply 25% discount + Send to NGO
+2026-04-17,Eggs,118,67,9,5.63,4,0,98,LOW,Normal selling
+2026-03-16,Rice,154,60,76,21.99,0,0,69,LOW,Normal selling
+2026-05-27,Chicken,80,210,1,0.01,2,0,40,HIGH,Apply 25% discount + Send to NGO
+2026-03-14,Apple,73,133,6,14.91,5,1,44,LOW,Normal selling
+2026-03-05,Chicken,95,207,2,0.49,3,0,54,HIGH,Apply 25% discount + Send to NGO
+2026-05-30,Eggs,68,71,5,5.06,5,1,72,LOW,Normal selling
+2026-04-15,Rice,168,84,43,34.04,2,0,56,LOW,Normal selling
+2026-04-22,Bread,83,30,4,18.35,2,0,44,LOW,Normal selling
+2026-06-13,Tomato,87,38,1,21.25,5,1,64,HIGH,Apply 25% discount + Send to NGO
+2026-02-20,Chicken,98,186,1,0.32,4,0,75,HIGH,Apply 25% discount + Send to NGO
+2026-05-17,Bread,163,29,2,18.57,6,1,148,HIGH,Apply 25% discount + Send to NGO
+2026-03-30,Chicken,186,190,3,0.57,0,0,115,MEDIUM,Apply 10-15% discount
+2026-05-04,Eggs,173,65,4,7.36,0,0,179,LOW,Normal selling
+2026-01-20,Eggs,178,68,8,7.5,1,0,160,LOW,Normal selling
+2026-05-26,Milk,64,44,3,4.85,1,0,50,MEDIUM,Apply 10-15% discount
+2026-03-21,Chicken,59,215,2,2.24,5,1,42,HIGH,Apply 25% discount + Send to NGO
+2026-04-18,Rice,96,84,48,22.61,5,1,35,LOW,Normal selling
+2026-01-12,Chicken,133,199,1,1.27,0,0,93,HIGH,Apply 25% discount + Send to NGO
+2026-02-18,Milk,87,42,3,4.98,2,0,74,MEDIUM,Apply 10-15% discount
+2026-01-31,Tomato,82,36,1,24.22,5,1,60,HIGH,Apply 25% discount + Send to NGO
+2026-05-11,Bread,156,34,5,20.21,0,0,89,LOW,Normal selling
+2026-03-21,Bread,58,31,2,24.6,5,1,47,HIGH,Apply 25% discount + Send to NGO
+2026-01-06,Tomato,176,49,4,18.39,1,0,125,LOW,Normal selling
+2026-04-24,Rice,62,56,78,31.83,4,0,32,LOW,Normal selling
+2026-01-18,Milk,96,53,3,3.56,6,1,71,MEDIUM,Apply 10-15% discount
+2026-06-14,Apple,105,117,3,19.67,6,1,67,MEDIUM,Apply 10-15% discount
+2026-05-04,Banana,75,60,3,12.9,0,0,50,MEDIUM,Apply 10-15% discount
+2026-02-19,Banana,101,60,1,24.71,3,0,64,HIGH,Apply 25% discount + Send to NGO
+2026-01-23,Rice,85,77,53,33.66,4,0,42,LOW,Normal selling
+2026-06-01,Tomato,101,52,3,16.06,0,0,64,MEDIUM,Apply 10-15% discount
+2026-02-06,Bread,85,29,6,21.1,4,0,47,LOW,Normal selling
+2026-02-08,Milk,104,54,4,4.62,6,1,87,LOW,Normal selling
+2026-06-11,Apple,84,125,4,12.27,3,0,41,LOW,Normal selling
+2026-04-22,Banana,112,51,2,18.67,2,0,88,HIGH,Apply 25% discount + Send to NGO
+2026-06-12,Apple,132,117,4,10.35,4,0,70,LOW,Normal selling
+2026-05-20,Bread,72,34,6,20.88,2,0,46,LOW,Normal selling
+2026-05-06,Chicken,123,209,3,1.76,2,0,66,MEDIUM,Apply 10-15% discount
+2026-01-15,Banana,159,66,1,22.48,3,0,96,HIGH,Apply 25% discount + Send to NGO
+2026-02-07,Rice,149,63,70,25.68,5,1,99,LOW,Normal selling
+2026-02-22,Tomato,99,29,6,19.1,6,1,105,LOW,Normal selling
+2026-02-14,Chicken,174,195,1,3.98,5,1,129,HIGH,Apply 25% discount + Send to NGO
+2026-04-09,Milk,59,56,4,3.57,3,0,37,LOW,Normal selling
+2026-03-08,Tomato,198,45,3,19.63,6,1,172,MEDIUM,Apply 10-15% discount
+2026-06-14,Tomato,99,36,4,24.0,6,1,88,LOW,Normal selling
+2026-04-04,Rice,93,56,72,28.24,5,1,50,LOW,Normal selling
+2026-05-08,Tomato,148,36,1,24.02,4,0,103,HIGH,Apply 25% discount + Send to NGO
+2026-06-12,Bread,175,30,4,23.04,4,0,111,LOW,Normal selling
+2026-06-19,Banana,132,68,3,13.41,4,0,78,MEDIUM,Apply 10-15% discount
+2026-03-18,Rice,134,64,68,26.53,2,0,51,LOW,Normal selling
+2026-05-15,Banana,56,66,2,19.0,4,0,37,HIGH,Apply 25% discount + Send to NGO
+2026-04-20,Apple,91,105,5,16.31,0,0,55,LOW,Normal selling
+2026-06-01,Eggs,154,75,8,8.89,0,0,96,LOW,Normal selling
+2026-03-04,Bread,184,42,4,24.59,2,0,86,LOW,Normal selling
+2026-05-05,Apple,197,127,1,17.08,1,0,101,HIGH,Apply 25% discount + Send to NGO
+2026-06-18,Bread,194,45,1,23.73,3,0,115,HIGH,Apply 25% discount + Send to NGO
+2026-05-23,Bread,180,39,2,20.0,5,1,102,HIGH,Apply 25% discount + Send to NGO
+2026-05-19,Tomato,166,40,6,18.07,1,0,129,LOW,Normal selling
+2026-01-31,Apple,79,124,5,10.16,5,1,53,LOW,Normal selling
+2026-02-20,Milk,192,63,2,2.06,4,0,107,HIGH,Apply 25% discount + Send to NGO
+2026-06-22,Tomato,198,40,4,20.22,0,0,121,LOW,Normal selling
+2026-01-09,Chicken,157,186,1,2.84,4,0,119,HIGH,Apply 25% discount + Send to NGO
+2026-03-05,Banana,67,48,3,20.11,3,0,53,MEDIUM,Apply 10-15% discount
+2026-06-08,Apple,110,129,3,18.09,0,0,48,MEDIUM,Apply 10-15% discount
+2026-01-05,Milk,165,52,2,2.54,0,0,99,HIGH,Apply 25% discount + Send to NGO
+2026-01-12,Bread,158,30,4,23.0,0,0,94,LOW,Normal selling
+2026-02-22,Rice,105,65,65,27.29,6,1,65,LOW,Normal selling
+2026-03-05,Rice,68,83,45,20.04,3,0,23,LOW,Normal selling
+2026-03-03,Chicken,153,198,1,3.11,1,0,71,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Rice,176,62,50,20.6,4,0,87,LOW,Normal selling
+2026-03-11,Chicken,188,197,1,2.65,2,0,122,HIGH,Apply 25% discount + Send to NGO
+2026-06-05,Apple,159,128,4,10.42,4,0,62,LOW,Normal selling
+2026-01-16,Bread,75,41,6,19.68,4,0,47,LOW,Normal selling
+2026-03-29,Apple,157,110,4,11.86,6,1,110,LOW,Normal selling
+2026-05-15,Banana,81,66,1,23.85,4,0,49,HIGH,Apply 25% discount + Send to NGO
+2026-05-30,Tomato,130,31,4,17.68,5,1,111,LOW,Normal selling
+2026-04-28,Rice,184,83,49,23.24,1,0,87,LOW,Normal selling
+2026-04-17,Tomato,176,52,1,20.69,4,0,81,HIGH,Apply 25% discount + Send to NGO
+2026-03-01,Apple,82,126,2,19.99,6,1,44,HIGH,Apply 25% discount + Send to NGO
+2026-06-20,Apple,76,133,4,15.47,5,1,48,LOW,Normal selling
+2026-01-28,Rice,102,72,78,28.11,2,0,42,LOW,Normal selling
+2026-02-15,Milk,190,63,4,3.56,6,1,163,LOW,Normal selling
+2026-04-28,Milk,93,52,1,3.19,1,0,57,HIGH,Apply 25% discount + Send to NGO
+2026-01-17,Tomato,96,27,3,16.24,5,1,69,MEDIUM,Apply 10-15% discount
+2026-02-25,Banana,75,74,5,16.65,2,0,55,LOW,Normal selling
+2026-04-04,Milk,186,54,1,4.98,5,1,148,HIGH,Apply 25% discount + Send to NGO
+2026-03-11,Eggs,144,94,6,5.72,2,0,114,LOW,Normal selling
+2026-04-05,Tomato,150,41,3,23.82,6,1,125,MEDIUM,Apply 10-15% discount
+2026-01-30,Bread,55,21,5,20.13,4,0,40,LOW,Normal selling
+2026-01-04,Milk,177,64,3,2.41,6,1,117,MEDIUM,Apply 10-15% discount
+2026-05-21,Milk,147,46,4,2.82,3,0,91,LOW,Normal selling
+2026-04-22,Milk,131,50,5,2.53,2,0,110,LOW,Normal selling
+2026-06-19,Apple,108,109,6,15.75,4,0,74,LOW,Normal selling
+2026-06-11,Milk,66,38,4,5.13,3,0,61,LOW,Normal selling
+2026-03-28,Milk,164,64,1,2.48,5,1,104,HIGH,Apply 25% discount + Send to NGO
+2026-01-04,Apple,99,115,7,10.42,6,1,57,LOW,Normal selling
+2026-01-15,Apple,112,132,6,14.7,3,0,46,LOW,Normal selling
+2026-05-06,Eggs,181,71,5,6.54,2,0,143,LOW,Normal selling
+2026-02-06,Tomato,151,25,5,17.02,4,0,106,LOW,Normal selling
+2026-05-20,Eggs,100,94,5,8.77,2,0,73,LOW,Normal selling
+2026-06-19,Eggs,104,69,6,8.63,4,0,71,LOW,Normal selling
+2026-04-18,Tomato,66,32,4,18.78,5,1,46,LOW,Normal selling
+2026-03-10,Rice,183,71,69,20.65,1,0,85,LOW,Normal selling
+2026-02-08,Milk,161,58,4,5.13,6,1,102,LOW,Normal selling
+2026-04-09,Milk,78,36,1,5.43,3,0,77,HIGH,Apply 25% discount + Send to NGO
+2026-02-16,Apple,156,114,1,17.94,0,0,102,HIGH,Apply 25% discount + Send to NGO
+2026-04-29,Chicken,133,195,1,0.5,2,0,82,HIGH,Apply 25% discount + Send to NGO
+2026-03-12,Rice,147,56,77,24.23,3,0,83,LOW,Normal selling
+2026-05-20,Milk,88,45,1,5.04,2,0,58,HIGH,Apply 25% discount + Send to NGO
+2026-04-17,Bread,92,35,3,21.07,4,0,48,MEDIUM,Apply 10-15% discount
+2026-04-03,Milk,182,57,1,5.75,4,0,109,HIGH,Apply 25% discount + Send to NGO
+2026-04-06,Bread,160,45,4,24.73,0,0,85,LOW,Normal selling
+2026-06-25,Eggs,123,86,7,8.9,3,0,69,LOW,Normal selling
+2026-04-16,Eggs,71,71,7,7.37,3,0,48,LOW,Normal selling
+2026-04-29,Chicken,182,194,2,0.73,2,0,130,HIGH,Apply 25% discount + Send to NGO
+2026-04-20,Bread,117,32,5,22.91,0,0,56,LOW,Normal selling
+2026-05-30,Tomato,151,28,4,20.5,5,1,109,LOW,Normal selling
+2026-01-08,Banana,64,66,1,21.75,3,0,48,HIGH,Apply 25% discount + Send to NGO
+2026-02-16,Eggs,117,85,10,5.86,0,0,103,LOW,Normal selling
+2026-02-18,Apple,141,135,3,18.79,2,0,72,MEDIUM,Apply 10-15% discount
+2026-01-21,Tomato,137,35,5,15.15,2,0,109,LOW,Normal selling
+2026-03-03,Chicken,58,191,1,1.98,1,0,38,HIGH,Apply 25% discount + Send to NGO
+2026-03-25,Bread,100,43,3,22.39,2,0,58,MEDIUM,Apply 10-15% discount
+2026-03-15,Milk,53,46,2,4.6,6,1,40,HIGH,Apply 25% discount + Send to NGO
+2026-06-21,Apple,160,117,2,18.52,6,1,93,HIGH,Apply 25% discount + Send to NGO
+2026-05-07,Rice,102,85,55,22.13,3,0,39,LOW,Normal selling
+2026-06-07,Chicken,173,189,3,0.81,6,1,142,MEDIUM,Apply 10-15% discount
+2026-05-07,Rice,67,77,49,33.57,3,0,27,LOW,Normal selling
+2026-04-24,Eggs,175,82,10,4.52,4,0,116,LOW,Normal selling
+2026-06-29,Chicken,125,205,2,3.02,0,0,74,HIGH,Apply 25% discount + Send to NGO
+2026-05-22,Chicken,125,201,3,0.63,4,0,85,MEDIUM,Apply 10-15% discount
+2026-06-17,Rice,129,77,64,24.75,2,0,50,LOW,Normal selling
+2026-03-25,Banana,167,47,5,14.33,2,0,146,LOW,Normal selling
+2026-05-19,Milk,153,65,3,3.76,1,0,74,MEDIUM,Apply 10-15% discount
+2026-03-04,Milk,90,63,4,5.82,2,0,56,LOW,Normal selling
+2026-03-15,Bread,148,41,2,21.3,6,1,113,HIGH,Apply 25% discount + Send to NGO
+2026-01-01,Rice,62,71,80,34.21,3,0,22,LOW,Normal selling
