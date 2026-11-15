@@ -46,13 +46,13 @@
 - 📊 [Retail Sales Forecast Dataset 2026 (Kaggle)](https://www.kaggle.com/datasets/mmumairkhattak/retail-sales-forecast-dataset-2026)
 
 ### Tasks — Base
-- [ ] Load `train.csv` dan `transactions.csv` dari folder M5
-- [ ] EDA: pola demand harian, efek promo & hari libur, seasonality
-- [ ] Feature engineering: `lag_7`, `lag_14`, `rolling_mean_7`, `is_promo`
-- [ ] Split data: train/test per time window (jangan acak — gunakan Rolling Window Validation)
-- [ ] Training model forecasting (LightGBM / Prophet)
-- [ ] Evaluasi model (MAE, RMSE, MAPE)
-- [ ] Output: prediksi `demand_3day` per `product_id` untuk input dashboard
+- [x] Load `train.csv` dan `transactions.csv` dari folder M5
+- [x] EDA: pola demand harian, efek promo & hari libur, seasonality
+- [x] Feature engineering: `lag_7`, `lag_14`, `rolling_mean_7`, `is_promo`
+- [x] Split data: train/test per time window (Rolling Window Validation)
+- [x] Training model forecasting (LightGBM multi-horizon)
+- [x] Evaluasi model (MAE, RMSE, MAPE)
+- [x] Output: prediksi `demand_3day` per `product_id` untuk input dashboard via `/api/forecast/products`
 
 ### Tasks — 🚀 UPGRADE (Tambah setelah Person 0 selesai kalender libur MY)
 - [ ] Tambahkan kolom `is_holiday` dari `holidays_my.csv` ke training data

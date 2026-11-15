@@ -1,24 +1,42 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 from typing import Dict, Any
 
-from backend.schemas.batch import BatchResponse
-from backend.services.batch_service import get_batches, save_batch_to_csv
+from backend.schemas.batch import BatchResponse, Batch
+from backend.services.batch_service import get_batches, get_batch_by_id, save_batch_to_csv
 
 
 router = APIRouter(
-    prefix="/api/batches",
     tags=["Food Batches"]
 )
 
 
-@router.get("/", response_model=BatchResponse)
+@router.get("/api/batches", response_model=BatchResponse)
+@router.get("/api/lots", response_model=BatchResponse)
 def read_batches():
+    """
+    Returns active store inventory batches sorted by FEFO (First-Expired, First-Out).
+    Serves both /api/batches and /api/lots contract.
+    """
     return get_batches()
 
 
-@router.post("/")
+@router.get("/api/batches/{batch_id}", response_model=Batch)
+@router.get("/api/lots/{batch_id}", response_model=Batch)
+def read_single_batch(batch_id: str):
+    """
+    Returns granular batch details for a specific lot_id.
+    """
+    batch = get_batch_by_id(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+    return batch
+
+
+@router.post("/api/batches")
+@router.post("/api/lots")
 def create_batch(batch_data: Dict[str, Any] = Body(...)):
     """
-    Persists a newly registered inventory batch directly into inventory_master.csv.
+    Persists a newly registered inventory batch directly into inventory_master.csv
+    and computes ML spoilage risk using Person 1's XGBoost champion model.
     """
     return save_batch_to_csv(batch_data)

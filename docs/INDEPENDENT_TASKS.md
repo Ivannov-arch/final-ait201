@@ -76,15 +76,15 @@ Dua pekerjaan ini sama sekali tidak menunggu pipeline selesai:
 
 #### 🏗️ BASE Tasks
 - **Bagian Forecasting (Goal 2):**
-  - [ ] Load data `train.csv` dan `transactions.csv` dari folder `8. store-sales-time-series-forecasting/`.
-  - [ ] Buat pipeline time-series baseline (lag-7, lag-14, rolling mean penjualan).
-  - [ ] Latih model baseline forecasting (LightGBM / Prophet) tanpa Malaysia holidays.
-  - [ ] Simpan model ke `models/demand_forecast_base.pkl`.
+  - [x] Load data `train.csv` dan `transactions.csv` dari folder `8. store-sales-time-series-forecasting/`.
+  - [x] Buat pipeline time-series baseline (lag-7, lag-14, rolling mean penjualan).
+  - [x] Latih model baseline forecasting (LightGBM) untuk prediksi multi-horizon 3 hari ke depan.
+  - [x] Simpan model ke `models/demand_forecast*.pkl`.
 - **Bagian Backend API (Goal 10):**
-  - [ ] Inisialisasi struktur folder FastAPI (`routers/`, `schemas/`, `services/`).
-  - [ ] Buat skema Pydantic untuk request/response.
-  - [ ] Buat endpoint dummy yang mengembalikan JSON tiruan (`GET /api/batches`, `GET /api/dashboard/summary`).
-  - [ ] Pastikan dokumentasi Swagger di `http://localhost:8000/docs` sudah bisa diakses dan dites.
+  - [x] Inisialisasi struktur folder FastAPI (`routers/`, `schemas/`, `services/`).
+  - [x] Buat skema Pydantic untuk request/response (`batch.py`, `dashboard.py`).
+  - [x] Bangun endpoint lengkap: `GET /api/lots`, `GET /api/batches`, `GET /api/dashboard/summary`, `POST /api/recommend`, `GET /api/dispatch-route/{batch_id}`, dan `/api/forecast/products`.
+  - [x] Pastikan dokumentasi Swagger di `http://localhost:8000/docs` sudah bisa diakses dan dites.
 
 #### 🚀 UPGRADE Tasks
 - [ ] Setelah Person 0 menyerahkan Malaysia holidays CSV (~20 baris): tambahkan sebagai fitur `is_holiday` ke model forecasting.

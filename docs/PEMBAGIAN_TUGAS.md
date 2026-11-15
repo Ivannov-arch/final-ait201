@@ -95,9 +95,9 @@ Proyek ini dirancang agar setiap anggota tim memiliki bobot kerja yang **solid, 
 - [x] Bangun server FastAPI (`backend/main.py`) dengan endpoint:
   - [x] `GET /api/lots` (daftar stok FEFO via `/api/batches`)
   - [x] `GET /api/forecast/{product_id}` (prediksi demand 3 hari via `/api/forecast/product/{product_name}`)
-  - [x] `POST /api/recommend` (rekomendasi aksi diskon/donasi — **sudah terintegrasi Rule Engine Person 4 via Vite middleware**)
-  - [ ] `GET /api/dispatch-route/{batch_id}` (rute OSRM & polyline jalan — **menunggu integrasi OSRM Person 5**)
-  - [x] `GET /api/dashboard/summary` (KPI agregat)
+  - [x] `POST /api/recommend` (rekomendasi aksi diskon/donasi — terintegrasi Rule Engine Person 4 secara native & Vite middleware)
+  - [x] `GET /api/dispatch-route/{batch_id}` (rute OSRM & polyline jalan — terintegrasi model estimasi kargo Person 5 & OSRM)
+  - [x] `GET /api/dashboard/summary` (KPI agregat dinamis terhitung langsung dari master data)
 - [x] Konfigurasi CORS dan Swagger docs di `/docs`.
 
 ---

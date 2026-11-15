@@ -14,6 +14,11 @@ def _format_batch_record(record: dict) -> dict:
     except (ValueError, TypeError):
         dte = 5
     status = "Near Expiry" if dte <= 2 else "Available"
+    
+    # Extract or infer risk tier and label
+    risk_tier = str(record.get("risk_tier") or ("high" if dte <= 2 else "med" if dte <= 5 else "low")).lower()
+    risk_label = str(record.get("risk_label") or ("High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"))
+
     return {
         "batch_id": str(record.get("lot_id", "N/A")),
         "food_name": str(record.get("product_name", "Unknown")),
@@ -22,8 +27,37 @@ def _format_batch_record(record: dict) -> dict:
         "status": status,
         "category": str(record.get("category", "Produce")),
         "unit_price_myr": float(record.get("unit_price_myr", 5.0)),
-        "days_to_expiry": dte
+        "days_to_expiry": dte,
+        "risk_tier": risk_tier,
+        "risk_label": risk_label,
+        "shelf_life_days": float(record.get("shelf_life_days") or max(1, dte + 7)),
+        "turnover_ratio": float(record.get("turnover_ratio") or 2.0),
+        "stock_pressure": float(record.get("stock_pressure") or 1.0)
     }
+
+
+def get_batch_by_id(batch_id: str) -> dict | None:
+    """Retrieve a single batch record by lot_id."""
+    if INVENTORY_MASTER_JSON.exists():
+        try:
+            with open(INVENTORY_MASTER_JSON, "r", encoding="utf-8") as f:
+                records = json.load(f)
+            for r in records:
+                if str(r.get("lot_id")) == str(batch_id):
+                    return _format_batch_record(r)
+        except Exception:
+            pass
+
+    if INVENTORY_MASTER_PATH.exists():
+        try:
+            df = pd.read_csv(INVENTORY_MASTER_PATH)
+            matches = df[df["lot_id"] == batch_id]
+            if not matches.empty:
+                return _format_batch_record(matches.iloc[0].to_dict())
+        except Exception:
+            pass
+
+    return None
 
 
 def get_batches():
@@ -75,8 +109,34 @@ def save_batch_to_csv(batch_data: dict):
     date_in = str(batch_data.get("dateIn") or "2026-11-14")
     uom = str(batch_data.get("unit") or ("kg" if category in ["Produce", "Seafood"] else "pack"))
 
-    risk_tier = "high" if dte <= 2 else "med" if dte <= 5 else "low"
-    risk_label = "High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"
+    # ML-powered Spoilage Risk Prediction (Person 1 Model Integration)
+    try:
+        from src.ml.spoilage import predict_spoilage_risk
+        lot_feature_input = {
+            "days_until_expiry": dte,
+            "shelf_life_days": max(1, dte + 7),
+            "Stock_Quantity": quantity,
+            "Sales_Volume": turnover,
+            "Unit_Price": unit_price,
+            "Category": category,
+            "turnover_ratio": turnover,
+            "stock_pressure": round(quantity / (reorder + 1), 2)
+        }
+        pred = predict_spoilage_risk(lot_feature_input)
+        raw_label = str(pred.get("label", "LOW")).upper()
+        if raw_label == "HIGH":
+            risk_tier = "high"
+            risk_label = "High Risk"
+        elif raw_label == "MODERATE":
+            risk_tier = "med"
+            risk_label = "Moderate Risk"
+        else:
+            risk_tier = "low"
+            risk_label = "Low Risk"
+    except Exception:
+        # Fallback heuristic
+        risk_tier = "high" if dte <= 2 else "med" if dte <= 5 else "low"
+        risk_label = "High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"
 
     new_row = {
         "lot_id": lot_id,

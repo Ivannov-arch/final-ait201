@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.routers.forecast import router as forecast_router
 from backend.routers.batches import router as batches_router
 from backend.routers.dashboard import router as dashboard_router
+from backend.routers.recommend import router as recommend_router
+from backend.routers.dispatch import router as dispatch_router
 
 
 app = FastAPI(
@@ -36,6 +38,8 @@ app.add_middleware(
 app.include_router(forecast_router)
 app.include_router(batches_router)
 app.include_router(dashboard_router)
+app.include_router(recommend_router)
+app.include_router(dispatch_router)
 
 
 # ==========================================
