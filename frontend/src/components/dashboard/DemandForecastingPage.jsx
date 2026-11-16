@@ -81,9 +81,9 @@ function computeDecision(stock, demand, dte, unit) {
   if (s === 0 || balance < 0) {
     const deficit = s === 0 ? d : Math.abs(balance)
     return {
-      title: 'Restock Required',
-      action: `Order +${deficit} ${unit}`,
-      reason: `Customer demand exceeds on-hand stock. Order ${deficit} ${unit} to prevent empty shelves.`,
+      title: 'Restock Required (Advisory)',
+      action: `Perlu Order +${deficit} ${unit} (Manual PO Only)`,
+      reason: `Customer demand exceeds on-hand stock. Order ${deficit} ${unit} to prevent empty shelves. (Auto-PO Locked — periksa fisik sebelum pemesanan).`,
       mascot: '/image/decision/donate.png',
       badgeClass: 'is-critical',
       bannerBg: '#fef2f2',
@@ -135,17 +135,96 @@ function computeDecision(stock, demand, dte, unit) {
 
 export default function DemandForecastingPage({ onToggleSidebar, batches = [] }) {
   const [mlProducts, setMlProducts] = useState({})
+  const [apiMeta, setApiMeta] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [apiError, setApiError] = useState(null)
+  const [useDemoBackup, setUseDemoBackup] = useState(false)
+  const [showMethodologyModal, setShowMethodologyModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef(null)
 
-  // Load ML predictions
-  useEffect(() => {
+  // Real calendar date generator for the projection window
+  const getForecastDayInfo = (offset) => {
+    const now = new Date()
+    const target = new Date(now)
+    target.setDate(now.getDate() + offset)
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+    const day = target.getDate()
+    const month = months[target.getMonth()]
+    const dateStr = `${day} ${month}`
+
+    let dayLabel = ''
+    if (offset === 0) dayLabel = 'Hari Ini'
+    else if (offset === 1) dayLabel = 'Besok'
+    else if (offset === 2) dayLabel = 'Lusa'
+    else dayLabel = `+${offset} Hari`
+
+    return {
+      offset,
+      dateStr,
+      label: dayLabel,
+      full: offset === 0 ? 'Hari Ini' : `${dayLabel} · ${dateStr}`
+    }
+  }
+
+  // Load ML predictions with explicit loading, error, and metadata tracking
+  const fetchForecastData = () => {
+    setIsLoading(true)
+    setApiError(null)
     fetch('/api/forecast/products?store_nbr=1&limit=100')
-      .then(r => r.json())
-      .then(d => setMlProducts(d.products || {}))
-      .catch(() => setMlProducts({}))
+      .then(async (r) => {
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}: Failed to reach forecast service`)
+        }
+        return r.json()
+      })
+      .then((d) => {
+        if (d && d.products && Object.keys(d.products).length > 0) {
+          setMlProducts(d.products)
+          setApiMeta({
+            originDate: d.forecast_origin_date || '2017-08-15',
+            source: d.forecast_source || 'historical_static',
+            method: d.forecast_method || 'lightgbm',
+            granularity: d.forecast_granularity || 'family_level_disaggregated',
+            validationStatus: d.forecast_validation_status || 'not_validated',
+            warning: d.forecast_warning || '',
+            inventorySource: d.inventory_source || 'Local Master JSON'
+          })
+          setUseDemoBackup(false)
+        } else {
+          setMlProducts({})
+          setApiError('Forecast API returned an empty product list.')
+        }
+      })
+      .catch((err) => {
+        console.warn('[DemandForecasting] Live fetch notice:', err.message)
+        setApiError(err.message || 'Network error connecting to forecast service.')
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    fetchForecastData()
   }, [])
+
+  const handleEnableDemoBackup = () => {
+    setMlProducts(defaultForecastData)
+    setApiMeta({
+      originDate: '2017-08-15 (Bundled Snapshot)',
+      source: 'historical_static_demo',
+      method: 'lightgbm (precomputed)',
+      granularity: 'family_level_disaggregated',
+      validationStatus: 'not_validated',
+      warning: 'DEMO MODE: Displaying precomputed Kaggle dataset backup.',
+      inventorySource: 'Bundled JSON Snapshot'
+    })
+    setUseDemoBackup(true)
+    setApiError(null)
+  }
 
   // Close search dropdown on click outside
   useEffect(() => {
@@ -160,9 +239,9 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
 
   // Merge products
   const mergedDb = useMemo(() => {
-    const base = Object.keys(mlProducts).length > 0 ? mlProducts : defaultForecastData
+    const base = Object.keys(mlProducts).length > 0 ? mlProducts : (useDemoBackup ? defaultForecastData : {})
     return mergeMlWithBatches(base, batches)
-  }, [mlProducts, batches])
+  }, [mlProducts, useDemoBackup, batches])
 
   const productKeys = useMemo(() => Object.keys(mergedDb), [mergedDb])
   const [selectedProduct, setSelectedProduct] = useState(productKeys[0] || 'Bell Pepper')
@@ -192,17 +271,21 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
 
   const decision = computeDecision(stock, demand, dte, unit)
 
-  // ── 3-Day Visual Trajectory Graph Coordinates ──
+  const day1Info = getForecastDayInfo(1)
+  const day2Info = getForecastDayInfo(2)
+  const day3Info = getForecastDayInfo(3)
+
+  // ── 3-Day Visual Trajectory Graph Coordinates with Real Calendar Dates ──
   const timelinePoints = [
-    { label: 'Today', sub: 'Start', stockVal: stock, demandVal: null },
-    { label: points[0]?.label || 'Tomorrow', sub: points[0]?.date || 'Day 1', stockVal: points[0]?.stockRemaining ?? stock, demandVal: points[0]?.demand ?? 0 },
-    { label: points[1]?.label || 'Day 2', sub: points[1]?.date || 'Day 2', stockVal: points[1]?.stockRemaining ?? 0, demandVal: points[1]?.demand ?? 0 },
-    { label: points[2]?.label || 'Day 3', sub: points[2]?.date || 'Day 3', stockVal: points[2]?.stockRemaining ?? 0, demandVal: points[2]?.demand ?? 0 }
+    { label: 'Hari Ini', sub: 'Mulai', stockVal: stock, demandVal: null },
+    { label: day1Info.dateStr, sub: day1Info.label, stockVal: points[0]?.stockRemaining ?? stock, demandVal: points[0]?.demand ?? 0 },
+    { label: day2Info.dateStr, sub: day2Info.label, stockVal: points[1]?.stockRemaining ?? 0, demandVal: points[1]?.demand ?? 0 },
+    { label: day3Info.dateStr, sub: day3Info.label, stockVal: points[2]?.stockRemaining ?? 0, demandVal: points[2]?.demand ?? 0 }
   ]
 
   const maxGraphVal = Math.max(stock, ...timelinePoints.map(p => Math.max(p.stockVal, p.demandVal || 0)), 10) * 1.25
   const chartW = 680
-  const chartH = 175
+  const chartH = 185
   const padL = 45
   const padR = 40
   const padT = 26
@@ -229,87 +312,216 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
         onToggleSidebar={onToggleSidebar}
       />
 
-      {/* ─── 1. SIMPLE PRODUCT SELECTOR ─── */}
-      <div className="fg-fc-distill-bar">
-        {/* Search input with clean dropdown */}
-        <div className="fg-fc-select-wrap" ref={searchRef}>
-          <div className="fg-fc-select-input-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search or pick product..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value)
-                setShowDropdown(true)
-              }}
-              onFocus={() => setShowDropdown(true)}
-              className="fg-fc-select-input"
-            />
-            {searchTerm && (
+      {/* ─── OPERATIONS STATUS & METHODOLOGY TRIGGER ─── */}
+      <div className="fg-fc-ops-context">
+        <div className="fg-fc-ops-status">
+          <span className="fg-fc-status-dot" />
+          <span className="fg-fc-ops-title">Mode: Advisory Penjualan 3-Hari</span>
+          <span className="fg-fc-ops-badge">Family-level Disaggregated</span>
+          {useDemoBackup && (
+            <span className="fg-fc-ops-badge fg-fc-ops-badge--demo">
+              Demo Snapshot (Backup)
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowMethodologyModal(true)}
+          className="fg-fc-ops-info-btn"
+          title="Buka transparansi data, model, dan batasan validasi"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          Metodologi & Validasi Data
+        </button>
+      </div>
+
+      {/* ─── METHODOLOGY & AUDIT MODAL ─── */}
+      {showMethodologyModal && (
+        <div className="fg-fc-modal-backdrop" onClick={() => setShowMethodologyModal(false)}>
+          <div className="fg-fc-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="fg-fc-modal-header">
+              <div>
+                <h3 className="fg-fc-modal-title">Metodologi & Validasi Data</h3>
+                <span className="fg-fc-modal-sub">Audit operasional model estimasi demand</span>
+              </div>
               <button
                 type="button"
-                className="fg-search-clear"
-                onClick={() => {
-                  setSearchTerm('')
-                  setShowDropdown(false)
-                }}
+                className="fg-fc-modal-close"
+                onClick={() => setShowMethodologyModal(false)}
+                aria-label="Tutup"
               >
                 ✕
               </button>
-            )}
-          </div>
+            </div>
 
-          {showDropdown && (
-            <div className="fg-fc-dropdown">
-              {searchMatches.map(p => {
-                const item = mergedDb[p]
-                const isSelected = p === selectedProduct
-                return (
+            <div className="fg-fc-modal-body">
+              <div className="fg-fc-modal-grid">
+                <div className="fg-fc-modal-item">
+                  <span className="fg-fc-modal-label">Origin Data Historis</span>
+                  <span className="fg-fc-modal-val">{apiMeta?.originDate || '2017-08-15'} (Kaggle M5 Dataset)</span>
+                </div>
+                <div className="fg-fc-modal-item">
+                  <span className="fg-fc-modal-label">Arsitektur Model</span>
+                  <span className="fg-fc-modal-val">{apiMeta?.method ? apiMeta.method.toUpperCase() : 'LIGHTGBM'} (Tingkat Family/Kategori)</span>
+                </div>
+                <div className="fg-fc-modal-item">
+                  <span className="fg-fc-modal-label">Metode Alokasi SKU</span>
+                  <span className="fg-fc-modal-val">Disagregasi Proporsi Stok (Stock-Share Weight)</span>
+                </div>
+                <div className="fg-fc-modal-item">
+                  <span className="fg-fc-modal-label">Status Validasi Operasional</span>
+                  <span className="fg-fc-modal-val" style={{ color: '#b45309' }}>
+                    Advisory — Belum Divalidasi untuk Auto-PO
+                  </span>
+                </div>
+              </div>
+
+              <div className="fg-fc-modal-note">
+                <p>
+                  <strong>Catatan Operasional:</strong> Proyeksi dihitung dari model LightGBM pada tingkat family, lalu dialokasikan ke produk berdasarkan porsi stok toko saat ini. Angka ini berfungsi sebagai indikator advisory untuk rotasi stok (FEFO/Markdown), dan <em>tidak boleh digunakan sebagai Purchase Order otomatis</em> tanpa validasi data POS harian lokal.
+                </p>
+              </div>
+            </div>
+
+            <div className="fg-fc-modal-footer">
+              <button
+                type="button"
+                className="fg-fc-modal-btn-primary"
+                onClick={() => setShowMethodologyModal(false)}
+              >
+                Mengerti
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── LOADING STATE ─── */}
+      {isLoading && (
+        <div className="fg-fc-state-card">
+          <div className="fg-fc-spinner" />
+          <h3 className="fg-fc-state-title">Memuat Model Peramalan...</h3>
+          <p className="fg-fc-state-desc">Menghubungkan ke layanan forecast dan mengalokasikan proyeksi demand 3-hari.</p>
+        </div>
+      )}
+
+      {/* ─── ERROR STATE ─── */}
+      {!isLoading && apiError && !useDemoBackup && (
+        <div className="fg-fc-state-card">
+          <span style={{ fontSize: '2.4rem', marginBottom: '0.6rem' }}>⚠️</span>
+          <h3 className="fg-fc-state-title">Gagal Memuat Data Forecast</h3>
+          <p className="fg-fc-state-desc">{apiError}</p>
+          <div className="fg-fc-state-actions">
+            <button type="button" className="fg-fc-btn-retry" onClick={fetchForecastData}>
+              🔄 Coba Lagi (Retry)
+            </button>
+            <button type="button" className="fg-fc-btn-secondary" onClick={handleEnableDemoBackup}>
+              📦 Buka Data Demo Cadangan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── EMPTY STATE ─── */}
+      {!isLoading && !apiError && productKeys.length === 0 && (
+        <div className="fg-fc-state-card">
+          <span style={{ fontSize: '2.4rem', marginBottom: '0.6rem' }}>📭</span>
+          <h3 className="fg-fc-state-title">Tidak Ada Data Forecast Tersedia</h3>
+          <p className="fg-fc-state-desc">Belum ada data inventori atau proyeksi demand yang cocok dengan toko ini.</p>
+          <button type="button" className="fg-fc-btn-retry" onClick={fetchForecastData}>
+            🔄 Segarkan Data
+          </button>
+        </div>
+      )}
+
+      {/* ─── MAIN CONTENT VIEW ─── */}
+      {!isLoading && (!apiError || useDemoBackup) && productKeys.length > 0 && (
+        <>
+          {/* ─── 1. SIMPLE PRODUCT SELECTOR ─── */}
+          <div className="fg-fc-distill-bar">
+            {/* Search input with clean dropdown */}
+            <div className="fg-fc-select-wrap" ref={searchRef}>
+              <div className="fg-fc-select-input-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search or pick product..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setShowDropdown(true)
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  className="fg-fc-select-input"
+                />
+                {searchTerm && (
                   <button
-                    key={p}
                     type="button"
+                    className="fg-search-clear"
                     onClick={() => {
-                      setSelectedProduct(p)
                       setSearchTerm('')
                       setShowDropdown(false)
                     }}
-                    className={`fg-fc-dropdown-item ${isSelected ? 'is-selected' : ''}`}
                   >
-                    <div className="fg-fc-item-meta">
-                      <span className="fg-fc-item-name">{p}</span>
-                      <span className="fg-fc-item-cat">{item?.category}</span>
-                    </div>
-                    <span className={`fg-fc-item-stock ${(item?.currentStock || 0) === 0 ? 'is-zero' : ''}`}>
-                      {(item?.currentStock || 0) === 0 ? 'Stockout' : `${item?.currentStock || 0} ${item?.unit || ''}`}
-                    </span>
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {showDropdown && (
+                <div className="fg-fc-dropdown">
+                  {searchMatches.map(p => {
+                    const item = mergedDb[p]
+                    const isSelected = p === selectedProduct
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setSelectedProduct(p)
+                          setSearchTerm('')
+                          setShowDropdown(false)
+                        }}
+                        className={`fg-fc-dropdown-item ${isSelected ? 'is-selected' : ''}`}
+                      >
+                        <div className="fg-fc-item-meta">
+                          <span className="fg-fc-item-name">{p}</span>
+                          <span className="fg-fc-item-cat">{item?.category}</span>
+                        </div>
+                        <span className={`fg-fc-item-stock ${(item?.currentStock || 0) === 0 ? 'is-zero' : ''}`}>
+                          {(item?.currentStock || 0) === 0 ? 'Stockout' : `${item?.currentStock || 0} ${item?.unit || ''}`}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Quick chip shortcuts */}
+            <div className="fg-fc-quick-picker">
+              {productKeys.slice(0, 5).map(prod => {
+                const isSelected = prod === selectedProduct
+                return (
+                  <button
+                    key={prod}
+                    type="button"
+                    onClick={() => setSelectedProduct(prod)}
+                    className={`fg-fc-quick-chip ${isSelected ? 'is-active' : ''}`}
+                  >
+                    {prod}
                   </button>
                 )
               })}
             </div>
-          )}
-        </div>
-
-        {/* Quick chip shortcuts */}
-        <div className="fg-fc-quick-picker">
-          {productKeys.slice(0, 5).map(prod => {
-            const isSelected = prod === selectedProduct
-            return (
-              <button
-                key={prod}
-                type="button"
-                onClick={() => setSelectedProduct(prod)}
-                className={`fg-fc-quick-chip ${isSelected ? 'is-active' : ''}`}
-              >
-                {prod}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+          </div>
 
       {/* ─── 2. CORE FORECAST & VERDICT CARD ─── */}
       <section className="fg-fc-card-main">
@@ -345,7 +557,9 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
               <AnimatedNumber value={demand} decimals={0} />
               <span className="fg-fc-tile-unit">{unit}</span>
             </div>
-            <span className="fg-fc-tile-hint">Customer demand</span>
+            <span className="fg-fc-tile-hint" title="Estimasi family-level, dibagi berdasarkan porsi stok. Belum divalidasi di tingkat SKU.">
+              Estimasi family · Disagregasi stok
+            </span>
           </div>
 
           {/* Ending Balance */}
@@ -398,9 +612,9 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
             const depPct = Math.min(100, Math.round((pt.demand / Math.max(1, prevStock)) * 100))
 
             return (
-              <div key={pt.label} className="fg-fc-day-step">
+              <div key={pt.label || idx} className="fg-fc-day-step">
                 <div className="fg-fc-step-head">
-                  <span className="fg-fc-step-day">{pt.label} ({pt.date})</span>
+                  <span className="fg-fc-step-day">{getForecastDayInfo(idx + 1).full}</span>
                   <span className={`fg-fc-step-status ${isZero ? 'is-out' : isLow ? 'is-low' : 'is-ok'}`}>
                     {isZero ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
                   </span>
@@ -501,16 +715,25 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
                 </g>
               ))}
 
-              {/* X-axis labels */}
+              {/* X-axis labels: Real Calendar Date + Context */}
               {stockCoords.map((pt, i) => (
-                <text key={`x-lbl-${i}`} x={pt.x} y={padB + 18} textAnchor="middle" fill="#496354" fontSize="10" fontWeight="800">
-                  {pt.label}
-                </text>
+                <g key={`x-lbl-${i}`}>
+                  <text x={pt.x} y={padB + 16} textAnchor="middle" fill="#0c1f15" fontSize="10.5" fontWeight="800">
+                    {pt.label}
+                  </text>
+                  {pt.sub && (
+                    <text x={pt.x} y={padB + 28} textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="600">
+                      {pt.sub}
+                    </text>
+                  )}
+                </g>
               ))}
             </svg>
           </div>
         </div>
       </section>
+        </>
+      )}
     </div>
   )
 }

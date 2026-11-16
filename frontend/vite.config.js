@@ -7,6 +7,7 @@ const DATA_DIR       = path.resolve(__dirname, '../data/processed')
 const MASTER_JSON    = path.join(DATA_DIR, 'inventory_master.json')
 const TXNS_JSON      = path.join(DATA_DIR, 'transactions.json')
 const FORECAST_JSON  = path.join(DATA_DIR, 'three_day_forecast.json')
+const SHARED_MAP_JSON = path.resolve(__dirname, '../shared/category_map.json')
 
 // ── JSON Helpers ──────────────────────────────────────────────────────────────
 function readJson(p) {
@@ -595,20 +596,34 @@ function createApiMiddleware() {
           batches = readJson(MASTER_JSON).filter(r => Number(r.quantity) > 0)
         }
 
-        // Category → ML family map (mirrors CATEGORY_MAP in forecast_service.py)
-        const CATEGORY_MAP = {
+        // Category → ML family map (loaded from shared/category_map.json)
+        const sharedData = readJson(SHARED_MAP_JSON)
+        const CATEGORY_MAP = (sharedData && sharedData.category_to_family) || {
           'Produce': 'PRODUCE', 'Fruits & Vegetables': 'PRODUCE',
           'Dairy': 'DAIRY', 'Bakery': 'BREAD/BAKERY',
           'Beverages': 'BEVERAGES', 'Seafood': 'SEAFOOD',
           'Meat': 'MEATS', 'Meats': 'MEATS', 'Poultry': 'POULTRY',
           'Eggs': 'EGGS', 'Frozen Foods': 'FROZEN FOODS',
+          'Deli': 'DELI', 'Prepared Food': 'PREPARED FOODS',
+          'Liquor, Wine, Beer': 'LIQUOR,WINE,BEER',
           'Grains & Pulses': 'GROCERY I', 'Oils & Fats': 'GROCERY I',
           'Grocery': 'GROCERY I'
         }
-        const UNIT_MAP = {
-          'Produce': 'kg', 'Fruits & Vegetables': 'kg', 'Dairy': 'pack',
-          'Bakery': 'pcs', 'Beverages': 'bottle', 'Seafood': 'kg',
-          'Meat': 'kg', 'Meats': 'kg', 'Grains & Pulses': 'pack', 'Oils & Fats': 'bottle'
+        const FAMILY_DEFAULT_UNITS = (sharedData && sharedData.family_default_units) || {
+          'PRODUCE': 'kg', 'BREAD/BAKERY': 'pack', 'DAIRY': 'pack',
+          'DELI': 'kg', 'EGGS': 'pack', 'FROZEN FOODS': 'pack',
+          'GROCERY I': 'pack', 'GROCERY II': 'pack', 'LIQUOR,WINE,BEER': 'bottle',
+          'MEATS': 'kg', 'POULTRY': 'kg', 'PREPARED FOODS': 'pack',
+          'SEAFOOD': 'kg', 'BEVERAGES': 'bottle'
+        }
+
+        const resolveFamily = (cat) => {
+          const c = String(cat || '').trim()
+          if (CATEGORY_MAP[c]) return { family: CATEGORY_MAP[c], isKnown: true }
+          for (const [k, v] of Object.entries(CATEGORY_MAP)) {
+            if (k.toLowerCase() === c.toLowerCase()) return { family: v, isKnown: true }
+          }
+          return { family: 'GROCERY I', isKnown: false }
         }
 
         // Build family → {1,2,3} demand lookup for the given store
@@ -637,7 +652,9 @@ function createApiMiddleware() {
         const products = {}
         for (const { name, rows } of topProducts) {
           const category = rows[0].category || 'Produce'
-          const unit     = UNIT_MAP[category] || rows[0].uom || 'units'
+          const { family: mlFamily, isKnown: isKnownFamily } = resolveFamily(category)
+          const actualUom = rows[0].uom && String(rows[0].uom).trim()
+          const unit = actualUom || FAMILY_DEFAULT_UNITS[mlFamily] || 'units'
           const totalQty = rows.reduce((s, r) => s + Number(r.quantity), 0)
           const minDte   = Math.min(...rows.map(r => Number(r.days_to_expiry) || 7))
           const price    = parseFloat(rows[0].unit_price_myr) || 6.0
@@ -649,22 +666,28 @@ function createApiMiddleware() {
           const weight = catTotal > 0 ? totalQty / catTotal : 1
 
           // Get ML family forecast for this store; fallback if family missing
-          const mlFamily = CATEGORY_MAP[category] || 'GROCERY I'
-          const famFc    = lookup[mlFamily] || { 1: 50.0, 2: 45.0, 3: 40.0 }
+          const hasFamilyForecast = Boolean(lookup[mlFamily])
+          const famFc = lookup[mlFamily] || { 1: 50.0, 2: 45.0, 3: 40.0 }
 
-          // Generate 3-day projections with disaggregated demand
-          const labels = ['Tomorrow', 'Day After', 'Day 3']
+          // Generate projections with disaggregated demand
+          const labels = ['Horizon +1', 'Horizon +2', 'Horizon +3']
+          const targetDates = ['2017-08-16', '2017-08-17', '2017-08-18']
           let cur = totalQty, totalDemand = 0
           const points = [1, 2, 3].map((h, i) => {
-            const rawDem = (famFc[h] || 50.0) * weight
+            const rawDem = (famFc[h] || 45.0) * weight
             const dem    = Math.max(1, Math.round(rawDem))
             totalDemand += dem
             const rem     = Math.max(0, cur - dem)
             const deficit = dem > cur ? dem - cur : 0
             cur = rem
             return {
-              label: labels[i], date: `Day +${h}`,
-              demand: dem, stockRemaining: rem, stockDeficit: deficit,
+              horizon: h,
+              label: labels[i],
+              date: `Day +${h}`,
+              historical_target_date: targetDates[i],
+              demand: dem,
+              stockRemaining: rem,
+              stockDeficit: deficit,
               status: rem === 0 ? 'Stockout' : rem < 15 ? 'Low' : 'Adequate'
             }
           })
@@ -674,28 +697,64 @@ function createApiMiddleware() {
           let recommendedAction, actionReason
           if (surplusQty > 0 && minDte <= 1) {
             recommendedAction = 'Donate to Food Bank'
-            actionReason = `Surplus of ${surplusQty} ${unit} with critical shelf life (DTE ${minDte}d).`
+            actionReason = `Advisory: Surplus of ${surplusQty} ${unit} with critical shelf life (DTE ${minDte}d). Route to local food bank to prevent waste.`
           } else if (surplusQty > 0 && minDte <= 3) {
             recommendedAction = 'Dynamic Markdown'
-            actionReason = `Surplus of ${surplusQty} ${unit} nearing expiry (DTE ${minDte}d). Apply markdown.`
+            actionReason = `Advisory: Surplus of ${surplusQty} ${unit} nearing expiry (DTE ${minDte}d). Apply markdown.`
           } else {
             recommendedAction = 'Normal Sale'
-            actionReason = `Adequate stock velocity. DTE ${minDte}d is safe for standard pricing.`
+            actionReason = `Advisory: Stock velocity balanced. DTE ${minDte}d is safe for standard pricing.`
           }
 
           products[name] = {
-            status: 'success', product: name, category, unit,
-            unitPrice: price, currentStock: totalQty,
-            daysToExpiry: minDte, totalDemand,
-            surplusQty, reorderNeeded,
+            status: 'success',
+            product: name,
+            category,
+            unit,
+            unitPrice: price,
+            currentStock: totalQty,
+            daysToExpiry: minDte,
+            totalDemand,
+            surplusQty,
+            reorderNeeded,
             reorderQty: reorderNeeded ? Math.max(0, totalDemand - totalQty) : 0,
-            recommendedAction, actionReason,
-            mlFamily, mlWeight: parseFloat(weight.toFixed(4)),
+            recommendedAction,
+            actionReason,
+            mlFamily,
+            mlFamilyKnown: isKnownFamily,
+            mlWeight: parseFloat(weight.toFixed(4)),
+            forecast_origin_date: '2017-08-15',
+            forecast_source: (isKnownFamily && hasFamilyForecast) ? 'historical_static' : 'heuristic',
+            forecast_method: (isKnownFamily && hasFamilyForecast) ? 'lightgbm' : null,
+            forecast_granularity: 'family_level_disaggregated',
+            forecast_disaggregation_method: 'stock_share',
+            disaggregation_method: 'stock_share',
+            sku_level_validated: false,
+            reorder_auto_po_allowed: false,
+            forecast_validation_status: 'not_validated',
+            generated_at: new Date().toISOString(),
             points
           }
         }
 
-        sendJson(res, 200, { status: 'success', store_nbr: storeNbr, source: dataSource, total_products: Object.keys(products).length, products })
+        sendJson(res, 200, {
+          status: 'success',
+          store_nbr: storeNbr,
+          inventory_source: dataSource,
+          forecast_origin_date: '2017-08-15',
+          forecast_source: 'historical_static',
+          forecast_method: 'lightgbm',
+          forecast_granularity: 'family_level_disaggregated',
+          forecast_disaggregation_method: 'stock_share',
+          disaggregation_method: 'stock_share',
+          sku_level_validated: false,
+          reorder_auto_po_allowed: false,
+          forecast_validation_status: 'not_validated',
+          generated_at: new Date().toISOString(),
+          forecast_warning: 'Historical Kaggle dataset ending 2017-08-15. Disaggregated from family-level forecast by stock share. Advisory only — not validated for automated PO or business commitment.',
+          total_products: Object.keys(products).length,
+          products
+        })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }

@@ -33,6 +33,11 @@ def get_products_forecast(store_nbr: int = 1, limit: int = 30):
     """
     try:
         return get_all_products_forecast(store_nbr=store_nbr, limit=limit)
+    except FileNotFoundError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        )
     except Exception as error:
         raise HTTPException(
             status_code=500,
@@ -48,6 +53,21 @@ def get_single_product_forecast(product_name: str, store_nbr: int = 1):
     """
     try:
         return get_product_forecast(product_name=product_name, store_nbr=store_nbr)
+    except FileNotFoundError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error)
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error)
+        )
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
     except ValueError as error:
         raise HTTPException(
             status_code=404,
