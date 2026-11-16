@@ -1,173 +1,91 @@
-# Log Perbaikan Bug & Refactoring Sistem (Debug Log)
-> **Proyek:** Dynamic Food Clearing House Simulator (FreshGuard AIT-201)  
-> **Tanggal Audit & Perbaikan:** 14 November 2026  
-> **Status:** ✅ Seluruh Bug Kritis & Operasional Selesai Diperbaiki dan Terverifikasi
+# DebugLog — FreshGuard
+
+Log solusi yang diterapkan. Format: tanggal, masalah, solusi, bukti.
 
 ---
 
-## 1. Ringkasan Eksekutif
-Dokumen ini merangkum seluruh perbaikan bug, penyesuaian arsitektur, dan refactoring yang telah diterapkan ke dalam sistem FreshGuard AIT-201. Perbaikan mencakup penyelarasan database Cloud Supabase, perbaikan data integrity pada modul Inventory FEFO dan Sales POS, refactoring model Demand Forecasting dan Rule Engine, optimalisasi keamanan secret keys, hingga standarisasi identifier batch tunggal (`LOT-`).
+## 2026-11-17 — Integrasi Spoilage Risk ML end-to-end (tanpa retrain)
 
----
+Konteks: audit menemukan model XGBoost `models/spoilage_classifier.pkl` valid, tetapi di-runtime aplikasi model ter-bypass total ("Ghost ML") — frontend memakai threshold DTE, FastAPI GET membaca label tersimpan, `.venv` tanpa dependency, dan kategori FreshGuard tidak cocok dengan kategori training. Dataset training `7_perishable_goods_cleaned.csv` (89.880 baris) **tidak disentuh**, model Ivannov dipakai 100% tanpa retrain.
 
-## 2. Tabel Rekapitulasi Status Perbaikan Bug
+### SOL-01: Bridge ML Python persisten untuk frontend
 
-| Kode Bug | Modul / Komponen | Kategori | Severity | Status |
-|:---|:---|:---|:---:|:---:|
-| **BUG-INV-01** | Inventory & Data Pipeline | Data Integrity / Harmonization | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-INV-02** | Inventory & Vite Backend | Cloud Data Sync | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-INV-04** | Inventory (FEFO Risk) | Logic / Time-bomb | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-INV-05** | Inventory (Edit Batch) | Cloud Data Sync | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-SALES-01** | Sales Log & POS | Schema Mismatch (Supabase Enum) | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-SALES-03** | Sales Log Backend | File System / Bootstrap | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-SALES-04** | Sales Log (Edit/Delete) | Inventory Data Integrity | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-SALES-05** | Sales Log Backend | Circular Dependency / Vite HMR | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-FC-01** | Demand Forecasting | Cloud Architecture Integration | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-FC-02** | Demand Forecasting | Dead Code / UI-Only Action | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-FC-03** | Demand Forecasting | State Management (Stale Product) | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-FC-04** | Demand Forecasting | Business Logic (Heuristic Decay) | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-FC-07** | Demand Forecasting Service | Stale Data / Supabase Source | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-RE-01** | Rule Engine | API Contract (`discount_percent`) | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-RE-02** | Rule Engine | Non-Deterministic Routing Order | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-DSP-01** | Dispatch Module | Business Logic (Receiver Matching) | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-DSP-02** | Dispatch Module | Data Persistence (Supabase Cloud) | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-DSP-04** | Dispatch Module | Memory Leak (`setInterval` cleanup) | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-ML-01** | ML Spoilage Model | Module Side Effect (Import Print) | 🟠 MEDIUM | **[x] ✅ FIXED** |
-| **BUG-DB-03** | Konfigurasi & Security | Security (Secret & Fallback URL) | 🔴 CRITICAL | **[x] ✅ FIXED** |
-| **BUG-UI-02** | Demand Forecasting UI | Transparency (ML vs Heuristik) | 🟡 LOW | **[x] ✅ FIXED** |
-| **BUG-KPI-01** | Dashboard KPI Strip | Default Values & Dynamic Tag | 🟡 LOW | **[x] ✅ FIXED** |
-| **BUG-CHART-01**| Dashboard Charts | Live Realized Profit Link | 🟡 LOW | **[x] ✅ FIXED** |
-| **BUG-CHART-02**| Dashboard Charts | Dynamic Weighting & Greeting | 🟡 LOW | **[x] ✅ FIXED** |
-| **BUG-PROFIT-01**| Dashboard KPI Strip | Persistent Realized Profit Sync | 🟠 MEDIUM | **[x] ✅ FIXED** |
+- **Masalah:** Vite middleware (Node) tidak bisa load `.pkl` XGBoost. Semua `fetch('/api/...')` dicegat middleware → model tidak pernah terpanggil dari UI.
+- **Solusi:** File baru `src/ml/spoilage_bridge.py` — proses Python persisten, komunikasi JSON per baris lewat stdin/stdout. Model dimuat **sekali**, tiap prediksi hanya milidetik. Protokol: `{"lots":[...]}` → `{"ok":true,"results":[...]}`, sinyal siap `{"event":"ready"}`.
+- **Bukti:** Smoke test: Dairy DTE=1 → HIGH 0.9873 (Tier2 aktif).
 
----
+### SOL-02: Wiring Vite middleware ke model
 
-## 3. Rincian Teknis Implementasi Perbaikan
+- **Masalah:** Risk dihitung dari threshold DTE di `rowToBatch`.
+- **Solusi:** Di `frontend/vite.config.js`:
+  - `predictSpoilageBatch()` + `startSpoilageProc()` — spawn python (kandidat: `FRESHGUARD_PYTHON` env → `python` → `python3`), single in-flight queue, timeout 30s, fallback heuristik DTE bila proses gagal.
+  - **GET /api/batches** — bulk predict semua batch aktif, 1 round-trip.
+  - **POST /api/batches** — `risk_tier`/`risk_label` dari model, nilai client diabaikan.
+  - **PATCH /api/batches/:id** — risk dihitung ulang bila DTE/kategori berubah.
+  - Field batch baru: `riskScore` (0–1 kontinu dari `predict_proba`) dan `riskSource` (`ml_xgboost` / `policy_shelf_stable` / `dte_fallback`).
+  - Supabase sync otomatis membawa `risk_label` hasil ML.
+- **Bukti:** Uji live `GET /api/batches`: 58 batch → 42 `ml_xgboost`, 16 `policy_shelf_stable`. Label ML berbeda dari heuristik DTE (Cheese DTE=3 → HIGH 0.5672; Egg DTE=2 → LOW 0.5714) — pola mustahil dihasilkan threshold DTE.
 
-### 3.1. Modul Inventory & Standarisasi ID (`BUG-INV-01`, `BUG-INV-02`, `BUG-INV-04`, `BUG-INV-05`)
-1. **Standarisasi ID Tunggal `LOT-` (`BUG-INV-01`):**
-   * **Masalah:** Terjadi mismatch ID antara data kanonikal (`CAN-2000`) dengan data inventaris lokal (`LOT-1000`), menyebabkan request `PATCH` dan `DELETE` menghasilkan status 404 pada data Supabase.
-   * **Solusi:** 
-     * Seluruh pipeline ETL ([`src/etl/canonical_schema.py`](file:///d:/hahaha/food-cleaning-ait201/src/etl/canonical_schema.py)) dan Ingestion ([`src/ingest/upload_batches.py`](file:///d:/hahaha/food-cleaning-ait201/src/ingest/upload_batches.py)) distandarisasi menghasilkan format tunggal `LOT-XXXX`.
-     * File data `canonical_batch_table.csv` dan `simulation_events.csv` (7.200+ entri) dimigrasikan dari `CAN-` ke `LOT-`.
-     * Menambahkan helper `matchBatchId()` di [`frontend/vite.config.js`](file:///d:/hahaha/food-cleaning-ait201/frontend/vite.config.js) dan normalisasi otomatis pada [`frontend/src/services/supabase.js`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/services/supabase.js) untuk backward compatibility.
-2. **Sinkronisasi Lengkap Add & Edit Batch (`BUG-INV-02` & `BUG-INV-05`):**
-   * **Masalah:** Fungsi `rowToSupabase()` mengabaikan kolom wajib skema database (`canonical_category`, `moral_hazard_flag`, `channel`, `discount_percent`, `discounted_price_myr`, `expected_value_myr`). Selain itu, endpoint `PATCH /api/batches/:id` hanya menyinkronkan `quantity` ke Supabase, mengabaikan perubahan harga, tanggal kedaluwarsa, dan reorder level.
-   * **Solusi:**
-     * Melengkapi `rowToSupabase()` di [`frontend/vite.config.js`](file:///d:/hahaha/food-cleaning-ait201/frontend/vite.config.js) dengan pemetaan lengkap seluruh kolom skema database.
-     * Mengembangkan endpoint `PATCH /api/batches/:id` agar memperbarui seluruh atribut (`unit_price_myr`, `expiry_date`, `days_to_expiry`, `reorder_level`, `turnover_ratio`, `product_name`, `category`) ke JSON lokal dan mempropagasi seluruh payload pembaruan ke Supabase Cloud.
-3. **Penghapusan Hardcoded Date 2026 (`BUG-INV-04`):**
-   * **Masalah:** Perhitungan DTE di [`frontend/src/components/dashboard/inventoryData.js`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/inventoryData.js) di-hardcode ke tanggal acuan statis `2026-11-14`.
-   * **Solusi:** Menormalkan tanggal referensi ke waktu nyata dinamis (`new Date()`).
+### SOL-03: Pemisahan departemen ritel — Dry Goods / Shelf-Stable policy
 
----
+- **Masalah:** Grains & Pulses, Oils & Fats = barang kering non-perishable (umur simpan 1–2 tahun), tidak mengalami pembusukan mikroba. Model dilatih khusus perishable goods → tidak layak memprosesnya.
+- **Solusi:** Di `src/ml/spoilage.py`: `SHELF_STABLE_CATEGORIES` + `_predict_shelf_stable_risk()` — early return sebelum inference. DTE > 0 → LOW dengan prob LOW 0.95. DTE ≤ 0 (kadaluarsa) → HIGH 0.95. Response ditandai `department: "Dry Goods (Shelf-Stable)"`, `source: "policy_shelf_stable"`.
+- **Bukti:** Rice Flour DTE=14 → LOW 0.95 policy; Oils & Fats DTE=-1 → HIGH 0.95. Cakupan live: 16/58 batch (27,6% ≈ estimasi 28% stok toko).
 
-### 3.2. Modul Sales Log & POS (`BUG-SALES-01`, `BUG-SALES-03`, `BUG-SALES-04`, `BUG-SALES-05`)
-1. **Perbaikan Enum Supabase `event_type` (`BUG-SALES-01`):**
-   * **Masalah:** Vite API mengirim event transaksi penjualan dengan `event_type: 'sale'`, padahal skema database PostgreSQL hanya mengizinkan enum: `'received'`, `'active_fefo'`, `'markdown'`, `'dispatched'`, `'wasted'`. Akibatnya seluruh insert transaksi ke Cloud ditolak.
-   * **Solusi:** Mengubah payload event transaksi menjadi `event_type: 'markdown'` dengan metadata `action: 'pos_sale'`, serta memperbarui validator di `upload_batches.py`.
-2. **Keamanan File System Bootstrap Fresh Clone (`BUG-SALES-03`):**
-   * **Masalah:** Pada repositori yang baru di-clone, direktori `data/processed/` belum tentu ada, sehingga penulisan pertama ke `transactions.json` memicu exception 500 ENOENT.
-   * **Solusi:** Menambahkan `fs.mkdirSync(path.dirname(p), { recursive: true })` di dalam helper `writeJson()`.
-3. **Penyesuaian Stok Otomatis saat Edit & Hapus Transaksi (`BUG-SALES-04`):**
-   * **Masalah:** Mengedit kuantitas penjualan di POS modal tidak mengubah stok inventaris batch terkait. Transaksi yang dihapus juga tidak mengembalikan stok ke gudang.
-   * **Solusi:** 
-     * Pada `handleSaveEditSale` di [`frontend/src/components/dashboard/SalesLogPage.jsx`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/SalesLogPage.jsx), dihitung selisih `qtyDiff = newQty - oldQty`. Sistem memvalidasi ketersediaan stok, menolak overdraft, dan memotong/menambah stok batch melalui `PATCH /api/batches/:id` dan state parent `onUpdateBatches`.
-     * Pada `handleDeleteSale`, stok barang yang pernah terjual otomatis dikembalikan (*restored*) ke inventaris.
-4. **Pembersihan Duplikasi Tulis ke `unifiedSalesLog.json` (`BUG-SALES-05`):**
-   * **Masalah:** Setiap transaksi baru menulis ulang ke file statis frontend `unifiedSalesLog.json`, memicu Vite HMR restart berulang kali.
-   * **Solusi:** Menghapus penulisan ke `unifiedSalesLog.json` pada runtime handler. File `transactions.json` (+ Cloud Supabase) ditetapkan sebagai *single source of truth*.
+### SOL-04: Mapping kategori tanpa retrain (`CATEGORY_EQUIVALENCE`)
 
----
+- **Masalah:** Model terlatih dengan 9 kategori US (Frozen_Meals, Ready_to_Eat, dst.) + 5 region. Kategori FreshGuard yang tidak punya kolom one-hot menghasilkan semua one-hot = 0 → probabilitas degenerat konstan `LOW 0.5681` untuk semua kategori tersebut.
+- **Solusi:** Kamus `CATEGORY_EQUIVALENCE` di `src/ml/spoilage.py` dipakai di `preprocess_single_lot` — kategori tak terlatih dipetakan ke kolom terlatih dengan dinamika busuk setara:
+  - Produce / Fruits / Vegetables → `Fruits & Vegetables`
+  - Poultry / Chicken / Beef / Pork / Meats → `Meat`
+  - Prepared Food(s) → `Ready_to_Eat`
+  - Frozen Foods / Frozen Meals → `Frozen_Meals`
+  - Eggs → `Dairy` (produk hewani berpendingin terdekat)
+  - Bread / Pastry → `Bakery`; Drinks → `Beverages`; Fish → `Seafood`
+  - SHELF_STABLE diperluas: + Grocery, Dry Goods, Pantry, Snacks, Liquor/Beer/Wine/Liquor-Wine-Beer
+- **Bukti:** `test_category_mapping.py` (root): 36 variasi nama kategori → 0 kasus degenerat 0.5681; skor ML bervariasi 0.5524–0.6130; sinonim satu kolom memang berbagi skor (by design). RESULT: PASS.
 
-### 3.3. Modul Demand Forecasting (`BUG-FC-01`, `BUG-FC-02`, `BUG-FC-03`, `BUG-FC-04`, `BUG-FC-07`, `BUG-UI-02`)
-1. **Koneksi Live ke Supabase Cloud (`BUG-FC-01` & `BUG-FC-07`):**
-   * **Masalah:** Layanan forecast hanya membaca file CSV/JSON lokal statis dan tidak pernah membaca inventaris aktif dari Supabase Cloud.
-   * **Solusi:** 
-     * Pada [`src/forecasting/forecast_service.py`](file:///d:/hahaha/food-cleaning-ait201/src/forecasting/forecast_service.py), fungsi `load_lots()` dihubungkan langsung ke REST endpoint Supabase (`/rest/v1/batches?select=*&quantity=gt.0`) dengan fallback bertingkat ke JSON lokal.
-     * Pada [`frontend/vite.config.js`](file:///d:/hahaha/food-cleaning-ait201/frontend/vite.config.js), endpoint `/api/forecast/products` mengambil data lot aktif dari Supabase Cloud secara live dan mengembalikan properti `source: 'Supabase Cloud + LightGBM ML'`.
-2. **Pembersihan Dead Code Tombol Execute (`BUG-FC-02`):**
-   * **Masalah:** Tombol aksi pada Forecast hanya menampilkan alert toast tanpa memicu mutasi database riil.
-   * **Solusi:** Mengganti tombol aksi dead code dengan pill visual status rekomendasi operasional yang informatif.
-3. **Reset Otomatis Stale Selected Product (`BUG-FC-03`):**
-   * **Masalah:** Jika batch produk yang sedang ditampilkan dihapus, state `selectedProduct` tidak di-reset dan merender data undefined.
-   * **Solusi:** Menambahkan `useEffect` pengawas di [`frontend/src/components/dashboard/DemandForecastingPage.jsx`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/DemandForecastingPage.jsx) yang otomatis mengalihkan seleksi ke produk aktif pertama jika produk terpilih tidak lagi tersedia.
-4. **Model Heuristik Penurunan Stok Berbasis Kategori (`BUG-FC-04`):**
-   * **Masalah:** Fallback heuristik menggunakan angka flat `35% / 30% / 25%` (90% stok habis dalam 3 hari), membuat produk tahan lama (seperti beras atau minyak) menghasilkan rekomendasi restock palsu.
-   * **Solusi:** Membuat fungsi `getCategoryDecayRates(category, turnoverRatio)` yang menyesuaikan laju penjualan menurut tingkat ketahanan pangan (perishable vs shelf-stable) dan rasio turnover barang.
-5. **Transparansi Sumber Data Forecast (`BUG-UI-02`):**
-   * **Masalah:** Pengguna tidak mengetahui apakah angka forecast berasal dari model ML LightGBM atau estimasi heuristik.
-   * **Solusi:** Menampilkan label teks informatif (tanpa badge) pada header produk:
-     * Model ML: `Forecast Source: LightGBM ML Model (Family: PRODUCE)`
-     * Heuristik: `Forecast Source: Category Velocity Heuristics`
+### SOL-05: FastAPI GET memakai model (sebelumnya bypass)
 
----
+- **Masalah:** `GET /api/batches` di FastAPI hanya membaca `risk_label` tersimpan / fallback DTE. Satu API, dua sumber risk berbeda.
+- **Solusi:** `backend/services/batch_service.py` — helper `_ml_risk(record)` memanggil `predict_spoilage_risk` untuk tiap record (shelf-stable tetap ke policy). `_format_batch_record` prioritas: **model → risk_label tersimpan → heuristik DTE**. Field baru `risk_score`, `risk_source` (schema `backend/schemas/batch.py` di-update, Optional).
+- **Bukti:** Uji via python sistem: `get_batches()` → 42 `ml_xgboost` + 16 `policy_shelf_stable`, hasil identik jalur Vite (Anchovies HIGH 0.9791).
 
-### 3.4. Modul Rule Engine & Algoritma Dispatch (`BUG-RE-01`, `BUG-RE-02`, `BUG-DSP-01`, `BUG-DSP-02`, `BUG-DSP-04`)
-1. **Standardisasi Kontrak API Diskon (`BUG-RE-01`):**
-   * **Masalah:** Python `rule_engine.py` mengembalikan `discount_percent: 0.25` (pecahan), sedangkan JavaScript mengharapkan angka persentase `25.0`.
-   * **Solusi:** Menyelaraskan output Python dan Node.js agar keduanya mengembalikan `discount_percent` (angka 0–100) dan `discount_fraction` (angka 0.0–1.0).
-2. **Pengurutan Deterministik Alokasi Donasi (`BUG-RE-02`):**
-   * **Masalah:** `evaluate_lot_dataframe()` memproses data berdasarkan urutan baris CSV acak, sehingga kuota donasi makanan berisiko dihabiskan oleh lot dengan sisa hari kedaluwarsa yang masih lama.
-   * **Solusi:** Menambahkan pengurutan eksplisit berdasarkan DTE (`sort_values(by="days_to_expiry")`) sebelum evaluasi kuota.
-3. **Smart Receiver Matching & Persistensi Dispatch (`BUG-DSP-01`, `BUG-DSP-02`, `BUG-DSP-04`):**
-   * **Masalah:** Pemilihan penerima food bank menggunakan operasi modulo indeks (`idx % receivers.length`) tanpa mempertimbangkan jenis makanan dan kapasitas receiver. Selain itu, aksi dispatch tidak tercatat ke Supabase dan interval countdown timer memicu memory leak saat navigasi berpindah.
-   * **Solusi:** 
-     * Mengimplementasikan pencocokan cerdas berdasarkan kategori produk dan kapasitas penerima di [`frontend/src/components/dashboard/DispatchPage.jsx`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/DispatchPage.jsx).
-     * Menghubungkan dispatch ke endpoint `/api/dispatch` yang mencatat ke tabel `dispatch_log` dan `simulation_events` di Supabase.
-     * Menambahkan fungsi cleanup unmount untuk membersihkan seluruh referensi timer `setInterval`.
+### SOL-06: Model cache thread-safe
 
----
+- **Masalah:** Cache global `_MODEL_PACKAGE` tanpa lock — FastAPI multi-thread bisa double-load pkl (BUG-ML-02).
+- **Solusi:** `threading.Lock` + double-check di `_load_model_package` (`src/ml/spoilage.py`).
 
-### 3.5. Modul Machine Learning, Security & Dashboard UI (`BUG-ML-01`, `BUG-DB-03`, `BUG-KPI-01`, `BUG-CHART-01`, `BUG-CHART-02`)
-1. **Isolasi Demo Code Model Spoilage (`BUG-ML-01`):**
-   * **Masalah:** Modul [`src/ml/spoilage.py`](file:///d:/hahaha/food-cleaning-ait201/src/ml/spoilage.py) mengeksekusi sampel lot dan mencetak ke stdout saat di-import oleh modul lain.
-   * **Solusi:** Membungkus kode demo dengan guard `if __name__ == "__main__":`.
-2. **Pembersihan URL Hardcode & Rahasia Layanan (`BUG-DB-03`):**
-   * **Masalah:** Fallback URL Supabase production di-hardcode di file client/config, berisiko mengarahkan request tanpa kredensial ke server cloud.
-   * **Solusi:** Menghapus seluruh string fallback URL hardcode di `vite.config.js`, `supabase.js`, dan script bootstrap. Koneksi murni mengandalkan variabel lingkungan `VITE_SUPABASE_URL`.
-3. **Perbaikan Nilai Default KPI Strip (`BUG-KPI-01`):**
-   * **Masalah:** Komponen [`frontend/src/components/dashboard/KpiStrip.jsx`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/KpiStrip.jsx) menggunakan default prop `activeBatchesCount = 5` dan label statis `"100% Monitored"`.
-   * **Solusi:** Mengubah default menjadi `0` dan membuat label status monitoring bersifat kondisional dinamis.
-4. **Grafik Real-Time & Personalisasi Sidebar (`BUG-CHART-01` & `BUG-CHART-02`):**
-   * **Solusi:** Menghubungkan grafik `ProfitDailyChart` dengan akumulasi penjualan kasir rolling 7 hari serta menghitung proporsi berat riil per kategori pada `ReasonForRecoveryChart`.
-5. **Persistensi & Sinkronisasi Realized Profit Dashboard (`BUG-PROFIT-01`):**
-   * **Masalah:** State `profit` di `DashboardPage.jsx` berawal dari `0`, sehingga kartu KPI "Realized Profit" selalu menampilkan `RM 0.00` saat awal buka atau refresh halaman dan tidak merefleksikan 18 transaksi kasir berstatus `paid` yang sudah tersimpan.
-   * **Solusi:**
-     * Menambahkan `useEffect` pada [`frontend/src/components/dashboard/DashboardPage.jsx`](file:///d:/hahaha/food-cleaning-ait201/frontend/src/components/dashboard/DashboardPage.jsx) untuk memuat riwayat transaksi dari `/api/transactions` saat pertama kali dimuat dan mengakumulasikan seluruh transaksi `status === 'paid'` (total **RM 2,244.02**).
-     * Meneruskan callback `onSalesUpdated` dari `DashboardPage` ke `SalesLogPage` agar saat transaksi diedit atau dihapus di modul POS, angka Realized Profit dan bar grafik di Dashboard otomatis tersinkronisasi secara real-time.
+### SOL-07: Dependency `.venv` + docstring
 
----
+- **Masalah:** `.venv` tanpa pip/joblib/xgboost/sklearn → import gagal diam-diam → fallback heuristik (akar Ghost ML). Docstring `predict_spoilage_risk` salah sebut "Random Forest".
+- **Solusi:** `ensurepip` lalu `pip install joblib xgboost scikit-learn`. Hasil: joblib 1.6.0, xgboost 3.4.1, **sklearn 1.9.1 = persis versi training** → `InconsistentVersionWarning` hilang di jalur `.venv`. Docstring dikoreksi ke XGBoost + arsitektur department-split didokumentasikan.
+- **Sisa:** `.venv` masih perlu `pandas fastapi uvicorn` agar `backend/main.py` bisa boot dari venv (install terputus). Jalur UI (Vite + python sistem) tidak terdampak.
 
-## 4. Hasil Verifikasi & Pengujian Kualitas
+### Keterbatasan sadar (keputusan, bukan bug)
 
-1. **Frontend Production Build:**
-   ```bash
-   cd frontend && npm run build
-   # Hasil: ✓ 105 modules transformed -> dist/index.html, dist/assets/
-   # Status: SUKSES (0 errors, 0 broken imports)
-   ```
-2. **Verifikasi Pipeline Ingesti Data:**
-   ```bash
-   python src/ingest/upload_batches.py --dry-run
-   # Hasil:
-   #   batches uploaded: 990 rows (on_conflict=batch_id: LOT-XXXX)
-   #   simulation_events uploaded: 2,644 rows (batch_id: LOT-XXXX)
-   # Status: SUKSES (100% lolos validasi integritas FK dan skema)
-   ```
-3. **Verifikasi Python Service Import:**
-   ```bash
-   python -c "import src.ml.spoilage; from src.forecasting.forecast_service import load_lots; print(len(load_lots()))"
-   # Hasil: 59 active lots loaded, stdout bersih tanpa side-effect
-   # Status: SUKSES
-   ```
-4. **Audit Kebocoran Kredensial:**
-   ```bash
-   git grep "sb_secret_"
-   # Hasil: 0 occurrences
-   # Status: BERSIH & AMAN
-   ```
+1. **Recall MODERATE 3,84%** — model praktis hanya HIGH/LOW; kelas MODERATE praktis tak muncul. Konsekuensi keputusan "model Ivannov 100% tanpa retrain".
+2. **Region dummy `Midwest`** untuk semua toko Malaysia — konsisten antar batch, perbandingan relatif adil; nilai region tidak bermakna geografis.
+3. **Bakery DTE=2 → LOW 0.7221** — output asli model, bertentangan aturan bisnis DTE≤2; dibiarkan sesuai prinsip "ikutin ML 100%".
 
----
+### Arsitektur akhir
 
-*Log ini disusun sebagai dokumentasi resmi pemeliharaan perangkat lunak FreshGuard AIT-201.*
+```
+UI (fetch /api/batches)
+  → Vite middleware (frontend/vite.config.js)
+    → predictSpoilageBatch() ⇄ src/ml/spoilage_bridge.py (proses Python persisten)
+      → src/ml/spoilage.py::predict_spoilage_risk
+        ├─ SHELF_STABLE_CATEGORIES → policy LOW 0.95 (kadaluarsa → HIGH)
+        └─ CATEGORY_EQUIVALENCE → kolom one-hot terlatih → XGBoost + Tier2 decay
+  → fallback: heuristik DTE (hanya bila proses Python gagal)
+
+FastAPI (backend/) — jalur identik, langsung import predict_spoilage_risk
+```
+
+### Verifikasi ulang
+
+```
+python test_category_mapping.py          # mapping kategori: PASS
+python src/ml/spoilage.py                # demo inference
+cd frontend && npm run dev              # UI live, badge risk dari ML
+```
