@@ -44,20 +44,20 @@ In the modern architecture, the system shifted from circular DTE-based labeling 
   * `LOW`: 0% waste
   * `MODERATE`: 0% < waste <= 25%
   * `HIGH`: waste > 25%
-* **Feature Set:** 24 store-compatible pre-sale features (stock pressure, base price, daily demand, category, region). All post-sale leakage columns strictly dropped.
+* **Feature Set:** 19 store-compatible pre-sale features (stock pressure, base price, daily demand, category — 9 OHE columns). US region features removed for global store compatibility. All post-sale leakage columns strictly dropped.
 
 ### Two-Tier System Decomposition
 
 | Tier | Component | Role | Mechanism |
 |---|---|---|---|
-| **Tier 1** | **ML Classifier (XGBoost Champion)** | Baseline Risk Profiling | Gradient boosted trees predict baseline waste risk probability from 24 pre-sale inventory features ($P_{\text{ML}}$). |
+| **Tier 1** | **ML Classifier (XGBoost Champion)** | Baseline Risk Profiling | Gradient boosted trees predict baseline waste risk probability from 19 pre-sale inventory features ($P_{\text{ML}}$). |
 | **Tier 2** | **Continuous Policy Engine** | Dynamic Time-Decay Escalation | Modulates probabilities via Bayesian time-decay: $P'(\text{HIGH}) = \frac{P(\text{HIGH}) + \alpha e^{-\text{DTE}/\tau_c}}{Z}$. |
 
 ### Multi-Model Benchmark Comparison (Perishable Goods Cleaned)
 
 | Model Architecture | Accuracy | F1-Macro | Recall `HIGH` | Training Speed | Status |
 |---|:---:|:---:|:---:|:---:|---|
-| **XGBoost (Champion)** | **67.4%** | **0.510** | **69.1%** | **1.88s** | 🏆 **Production Model** (Highest accuracy, highest critical recall) |
+| **XGBoost (Champion)** | **67.3%** | **0.513** | **68.75%** | **1.88s** | 🏆 **Production Model** (19 features, region-agnostic, highest accuracy) |
 | **Random Forest** | 63.9% | 0.569 | 58.5% | 2.05s | Baseline Reference |
 | **Gradient Boosting (GBM)** | 66.8% | 0.484 | 71.5% | 53.8s | High Recall but slow training |
 | **AdaBoost** | 59.1% | 0.426 | 59.5% | 8.02s | Suboptimal on multi-class imbalance |
@@ -67,7 +67,7 @@ In the modern architecture, the system shifted from circular DTE-based labeling 
 
 | Evaluation Metric | Tier 1 (Pure XGBoost ML) | Tier 1 + Tier 2 (Continuous Engine, $\alpha=0.10$) | Net Operational Impact |
 |---|:---:|:---:|---|
-| **Overall Accuracy** | **67.4%** | **67.2%** | Maintained high multi-class accuracy (+3.5% above Random Forest). |
+| **Overall Accuracy** | **67.3%** | **67.1%** | Maintained high multi-class accuracy (+3.4% above Random Forest). |
 | **F1-Macro** | **0.510** | **0.508** | Sharp focus on critical hazard vs safe inventory. |
 | **Recall `HIGH` (Critical Waste)** | **69.1%** | **71.3%** | 🟢 **Captures >70% of all hazardous waste items.** |
 | **Recall `LOW` (Safe Stock)** | **90.3%** | **88.6%** | Exceptional safe-stock precision (0.692) & retention. |
@@ -89,8 +89,7 @@ lot = {
     'daily_demand': 8.0,
     'days_until_expiry': 1,
     'shelf_life_days': 5,
-    'category': 'Bakery',
-    'region': 'Midwest'
+    'category': 'Bakery'
 }
 
 result = predict_spoilage_risk(lot)

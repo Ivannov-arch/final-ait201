@@ -17,16 +17,14 @@ import joblib
 # Default model path
 DEFAULT_MODEL_PATH = os.path.join("models", "spoilage_classifier.pkl")
 
-# Store-compatible feature columns (Perishable Goods dataset v2 - 24 features)
+# Store-compatible feature columns (Perishable Goods dataset v2 - 19 features, region-agnostic)
 TRAINED_FEATURE_COLS = [
     'initial_quantity', 'base_price', 'daily_demand', 'days_until_expiry',
     'shelf_life_days', 'day_of_week', 'is_weekend', 'month', 'is_promoted',
     'stock_pressure',
     'category_Bakery', 'category_Beverages', 'category_Dairy', 'category_Deli',
     'category_Frozen_Meals', 'category_Fruits & Vegetables', 'category_Meat',
-    'category_Ready_to_Eat', 'category_Seafood',
-    'region_Midwest', 'region_Northeast', 'region_Southeast', 'region_Southwest',
-    'region_West'
+    'category_Ready_to_Eat', 'category_Seafood'
 ]
 
 # Legacy feature columns support for backward compatibility with v1 model
@@ -164,8 +162,6 @@ def preprocess_single_lot(lot: dict, feature_cols: list | None = None, scaler=No
     # pass through unchanged.
     cat_raw = CATEGORY_EQUIVALENCE.get(cat_raw, cat_raw)
 
-    region_raw = str(lot.get('region', lot.get('Region', 'Midwest'))).strip()
-
     row = {col: 0.0 for col in feature_cols}
     if 'initial_quantity' in row: row['initial_quantity'] = qty
     if 'base_price' in row:       row['base_price'] = price
@@ -181,10 +177,6 @@ def preprocess_single_lot(lot: dict, feature_cols: list | None = None, scaler=No
     cat_col = f"category_{cat_raw}"
     if cat_col in row:
         row[cat_col] = 1.0
-
-    reg_col = f"region_{region_raw}"
-    if reg_col in row:
-        row[reg_col] = 1.0
 
     df_row = pd.DataFrame([row], columns=feature_cols)
     if scaler is not None:
@@ -406,8 +398,7 @@ if __name__ == "__main__":
         'daily_demand': 15.0,
         'days_until_expiry': 20,
         'shelf_life_days': 25,
-        'category': 'Bakery',
-        'region': 'Midwest'
+        'category': 'Bakery'
     }
     res_safe = predict_spoilage_risk(lot_safe)
     print(f"\n1. Safe Lot (Bakery DTE=20):")
@@ -420,8 +411,7 @@ if __name__ == "__main__":
         'daily_demand': 15.0,
         'days_until_expiry': 1,
         'shelf_life_days': 5,
-        'category': 'Bakery',
-        'region': 'Midwest'
+        'category': 'Bakery'
     }
     res_urgent = predict_spoilage_risk(lot_urgent)
     print(f"\n2. Critical Lot (Bakery DTE=1):")
