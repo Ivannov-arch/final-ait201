@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import fs from 'fs'
+import { spawn } from 'child_process'
 
 const DATA_DIR       = path.resolve(__dirname, '../data/processed')
 const MASTER_JSON    = path.join(DATA_DIR, 'inventory_master.json')
@@ -53,15 +54,126 @@ function sendJson(res, status, data) {
   res.end(JSON.stringify(data))
 }
 
+// ── Map inventory_master.json row → model lot dict (XGBoost spoilage schema) ───
+function rowToSpoilageLot(r) {
+  const dte = Number(r.days_to_expiry) || 0
+  const stockPressure = parseFloat(r.stock_pressure)
+  return {
+    days_until_expiry: dte,
+    shelf_life_days: Number(r.shelf_life_days) || (dte + 7),
+    initial_quantity: Number(r.quantity) || 0,
+    base_price: parseFloat(r.unit_price_myr) || 10.0,
+    daily_demand: Number(r.daily_demand) || Math.max(1, (Number(r.reorder_quantity) || 10) / 7),
+    stock_pressure: Number.isFinite(stockPressure) ? stockPressure : undefined,
+    category: r.category || r.canonical_category || 'Unknown'
+  }
+}
+
+const RISK_TIER_MAP  = { HIGH: 'high', MODERATE: 'med', LOW: 'low' }
+const RISK_LABEL_MAP = { HIGH: 'High Risk', MODERATE: 'Moderate Risk', LOW: 'Low Risk' }
+
+// ── ML Spoilage Bridge client (persistent Python process, model loads once) ────
+// Spawns `src/ml/spoilage_bridge.py`, which keeps the XGBoost model in memory
+// and answers line-delimited JSON requests. Falls back to the DTE heuristic in
+// rowToBatch whenever the process cannot start or times out.
+let _spoilageProc = null
+let _spoilageReady = null
+let _spoilagePending = null
+let _spoilageChain = Promise.resolve()
+const SPOILAGE_ROOT = path.resolve(__dirname, '..')
+
+function startSpoilageProc() {
+  if (_spoilageProc) return _spoilageReady
+  if (_spoilageReady) return _spoilageReady
+  _spoilageReady = new Promise(resolve => {
+    const candidates = [process.env.FRESHGUARD_PYTHON, 'python', 'python3'].filter(Boolean)
+    let settled = false
+    const settle = v => { if (!settled) { settled = true; resolve(v) } }
+    let started = false
+    for (const py of candidates) {
+      try {
+        const proc = spawn(py, ['-u', path.join(SPOILAGE_ROOT, 'src', 'ml', 'spoilage_bridge.py')],
+          { cwd: SPOILAGE_ROOT, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true })
+        started = true
+        let buf = ''
+        proc.stdout.on('data', d => {
+          buf += String(d)
+          let nl
+          while ((nl = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, nl).trim()
+            buf = buf.slice(nl + 1)
+            if (!line) continue
+            try {
+              const msg = JSON.parse(line)
+              if (msg.event === 'ready') { settle(proc); continue }
+              if (_spoilagePending) {
+                const p = _spoilagePending
+                _spoilagePending = null
+                p(msg.ok ? msg.results : null)
+              }
+            } catch (_) {}
+          }
+        })
+        proc.stderr.on('data', d => {
+          const s = String(d).trim()
+          if (s) console.warn('[ML Spoilage]', s.split('\n')[0].slice(0, 160))
+        })
+        proc.on('exit', () => {
+          if (_spoilageProc === proc) { _spoilageProc = null; _spoilageReady = null }
+          settle(null)
+          if (_spoilagePending) { const p = _spoilagePending; _spoilagePending = null; p(null) }
+        })
+        _spoilageProc = proc
+        break
+      } catch (_) { /* try next python candidate */ }
+    }
+    if (!started) settle(null)
+    setTimeout(() => { if (!settled) { settled = true; resolve(null) } }, 30000)
+  })
+  return _spoilageReady
+}
+
+function predictSpoilageBatch(lots) {
+  if (!Array.isArray(lots) || lots.length === 0) return Promise.resolve(null)
+  const task = async () => {
+    let proc = await startSpoilageProc()
+    if (!proc || proc.exitCode !== null || !proc.stdin.writable) {
+      _spoilageProc = null
+      _spoilageReady = null
+      proc = await startSpoilageProc()
+      if (!proc || proc.exitCode !== null || !proc.stdin.writable) return null
+    }
+    return new Promise(resolve => {
+      const timer = setTimeout(() => {
+        try { proc.kill() } catch (_) {}
+        if (_spoilagePending) { const p = _spoilagePending; _spoilagePending = null; p(null) }
+        resolve(null)
+      }, 30000)
+      _spoilagePending = results => { clearTimeout(timer); resolve(results) }
+      try { proc.stdin.write(JSON.stringify({ lots }) + '\n') }
+      catch (_) { clearTimeout(timer); resolve(null) }
+    })
+  }
+  // Single in-flight request: the bridge answers one message at a time.
+  _spoilageChain = _spoilageChain.then(task, task)
+  return _spoilageChain
+}
+
 // ── Map inventory_master.json row → Frontend Batch Object ──────────────────────
-function rowToBatch(r) {
+function rowToBatch(r, pred = null) {
   const qty   = Number(r.quantity) || 0
   const price = parseFloat(r.unit_price_myr) || 0
   const cost  = parseFloat(r.cost_price_myr) || price * 0.70
   const dte   = Number(r.days_to_expiry) || 0
 
-  let riskType = 'low', risk = 'Low Risk'
-  if (dte <= 2)      { riskType = 'high'; risk = 'High Risk' }
+  // Risk priority: ML/policy prediction (XGBoost + Tier2, or shelf-stable
+  // policy) when available → DTE heuristic fallback.
+  let riskType = 'low', risk = 'Low Risk', riskSource = 'dte_heuristic'
+  if (pred && pred.label) {
+    riskType   = RISK_TIER_MAP[pred.label] || 'low'
+    risk       = RISK_LABEL_MAP[pred.label] || 'Low Risk'
+    riskSource = pred.source || 'ml_xgboost'
+  } else if (dte <= 2)      { riskType = 'high'; risk = 'High Risk' }
   else if (dte <= 5) { riskType = 'med';  risk = 'Moderate Risk' }
 
   return {
@@ -80,6 +192,8 @@ function rowToBatch(r) {
     dte:               dte === 1 ? '1 day' : `${dte} days`,
     risk,
     riskType,
+    riskScore:         pred ? (pred.score ?? null) : (r.risk_score !== undefined ? Number(r.risk_score) || null : null),
+    riskSource,
     reorderLevel:      Number(r.reorder_level) || 15,
     reorderQuantity:   Number(r.reorder_quantity) || 20,
     turnoverRatio:     r.turnover_ratio,
@@ -259,21 +373,37 @@ function createApiMiddleware() {
     const url = req.url || ''
 
     // ── GET /api/batches → READ directly from inventory_master.json ────────────
+    // Risk scored by Person 1's XGBoost spoilage model (via Python bridge):
+    // perishable categories go through ML + Tier2, Grains & Pulses / Oils & Fats
+    // get the shelf-stable policy (LOW 95%). DTE heuristic only as fallback.
     if (url === '/api/batches' && req.method === 'GET') {
       const records = readJson(MASTER_JSON)
       // Only return items with stock > 0
       const activeBatches = records
         .filter(r => Number(r.quantity) > 0 && r.status !== 'Deleted')
-        .map(rowToBatch)
-      sendJson(res, 200, activeBatches)
+      let preds = null
+      try { preds = await predictSpoilageBatch(activeBatches.map(rowToSpoilageLot)) } catch (_) {}
+      const batches = activeBatches.map((r, i) => rowToBatch(r, preds ? preds[i] : null))
+      sendJson(res, 200, batches)
       return
     }
 
     // ── POST /api/batches → ADD / CREATE in local JSON + SYNC to Supabase Cloud ─
+    // Risk tier/label come from Person 1's XGBoost model (or shelf-stable policy
+    // for dry goods), not from the client-submitted value.
     if (url === '/api/batches' && req.method === 'POST') {
       try {
         const batch   = await collectBody(req)
         const row     = batchToRow(batch)
+        let pred = null
+        try {
+          const preds = await predictSpoilageBatch([rowToSpoilageLot(row)])
+          pred = preds ? preds[0] : null
+        } catch (_) {}
+        if (pred && pred.label) {
+          row.risk_tier  = RISK_TIER_MAP[pred.label] || 'low'
+          row.risk_label = RISK_LABEL_MAP[pred.label] || 'Low Risk'
+        }
         const records = readJson(MASTER_JSON)
         const idx     = records.findIndex(r => matchBatchId(r.lot_id, row.lot_id))
         if (idx >= 0) records[idx] = { ...records[idx], ...row }
@@ -281,7 +411,7 @@ function createApiMiddleware() {
         writeJson(MASTER_JSON, records)
         // Background sync to Supabase Cloud (BUG-INV-02: full row schema)
         syncToSupabase('UPSERT', rowToSupabase(row))
-        sendJson(res, 200, { status: 'saved', batch: rowToBatch(records[idx >= 0 ? idx : 0]) })
+        sendJson(res, 200, { status: 'saved', batch: rowToBatch(records[idx >= 0 ? idx : 0], pred) })
       } catch (e) {
         sendJson(res, 500, { error: e.message })
       }
@@ -334,6 +464,19 @@ function createApiMiddleware() {
           records[idx].status = payload.status
         }
 
+        // Recompute ML risk after edits (days_to_expiry / category may have changed)
+        let patchPred = null
+        if (Number(records[idx].quantity) > 0) {
+          try {
+            const preds = await predictSpoilageBatch([rowToSpoilageLot(records[idx])])
+            patchPred = preds ? preds[0] : null
+            if (patchPred && patchPred.label) {
+              records[idx].risk_tier  = RISK_TIER_MAP[patchPred.label] || 'low'
+              records[idx].risk_label = RISK_LABEL_MAP[patchPred.label] || 'Low Risk'
+            }
+          } catch (_) {}
+        }
+
         const canonicalLotId = records[idx].lot_id || lotId
 
         // Automatic removal when stock reaches 0
@@ -372,7 +515,7 @@ function createApiMiddleware() {
             updates.canonical_category = records[idx].category
           }
           syncToSupabase('PATCH', updates)
-          sendJson(res, 200, { status: 'updated', lot_id: canonicalLotId, batch: rowToBatch(records[idx]) })
+          sendJson(res, 200, { status: 'updated', lot_id: canonicalLotId, batch: rowToBatch(records[idx], patchPred) })
         }
       } catch (e) {
         sendJson(res, 500, { error: e.message })

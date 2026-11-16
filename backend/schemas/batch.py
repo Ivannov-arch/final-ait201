@@ -13,6 +13,8 @@ class Batch(BaseModel):
     days_to_expiry: int = 5
     risk_tier: Optional[str] = "low"
     risk_label: Optional[str] = "Low Risk"
+    risk_score: Optional[float] = None
+    risk_source: Optional[str] = None
     shelf_life_days: Optional[float] = 14.0
     turnover_ratio: Optional[float] = 2.0
     stock_pressure: Optional[float] = 1.0

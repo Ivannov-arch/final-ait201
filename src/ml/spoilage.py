@@ -9,6 +9,7 @@ Predicts spoilage risk level (HIGH, MODERATE, LOW) with calibrated confidence sc
 """
 
 import os
+import threading
 import pandas as pd
 import numpy as np
 import joblib
@@ -35,6 +36,44 @@ LEGACY_FEATURE_COLS = [
     'cat_Grains & Pulses', 'cat_Oils & Fats', 'cat_Seafood'
 ]
 
+# ── Category mapping (no-retrain bridge) ─────────────────────────────────────
+# FreshGuard retail categories that have NO trained one-hot column are mapped
+# onto the closest trained category with equivalent spoilage dynamics. This
+# makes every category hit a real trained column instead of leaving all
+# one-hots at 0 (which produced degenerate constant probabilities 0.5681).
+CATEGORY_EQUIVALENCE = {
+    # FreshGuard name        -> trained column name
+    'Produce':          'Fruits & Vegetables',
+    'Fruits':           'Fruits & Vegetables',
+    'Vegetables':       'Fruits & Vegetables',
+    'Bread':            'Bakery',
+    'Pastry':           'Bakery',
+    'Drinks':           'Beverages',
+    'Fish':             'Seafood',
+    'Meat':             'Meat',
+    'Meats':            'Meat',
+    'Beef':             'Meat',
+    'Pork':             'Meat',
+    'Poultry':          'Meat',
+    'Chicken':          'Meat',
+    'Frozen Foods':     'Frozen_Meals',
+    'Frozen Meals':     'Frozen_Meals',
+    'Prepared Food':    'Ready_to_Eat',
+    'Prepared Foods':   'Ready_to_Eat',
+    'Eggs':             'Dairy',   # refrigerated animal product, nearest trained dynamics
+}
+
+# Dry Goods / Shelf-Stable departments (non-perishable).
+# The XGBoost model is trained exclusively on Perishable Goods
+# (7_perishable_goods_cleaned.csv, waste_pct target). These categories are
+# shelf-stable (1-2 year shelf life) with no microbial spoilage pathway,
+# so they are scored by policy, not by the model.
+SHELF_STABLE_CATEGORIES = {
+    'Grains & Pulses', 'Oils & Fats', 'Grocery', 'Dry Goods', 'Pantry',
+    'Snacks',
+    'Liquor', 'Beer', 'Wine', 'Liquor, Wine, Beer',
+}
+
 # Category sensitivity tau (characteristic critical days for time-decay)
 CATEGORY_TAU_DAYS = {
     'Bakery': 2.0,
@@ -50,24 +89,31 @@ CATEGORY_TAU_DAYS = {
 
 # Internal cache for model package to avoid redundant disk I/O
 _MODEL_PACKAGE = None
+_MODEL_PACKAGE_LOCK = threading.Lock()
 
 def _load_model_package(model_path: str = DEFAULT_MODEL_PATH) -> dict | None:
-    """Loads and caches the model package safely."""
+    """Loads and caches the model package safely (thread-safe)."""
     global _MODEL_PACKAGE
     if _MODEL_PACKAGE is not None:
         return _MODEL_PACKAGE
 
-    if os.path.exists(model_path):
-        try:
-            loaded = joblib.load(model_path)
-            if isinstance(loaded, dict) and "model" in loaded:
-                _MODEL_PACKAGE = loaded
-            else:
-                _MODEL_PACKAGE = {"model": loaded}
+    with _MODEL_PACKAGE_LOCK:
+        # Re-check inside the lock: another thread may have loaded while this
+        # one was waiting.
+        if _MODEL_PACKAGE is not None:
             return _MODEL_PACKAGE
-        except Exception:
-            return None
-    return None
+
+        if os.path.exists(model_path):
+            try:
+                loaded = joblib.load(model_path)
+                if isinstance(loaded, dict) and "model" in loaded:
+                    _MODEL_PACKAGE = loaded
+                else:
+                    _MODEL_PACKAGE = {"model": loaded}
+                return _MODEL_PACKAGE
+            except Exception:
+                return None
+        return None
 
 def preprocess_single_lot(lot: dict, feature_cols: list | None = None, scaler=None) -> np.ndarray:
     """Transforms a single lot dictionary into a model-compatible scaled numpy array.
@@ -113,8 +159,10 @@ def preprocess_single_lot(lot: dict, feature_cols: list | None = None, scaler=No
         stock_pressure = round(qty / (demand + 1.0), 2)
 
     cat_raw = str(lot.get('category', lot.get('Category', ''))).strip()
-    if cat_raw == 'Produce':
-        cat_raw = 'Fruits & Vegetables'
+    # No-retrain bridge: map untrained FreshGuard categories onto the closest
+    # trained one-hot column (see CATEGORY_EQUIVALENCE). Exact trained names
+    # pass through unchanged.
+    cat_raw = CATEGORY_EQUIVALENCE.get(cat_raw, cat_raw)
 
     region_raw = str(lot.get('region', lot.get('Region', 'Midwest'))).strip()
 
@@ -200,6 +248,36 @@ def apply_continuous_tier2(
 
     return final_label, final_score, adjusted_probs, round(u, 4)
 
+def _predict_shelf_stable_risk(lot: dict, category: str, days_until_expiry: float) -> dict:
+    """Policy-based risk for Dry Goods / Shelf-Stable departments (no ML).
+
+    Non-perishable items (grains, pulses, oils, fats) cannot spoil
+    microbiologically like dairy or meat, so they return a confident LOW
+    risk regardless of DTE — unless the expiry date has already passed
+    (DTE <= 0), which is a hard HIGH regardless of department.
+    """
+    if days_until_expiry <= 0:
+        return {
+            "label": "HIGH",
+            "score": 0.95,
+            "raw_label": "HIGH",
+            "tier2_applied": False,
+            "urgency_factor": 1.0,
+            "probabilities": {"HIGH": 0.95, "MODERATE": 0.0, "LOW": 0.05},
+            "department": "Dry Goods (Shelf-Stable)",
+            "source": "policy_shelf_stable"
+        }
+    return {
+        "label": "LOW",
+        "score": 0.95,
+        "raw_label": "LOW",
+        "tier2_applied": False,
+        "urgency_factor": 0.0,
+        "probabilities": {"HIGH": 0.0, "MODERATE": 0.05, "LOW": 0.95},
+        "department": "Dry Goods (Shelf-Stable)",
+        "source": "policy_shelf_stable"
+    }
+
 def predict_spoilage_risk(
     lot: dict,
     model_path: str = DEFAULT_MODEL_PATH,
@@ -209,7 +287,11 @@ def predict_spoilage_risk(
     """Predicts spoilage risk level and confidence score for a single inventory lot.
 
     Architecture:
-      - Tier 1: Random Forest Classifier predicts base risk profile from inventory features.
+      - Department split: Dry Goods / Shelf-Stable categories (Grains & Pulses,
+        Oils & Fats) are scored by policy, not by the model — they are
+        non-perishable and cannot spoil microbiologically.
+      - Tier 1 (Perishable departments): XGBoost Classifier predicts base risk
+        profile from inventory features.
       - Tier 2 (if apply_tier2=True): Continuous time-decay escalation dynamically boosts
         urgency as days_until_expiry draws near based on category sensitivity tau.
 
@@ -231,6 +313,13 @@ def predict_spoilage_risk(
     pkg = _load_model_package(model_path)
     days_until_expiry = float(lot.get('days_until_expiry', lot.get('days_to_expiry', lot.get('shelf_life_days', 999))))
     category = str(lot.get('category', lot.get('Category', 'Unknown'))).strip()
+
+    # ── Department Split: Dry Goods / Shelf-Stable bypass the ML model ──
+    # The XGBoost model is trained only on Perishable Goods, so shelf-stable
+    # categories never reach inference (their one-hot columns don't exist in
+    # the trained schema anyway). Policy: LOW 95%, unless already expired.
+    if category in SHELF_STABLE_CATEGORIES:
+        return _predict_shelf_stable_risk(lot, category, days_until_expiry)
 
     if pkg is not None and "model" in pkg:
         try:

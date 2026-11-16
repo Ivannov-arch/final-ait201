@@ -7,6 +7,34 @@ INVENTORY_MASTER_PATH = ROOT / "data" / "processed" / "inventory_master.csv"
 INVENTORY_MASTER_JSON = ROOT / "data" / "processed" / "inventory_master.json"
 
 
+RISK_TIER_MAP = {"HIGH": "high", "MODERATE": "med", "LOW": "low"}
+RISK_LABEL_MAP = {"HIGH": "High Risk", "MODERATE": "Moderate Risk", "LOW": "Low Risk"}
+
+
+def _ml_risk(record: dict) -> dict | None:
+    """Run Person 1's XGBoost spoilage model for one inventory record.
+
+    Returns the prediction dict, or None when the model is unavailable
+    (missing dependency / pkl) — callers then fall back to the DTE heuristic.
+    Shelf-stable dry goods (Grains & Pulses, Oils & Fats, etc.) are scored by
+    the shelf-stable policy inside predict_spoilage_risk, not by the model.
+    """
+    try:
+        from src.ml.spoilage import predict_spoilage_risk
+        dte = float(record.get("days_to_expiry", 5) or 5)
+        return predict_spoilage_risk({
+            "days_until_expiry": dte,
+            "shelf_life_days": float(record.get("shelf_life_days") or max(1, dte + 7)),
+            "initial_quantity": float(record.get("quantity", 0) or 0),
+            "base_price": float(record.get("unit_price_myr", 5.0) or 5.0),
+            "daily_demand": max(1.0, float(record.get("reorder_quantity", 10) or 10) / 7),
+            "stock_pressure": float(record.get("stock_pressure") or 1.0),
+            "category": str(record.get("category") or "Produce"),
+        })
+    except Exception:
+        return None
+
+
 def _format_batch_record(record: dict) -> dict:
     """Format an inventory record dict into the standardized batch response shape."""
     try:
@@ -14,10 +42,21 @@ def _format_batch_record(record: dict) -> dict:
     except (ValueError, TypeError):
         dte = 5
     status = "Near Expiry" if dte <= 2 else "Available"
-    
-    # Extract or infer risk tier and label
-    risk_tier = str(record.get("risk_tier") or ("high" if dte <= 2 else "med" if dte <= 5 else "low")).lower()
-    risk_label = str(record.get("risk_label") or ("High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"))
+
+    # Risk priority: Person 1's XGBoost model (or shelf-stable policy) →
+    # stored risk_label → DTE heuristic.
+    pred = _ml_risk(record)
+    if pred and pred.get("label"):
+        lbl = str(pred["label"]).upper()
+        risk_tier = RISK_TIER_MAP.get(lbl, "low")
+        risk_label = RISK_LABEL_MAP.get(lbl, "Low Risk")
+        risk_score = pred.get("score")
+        risk_source = pred.get("source", "ml_xgboost")
+    else:
+        risk_tier = str(record.get("risk_tier") or ("high" if dte <= 2 else "med" if dte <= 5 else "low")).lower()
+        risk_label = str(record.get("risk_label") or ("High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"))
+        risk_score = None
+        risk_source = "dte_fallback"
 
     return {
         "batch_id": str(record.get("lot_id", "N/A")),
@@ -30,6 +69,8 @@ def _format_batch_record(record: dict) -> dict:
         "days_to_expiry": dte,
         "risk_tier": risk_tier,
         "risk_label": risk_label,
+        "risk_score": risk_score,
+        "risk_source": risk_source,
         "shelf_life_days": float(record.get("shelf_life_days") or max(1, dte + 7)),
         "turnover_ratio": float(record.get("turnover_ratio") or 2.0),
         "stock_pressure": float(record.get("stock_pressure") or 1.0)
