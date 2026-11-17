@@ -160,7 +160,7 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
           </svg>
           <input
             type="text"
-            placeholder="Cari batch, produk, kategori..."
+            placeholder="Search batch, product, category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Search activities"
@@ -185,9 +185,9 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <h3 className="fg-empty-state__title">Tidak ada aktivitas yang sesuai</h3>
+          <h3 className="fg-empty-state__title">No matching activity</h3>
           <p className="fg-empty-state__desc">
-            Coba ubah filter atau kata kunci pencarian Anda.
+            Try changing your filter or search keywords.
           </p>
           {(searchTerm || selectedCategory !== 'all') && (
             <button type="button" className="fg-btn-outline" onClick={handleResetFilters}>
@@ -216,7 +216,7 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
                     key={`${row.batch}-${row.time}-${idx}`}
                     className="fg-table-clickable-row"
                     onClick={() => onNavigateInventory && onNavigateInventory(row.batch)}
-                    title={`Buka ${row.batch} di Inventory FEFO`}
+                    title={`Open ${row.batch} in Inventory FEFO`}
                   >
                     <td className="fg-table-time">{row.time}</td>
                     <td>
@@ -255,7 +255,7 @@ export default function RecentActivitiesTable({ activities = INITIAL_ACTIVITIES,
                 key={`m-${row.batch}-${row.time}-${idx}`}
                 className="fg-mobile-activity-card fg-mobile-activity-card--clickable"
                 onClick={() => onNavigateInventory && onNavigateInventory(row.batch)}
-                title={`Buka ${row.batch} di Inventory FEFO`}
+                title={`Open ${row.batch} in Inventory FEFO`}
               >
                 <div className="fg-mobile-card__top">
                   <div className="fg-mobile-card__product-info">

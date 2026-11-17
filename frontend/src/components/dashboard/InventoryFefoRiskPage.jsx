@@ -1503,7 +1503,7 @@ export default function InventoryFefoRiskPage({
               </button>
             </div>
             <p className="fg-inv-modal-desc">
-              Perbarui data atribut batch untuk kalkulasi ulang FEFO rotation &amp; ML spoilage risk.
+              Update batch attribute data to recalculate FEFO rotation &amp; ML spoilage risk.
             </p>
             <form onSubmit={handleSaveEdit} className="fg-inv-modal-form">
               <div className="fg-inv-form-row">
@@ -1666,7 +1666,7 @@ export default function InventoryFefoRiskPage({
               </button>
             </div>
               <p className="fg-inv-modal-desc">
-               Daftarkan batch masuk — semua input digunakan oleh model ML untuk prediksi risiko spoilage.
+               Register incoming batch — all inputs are used by the ML model for spoilage risk prediction.
              </p>
              <form onSubmit={handleAddBatchSubmit} className="fg-inv-modal-form">
                <div className="fg-inv-form-row">
