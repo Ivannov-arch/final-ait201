@@ -22,9 +22,22 @@
   --c-high: oklch(58% 0.16 45);
   --c-expiring: oklch(52% 0.18 25);
 
+  /* Standardized component radii (Mistake 5: consistent components & 10px baseline) */
   --r-pill: 999px;
-  --r-card: 24px;
-  --r-sm: 14px;
+  --r-card: 16px;
+  --r-md: 10px;
+  --r-sm: 8px;
+
+  /* Natural, multi-layer soft shadows (Mistake 2: no harsh black/neon drop shadows) */
+  --shadow-subtle: 0 1px 2px 0 rgba(12, 31, 21, 0.04), 0 1px 3px 0 rgba(12, 31, 21, 0.02);
+  --shadow-card: 0 2px 8px -2px rgba(12, 31, 21, 0.05), 0 4px 16px -4px rgba(12, 31, 21, 0.03);
+  --shadow-elevated: 0 8px 24px -4px rgba(12, 31, 21, 0.07), 0 4px 10px -2px rgba(12, 31, 21, 0.03);
+  --shadow-modal: 0 20px 48px -10px rgba(12, 31, 21, 0.14), 0 8px 20px -4px rgba(12, 31, 21, 0.05);
+
+  /* Typography metrics (Segmen 4: -2% to -3% tracking and tight header line-height) */
+  --tracking-tight: -0.025em;
+  --lh-tight: 1.18;
+  --focus-ring: 0 0 0 3px rgba(27, 155, 85, 0.16);
 
   --ff-head: "Nunito", sans-serif;
   --ff-body: "Figtree", sans-serif;
@@ -389,6 +402,17 @@ button {
 .btn:active {
   transform: scale(0.97) translateY(0);
   transition-duration: 80ms;
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  pointer-events: none;
 }
 .btn--lg {
   padding: 0.68rem 1.6rem;

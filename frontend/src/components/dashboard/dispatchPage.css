@@ -179,7 +179,7 @@
   border: 1px solid oklch(56% 0.175 142 / 0.3);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 12px 32px -8px oklch(15% 0.02 148 / 0.5);
+  box-shadow: 0 12px 28px -6px rgba(12, 31, 21, 0.2), 0 4px 12px -2px rgba(12, 31, 21, 0.08);
   pointer-events: auto;
   animation: fg-toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -316,7 +316,7 @@
   background: radial-gradient(circle at 85% 20%, oklch(35% 0.12 142 / 0.35), transparent 70%), #0c1f15;
   color: #ffffff;
   border-color: #0c1f15;
-  box-shadow: 0 10px 24px -8px oklch(12% 0.05 148 / 0.45);
+  box-shadow: 0 8px 24px -6px rgba(12, 31, 21, 0.18), 0 2px 8px -2px rgba(12, 31, 21, 0.08);
 }
 
 .fg-dispatch-metric-card--capacity {
@@ -1256,10 +1256,10 @@
 
 .fg-dispatch-modal {
   background-color: #ffffff;
-  border-radius: 20px;
+  border-radius: 16px;
   width: 100%;
   max-width: 580px;
-  box-shadow: 0 24px 48px -12px oklch(15% 0.02 148 / 0.35);
+  box-shadow: 0 20px 48px -12px rgba(12, 31, 21, 0.16), 0 8px 20px -4px rgba(12, 31, 21, 0.06);
   border: 1px solid oklch(15% 0.02 148 / 0.1);
   display: flex;
   flex-direction: column;
