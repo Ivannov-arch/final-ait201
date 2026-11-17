@@ -176,7 +176,7 @@ export default function SalesLogPage({
 
     const statusLabels = {
       paid: 'Paid (Lunas)',
-      pending: 'Pending (Menunggu)',
+      pending: 'Pending',
       refunded: 'Refunded',
       void: 'Void'
     }
@@ -757,7 +757,7 @@ export default function SalesLogPage({
                         className={`fg-status-select fg-status-select--${s.status || 'paid'}`}
                         value={s.status || 'paid'}
                         onChange={(e) => handleUpdateStatus(s.id, e.target.value)}
-                        aria-label={`Ubah status ${s.id}`}
+                        aria-label={`Change status of ${s.id}`}
                         title="Click to change transaction status"
                       >
                         <option value="paid">Paid</option>
@@ -840,7 +840,7 @@ export default function SalesLogPage({
                       className={`fg-status-select fg-status-select--${s.status || 'paid'}`}
                       value={s.status || 'paid'}
                       onChange={(e) => handleUpdateStatus(s.id, e.target.value)}
-                      aria-label={`Ubah status ${s.id}`}
+                      aria-label={`Change status of ${s.id}`}
                     >
                       <option value="paid">Paid</option>
                       <option value="pending">Pending</option>
@@ -876,7 +876,7 @@ export default function SalesLogPage({
         </div>
       </div>
 
-      {/* POS Modal: Catat Penjualan */}
+      {/* POS Modal: Record Sale */}
       {showPOSModal && (
         <div className="fg-inv-modal-backdrop" ref={posModalRef} onClick={() => setShowPOSModal(false)}>
           <div className="fg-inv-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
@@ -907,13 +907,13 @@ export default function SalesLogPage({
                   required
                 >
                   {activeBatches.length === 0 && (
-                    <option value="">— Tidak ada stok aktif —</option>
+                    <option value="">— No active stock —</option>
                   )}
                   {activeBatches.map(b => {
                     const stock = b.stockQty !== undefined ? Number(b.stockQty) : parseNum(b.qty)
                     return (
                       <option key={b.id} value={b.id}>
-                        {b.id} — {b.product} ({stock} {parseUnit(b.qty)} tersisa · Jual: {b.sellPrice || b.costPrice})
+                        {b.id} — {b.product} ({stock} {parseUnit(b.qty)} remaining · Sell: {b.sellPrice || b.costPrice})
                       </option>
                     )
                   })}
@@ -1068,7 +1068,7 @@ export default function SalesLogPage({
 
               <div className="fg-inv-form-row">
                 <div className="fg-inv-form-field">
-                  <label>Nama Produk</label>
+                  <label>Product Name</label>
                   <input
                     type="text"
                     value={editingSale.product}
@@ -1077,7 +1077,7 @@ export default function SalesLogPage({
                   />
                 </div>
                 <div className="fg-inv-form-field">
-                  <label>Kategori</label>
+                  <label>Category</label>
                   <select
                     value={editingSale.category}
                     onChange={(e) => setEditingSale({ ...editingSale, category: e.target.value })}
@@ -1156,7 +1156,7 @@ export default function SalesLogPage({
                     onChange={(e) => setEditingSale({ ...editingSale, status: e.target.value })}
                   >
                     <option value="paid">Paid (Lunas)</option>
-                    <option value="pending">Pending (Menunggu)</option>
+                    <option value="pending">Pending</option>
                     <option value="refunded">Refunded (Retur)</option>
                     <option value="void">Void (Cancelled)</option>
                   </select>
@@ -1190,7 +1190,7 @@ export default function SalesLogPage({
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.02rem', fontWeight: 800, color: '#1b9b55', borderTop: '1px solid #daeee4', paddingTop: 6, marginTop: 4 }}>
-                      <span>Total Bayar Baru:</span>
+                      <span>New Total Payment:</span>
                       <span>RM {tot.toFixed(2)}</span>
                     </div>
                   </div>

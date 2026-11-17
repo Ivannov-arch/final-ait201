@@ -48,7 +48,7 @@ models/*.onnx
 #data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-*.parquet
+!*.parquet
 *.sqlite3
 *.db
 

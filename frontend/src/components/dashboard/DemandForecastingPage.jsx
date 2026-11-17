@@ -83,7 +83,7 @@ function computeDecision(stock, demand, dte, unit) {
     return {
       title: 'Restock Required (Advisory)',
       action: `Perlu Order +${deficit} ${unit} (Manual PO Only)`,
-      reason: `Customer demand exceeds on-hand stock. Order ${deficit} ${unit} to prevent empty shelves. (Auto-PO Locked — periksa fisik sebelum pemesanan).`,
+      reason: `Customer demand exceeds on-hand stock. Order ${deficit} ${unit} to prevent empty shelves. (Auto-PO Locked — verify physical stock before ordering).`,
       mascot: '/image/decision/donate.png',
       badgeClass: 'is-critical',
       bannerBg: '#fef2f2',
@@ -150,22 +150,22 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
     const target = new Date(now)
     target.setDate(now.getDate() + offset)
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const day = target.getDate()
     const month = months[target.getMonth()]
     const dateStr = `${day} ${month}`
 
     let dayLabel = ''
-    if (offset === 0) dayLabel = 'Hari Ini'
-    else if (offset === 1) dayLabel = 'Besok'
-    else if (offset === 2) dayLabel = 'Lusa'
-    else dayLabel = `+${offset} Hari`
+    if (offset === 0) dayLabel = 'Today'
+    else if (offset === 1) dayLabel = 'Tomorrow'
+    else if (offset === 2) dayLabel = 'Day After'
+    else dayLabel = `+${offset} Days`
 
     return {
       offset,
       dateStr,
       label: dayLabel,
-      full: offset === 0 ? 'Hari Ini' : `${dayLabel} · ${dateStr}`
+      full: offset === 0 ? 'Today' : `${dayLabel} · ${dateStr}`
     }
   }
 
@@ -277,7 +277,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
 
   // ── 3-Day Visual Trajectory Graph Coordinates with Real Calendar Dates ──
   const timelinePoints = [
-    { label: 'Hari Ini', sub: 'Mulai', stockVal: stock, demandVal: null },
+    { label: 'Today', sub: 'Start', stockVal: stock, demandVal: null },
     { label: day1Info.dateStr, sub: day1Info.label, stockVal: points[0]?.stockRemaining ?? stock, demandVal: points[0]?.demand ?? 0 },
     { label: day2Info.dateStr, sub: day2Info.label, stockVal: points[1]?.stockRemaining ?? 0, demandVal: points[1]?.demand ?? 0 },
     { label: day3Info.dateStr, sub: day3Info.label, stockVal: points[2]?.stockRemaining ?? 0, demandVal: points[2]?.demand ?? 0 }
@@ -316,7 +316,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
       <div className="fg-fc-ops-context">
         <div className="fg-fc-ops-status">
           <span className="fg-fc-status-dot" />
-          <span className="fg-fc-ops-title">Mode: Advisory Penjualan 3-Hari</span>
+          <span className="fg-fc-ops-title">Mode: 3-Day Sales Advisory</span>
           <span className="fg-fc-ops-badge">Family-level Disaggregated</span>
           {useDemoBackup && (
             <span className="fg-fc-ops-badge fg-fc-ops-badge--demo">
@@ -328,7 +328,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
           type="button"
           onClick={() => setShowMethodologyModal(true)}
           className="fg-fc-ops-info-btn"
-          title="Buka transparansi data, model, dan batasan validasi"
+          title="View data transparency, model, and validation limits"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
@@ -345,14 +345,14 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
           <div className="fg-fc-modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="fg-fc-modal-header">
               <div>
-                <h3 className="fg-fc-modal-title">Metodologi & Validasi Data</h3>
-                <span className="fg-fc-modal-sub">Audit operasional model estimasi demand</span>
+                <h3 className="fg-fc-modal-title">Methodology & Data Validation</h3>
+                <span className="fg-fc-modal-sub">Operational audit of demand estimation model</span>
               </div>
               <button
                 type="button"
                 className="fg-fc-modal-close"
                 onClick={() => setShowMethodologyModal(false)}
-                aria-label="Tutup"
+                aria-label="Close"
               >
                 ✕
               </button>
@@ -361,28 +361,28 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
             <div className="fg-fc-modal-body">
               <div className="fg-fc-modal-grid">
                 <div className="fg-fc-modal-item">
-                  <span className="fg-fc-modal-label">Origin Data Historis</span>
+                  <span className="fg-fc-modal-label">Historical Data Origin</span>
                   <span className="fg-fc-modal-val">{apiMeta?.originDate || '2017-08-15'} (Kaggle M5 Dataset)</span>
                 </div>
                 <div className="fg-fc-modal-item">
-                  <span className="fg-fc-modal-label">Arsitektur Model</span>
-                  <span className="fg-fc-modal-val">{apiMeta?.method ? apiMeta.method.toUpperCase() : 'LIGHTGBM'} (Tingkat Family/Kategori)</span>
+                  <span className="fg-fc-modal-label">Model Architecture</span>
+                  <span className="fg-fc-modal-val">{apiMeta?.method ? apiMeta.method.toUpperCase() : 'LIGHTGBM'} (Family/Category Level)</span>
                 </div>
                 <div className="fg-fc-modal-item">
-                  <span className="fg-fc-modal-label">Metode Alokasi SKU</span>
-                  <span className="fg-fc-modal-val">Disagregasi Proporsi Stok (Stock-Share Weight)</span>
+                  <span className="fg-fc-modal-label">SKU Allocation Method</span>
+                  <span className="fg-fc-modal-val">Stock-Share Weight Disaggregation</span>
                 </div>
                 <div className="fg-fc-modal-item">
-                  <span className="fg-fc-modal-label">Status Validasi Operasional</span>
+                  <span className="fg-fc-modal-label">Operational Validation Status</span>
                   <span className="fg-fc-modal-val" style={{ color: '#b45309' }}>
-                    Advisory — Belum Divalidasi untuk Auto-PO
+                    Advisory — Not Validated for Auto-PO
                   </span>
                 </div>
               </div>
 
               <div className="fg-fc-modal-note">
                 <p>
-                  <strong>Catatan Operasional:</strong> Proyeksi dihitung dari model LightGBM pada tingkat family, lalu dialokasikan ke produk berdasarkan porsi stok toko saat ini. Angka ini berfungsi sebagai indikator advisory untuk rotasi stok (FEFO/Markdown), dan <em>tidak boleh digunakan sebagai Purchase Order otomatis</em> tanpa validasi data POS harian lokal.
+                  <strong>Operational Note:</strong> Projections are computed by the LightGBM model at family level, then allocated to products based on the store's current stock share. These figures serve as advisory indicators for stock rotation (FEFO/Markdown), and <em>must not be used as automatic Purchase Orders</em> without local daily POS data validation.
                 </p>
               </div>
             </div>
@@ -393,7 +393,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
                 className="fg-fc-modal-btn-primary"
                 onClick={() => setShowMethodologyModal(false)}
               >
-                Mengerti
+                Understood
               </button>
             </div>
           </div>
@@ -404,8 +404,8 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
       {isLoading && (
         <div className="fg-fc-state-card">
           <div className="fg-fc-spinner" />
-          <h3 className="fg-fc-state-title">Memuat Model Peramalan...</h3>
-          <p className="fg-fc-state-desc">Menghubungkan ke layanan forecast dan mengalokasikan proyeksi demand 3-hari.</p>
+          <h3 className="fg-fc-state-title">Loading Forecasting Model...</h3>
+          <p className="fg-fc-state-desc">Connecting to forecast service and allocating 3-day demand projections.</p>
         </div>
       )}
 
@@ -413,14 +413,14 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
       {!isLoading && apiError && !useDemoBackup && (
         <div className="fg-fc-state-card">
           <span style={{ fontSize: '2.4rem', marginBottom: '0.6rem' }}>⚠️</span>
-          <h3 className="fg-fc-state-title">Gagal Memuat Data Forecast</h3>
+          <h3 className="fg-fc-state-title">Failed to Load Forecast Data</h3>
           <p className="fg-fc-state-desc">{apiError}</p>
           <div className="fg-fc-state-actions">
             <button type="button" className="fg-fc-btn-retry" onClick={fetchForecastData}>
-              🔄 Coba Lagi (Retry)
+              🔄 Try Again (Retry)
             </button>
             <button type="button" className="fg-fc-btn-secondary" onClick={handleEnableDemoBackup}>
-              📦 Buka Data Demo Cadangan
+              📦 Open Backup Demo Data
             </button>
           </div>
         </div>
@@ -430,10 +430,10 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
       {!isLoading && !apiError && productKeys.length === 0 && (
         <div className="fg-fc-state-card">
           <span style={{ fontSize: '2.4rem', marginBottom: '0.6rem' }}>📭</span>
-          <h3 className="fg-fc-state-title">Tidak Ada Data Forecast Tersedia</h3>
-          <p className="fg-fc-state-desc">Belum ada data inventori atau proyeksi demand yang cocok dengan toko ini.</p>
+          <h3 className="fg-fc-state-title">No Forecast Data Available</h3>
+          <p className="fg-fc-state-desc">No inventory data or demand projections match this store yet.</p>
           <button type="button" className="fg-fc-btn-retry" onClick={fetchForecastData}>
-            🔄 Segarkan Data
+            🔄 Refresh Data
           </button>
         </div>
       )}
@@ -557,8 +557,8 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
               <AnimatedNumber value={demand} decimals={0} />
               <span className="fg-fc-tile-unit">{unit}</span>
             </div>
-            <span className="fg-fc-tile-hint" title="Estimasi family-level, dibagi berdasarkan porsi stok. Belum divalidasi di tingkat SKU.">
-              Estimasi family · Disagregasi stok
+            <span className="fg-fc-tile-hint" title="Family-level estimate, divided by stock share. Not validated at SKU level.">
+              Family estimate · Stock disaggregation
             </span>
           </div>
 
