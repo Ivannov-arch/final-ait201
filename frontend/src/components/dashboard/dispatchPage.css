@@ -1379,7 +1379,7 @@
   color: #ffffff;
   border: 1px solid oklch(56% 0.175 142 / 0.35);
   border-radius: 999px;
-  box-shadow: 0 16px 36px -8px oklch(0% 0 0 / 0.55), 0 0 24px -4px oklch(56% 0.175 142 / 0.25);
+  box-shadow: 0 16px 36px -8px rgba(12, 31, 21, 0.24), 0 4px 12px -2px rgba(12, 31, 21, 0.08);
   padding: 0.6rem 1.15rem 0.6rem 1.35rem;
   display: flex;
   align-items: center;

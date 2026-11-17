@@ -1355,7 +1355,7 @@ button {
   .how__step:hover .how__step-node {
     border-color: #228c19;
     transform: translateY(-3px);
-    box-shadow: 0 8px 28px #228c1966;
+    box-shadow: 0 8px 20px -4px rgba(34, 140, 25, 0.22);
   }
 }
 .how__step-title {
@@ -2572,16 +2572,16 @@ button {
 .fg-bar-col:hover .fg-bar-pillar {
   background: linear-gradient(180deg, #5fe493, #17894a);
   transform: scaleY(1.03);
-  box-shadow: 0 6px 14px #1b9b5547;
+  box-shadow: 0 4px 12px -2px rgba(27, 155, 85, 0.28);
 }
 .fg-bar-pillar.is-below-target {
   background: linear-gradient(180deg, #f5a623, #d4831a);
-  box-shadow: 0 3px 8px #f5a6232e;
+  box-shadow: 0 2px 6px rgba(245, 166, 35, 0.18);
 }
 .fg-bar-pillar.is-below-target.is-hovered,
 .fg-bar-col:hover .fg-bar-pillar.is-below-target {
   background: linear-gradient(180deg, #f7b944, #b86e10);
-  box-shadow: 0 6px 14px #f5a62352;
+  box-shadow: 0 4px 12px -2px rgba(245, 166, 35, 0.3);
 }
 .fg-bar-label-group {
   margin-top: 0.6rem;
@@ -2616,7 +2616,7 @@ button {
   visibility: hidden;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 20;
-  box-shadow: 0 6px 18px #0003;
+  box-shadow: 0 8px 24px -4px rgba(12, 31, 21, 0.2);
   text-align: center;
 }
 .fg-chart-tooltip:after {
@@ -3372,12 +3372,12 @@ button {
   font-size: 0.92rem;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 14px #1b9b5540;
+  box-shadow: 0 4px 12px -2px rgba(27, 155, 85, 0.24);
 }
 .fg-module-view__btn:hover {
   background: #147b43;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px #1b9b554d;
+  box-shadow: 0 6px 16px -2px rgba(27, 155, 85, 0.3);
 }
 .fg-module-view__btn:active {
   transform: scale(0.97);
@@ -3405,7 +3405,7 @@ button {
     top: 0;
     bottom: 0;
     transform: translate(-100%);
-    box-shadow: 0 0 35px #00000040;
+    box-shadow: 0 16px 40px -10px rgba(12, 31, 21, 0.22);
     z-index: 50;
   }
   .fg-sidebar.is-open {
@@ -3636,7 +3636,7 @@ button {
     right: 1rem;
     width: auto;
     border-radius: 20px;
-    box-shadow: 0 -10px 40px #0003;
+    box-shadow: 0 -12px 32px -8px rgba(12, 31, 21, 0.16);
     z-index: 60;
   }
   .fg-header__menu-close-mobile {
@@ -3720,7 +3720,7 @@ button {
   color: #fff;
   padding: 0.85rem 1.25rem;
   border-radius: var(--r-pill, 999px);
-  box-shadow: 0 10px 30px #00000040;
+  box-shadow: 0 12px 32px -6px rgba(12, 31, 21, 0.28), 0 4px 12px -2px rgba(12, 31, 21, 0.12);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -6023,21 +6023,21 @@ button {
 }
 .fg-inv-action-btn--green {
   background: #1b9b55;
-  box-shadow: 0 4px 12px #1b9b5540;
+  box-shadow: 0 4px 12px -2px rgba(27, 155, 85, 0.28);
 }
 .fg-inv-action-btn--green:hover {
   background: #147b43;
 }
 .fg-inv-action-btn--amber {
   background: #e87a1e;
-  box-shadow: 0 4px 12px #e87a1e40;
+  box-shadow: 0 4px 12px -2px rgba(232, 122, 30, 0.28);
 }
 .fg-inv-action-btn--amber:hover {
   background: #cb6512;
 }
 .fg-inv-action-btn--red {
   background: #c82d32;
-  box-shadow: 0 4px 12px #c82d3240;
+  box-shadow: 0 4px 12px -2px rgba(200, 45, 50, 0.28);
 }
 .fg-inv-action-btn--red:hover {
   background: #aa2025;
@@ -6122,11 +6122,11 @@ button {
 }
 .fg-inv-modal {
   background: #fff;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 1.5rem;
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 20px 50px #0003;
+  box-shadow: 0 20px 48px -10px rgba(12, 31, 21, 0.14), 0 8px 20px -4px rgba(12, 31, 21, 0.05);
   display: flex;
   flex-direction: column;
   gap: 1.15rem;
@@ -6215,6 +6215,7 @@ button {
 .fg-inv-form-field input:focus,
 .fg-inv-form-field select:focus {
   border-color: #1b9b55;
+  box-shadow: 0 0 0 3px rgba(27, 155, 85, 0.14);
 }
 .fg-inv-form-row {
   display: grid;
@@ -6784,7 +6785,7 @@ button {
   background: #ffffff !important;
   border: 1px solid #dfeae3 !important;
   border-radius: 12px !important;
-  box-shadow: 0 14px 36px rgba(12, 31, 21, 0.28) !important;
+  box-shadow: 0 10px 28px -6px rgba(12, 31, 21, 0.16), 0 4px 10px -2px rgba(12, 31, 21, 0.06) !important;
   min-width: 155px !important;
   padding: 0.35rem !important;
   z-index: 9999 !important;

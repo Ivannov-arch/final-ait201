@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import FreshBotMascot from "./FreshBotMascot";
 
 export default function DashboardSidebar({
@@ -7,6 +8,15 @@ export default function DashboardSidebar({
   isOpen,
   onClose,
 }) {
+  // Escape key escape hatch to dismiss mobile drawer (Mistake 1 & User Flow Guide)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && onClose) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
   const navItems = [
     {
       id: "dashboard",

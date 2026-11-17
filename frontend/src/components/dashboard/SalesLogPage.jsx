@@ -61,6 +61,18 @@ export default function SalesLogPage({
       .catch(() => {})
   }, [])
 
+  // Escape key escape hatch to dismiss active modal (Mistake 1 & User Flow Guide)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showPOSModal) setShowPOSModal(false)
+        else if (editingSale) setEditingSale(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showPOSModal, editingSale])
+
   const kpiContainerRef = useRef(null)
   const tableContainerRef = useRef(null)
   const posModalRef = useRef(null)

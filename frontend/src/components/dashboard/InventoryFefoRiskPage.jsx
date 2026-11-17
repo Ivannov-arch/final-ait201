@@ -141,6 +141,21 @@ export default function InventoryFefoRiskPage({
     setCurrentPage(1)
   }, [searchTerm, selectedRiskFilter, selectedCategoryFilter, sortBy])
 
+  // Escape key hatch to dismiss active modals/menus (Mistake 1 & User Flow Guide)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (selectedBatchForAction) setSelectedBatchForAction(null)
+        else if (showAddModal) setShowAddModal(false)
+        else if (editBatch) setEditBatch(null)
+        else if (batchToDelete) setBatchToDelete(null)
+        else if (activeMenuBatchId) setActiveMenuBatchId(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedBatchForAction, showAddModal, editBatch, batchToDelete, activeMenuBatchId])
+
   // Filter & sort batches (declared before useEffect that depends on it)
   const filteredBatches = useMemo(() => {
     let list = batches.filter(b => {

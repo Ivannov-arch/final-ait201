@@ -226,15 +226,24 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
     setApiError(null)
   }
 
-  // Close search dropdown on click outside
+  // Close search dropdown on click outside or Escape key
   useEffect(() => {
     const handleOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowDropdown(false)
       }
     }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowDropdown(false)
+      }
+    }
     document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   // Merge products
