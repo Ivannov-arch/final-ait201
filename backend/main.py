@@ -6,6 +6,7 @@ from backend.routers.batches import router as batches_router
 from backend.routers.dashboard import router as dashboard_router
 from backend.routers.recommend import router as recommend_router
 from backend.routers.dispatch import router as dispatch_router
+from backend.routers.transactions import router as transactions_router
 
 
 app = FastAPI(
@@ -21,10 +22,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -40,6 +38,7 @@ app.include_router(batches_router)
 app.include_router(dashboard_router)
 app.include_router(recommend_router)
 app.include_router(dispatch_router)
+app.include_router(transactions_router)
 
 
 # ==========================================

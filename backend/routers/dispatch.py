@@ -7,7 +7,7 @@ Endpoint: GET /api/dispatch-route/{batch_id}
 
 import math
 import requests
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Optional
 
 from backend.services.batch_service import get_batch_by_id
@@ -165,3 +165,65 @@ def get_dispatch_route(batch_id: str, weather: Optional[str] = "Sunny"):
         "destination": matched_receiver,
         "route": route_info
     }
+
+
+@router.post("/api/dispatch")
+def log_dispatch(payload: dict = Body(...)):
+    """Logs a dispatch handover event and syncs to Supabase if configured."""
+    import os
+    import time
+    from datetime import datetime
+
+    dispatch_id = payload.get("dispatch_id") or f"DSP-{hex(int(time.time()*1000))[2:].upper()}"
+    record = {
+        "dispatch_id": dispatch_id,
+        "batch_id": payload.get("batch_id"),
+        "receiver_id": payload.get("receiver_id", "REC-01"),
+        "store_id": "MY-KL-001",
+        "distance_km": float(payload.get("distance_km") or 5.0),
+        "eta_hours": round(float(payload.get("eta_minutes") or 15) / 60.0, 2),
+        "status": "dispatched",
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+    supabase_url = os.getenv("SUPABASE_URL", os.getenv("VITE_SUPABASE_URL", ""))
+    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SUPABASE_KEY", os.getenv("VITE_SUPABASE_ANON_KEY", "")))
+
+    if supabase_url and supabase_key:
+        try:
+            headers = {
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates"
+            }
+            requests.post(
+                f"{supabase_url}/rest/v1/dispatch_log",
+                headers=headers,
+                json=[record],
+                timeout=3
+            )
+            event = {
+                "event_id": f"EVT-{dispatch_id}",
+                "batch_id": payload.get("batch_id"),
+                "store_id": "MY-KL-001",
+                "event_type": "dispatched",
+                "quantity": float(payload.get("quantity") or 10),
+                "metadata": {
+                    "receiver_id": payload.get("receiver_id"),
+                    "receiver_name": payload.get("receiver_name"),
+                    "distance_km": payload.get("distance_km"),
+                    "eta_minutes": payload.get("eta_minutes")
+                }
+            }
+            requests.post(
+                f"{supabase_url}/rest/v1/simulation_events",
+                headers=headers,
+                json=[event],
+                timeout=3
+            )
+        except Exception as e:
+            print(f"[Supabase Sync] dispatch notice: {e}")
+
+    return {"status": "dispatched", "record": record}
+

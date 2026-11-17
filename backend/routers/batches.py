@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Body, HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, Union, List
 
 from backend.schemas.batch import BatchResponse, Batch
-from backend.services.batch_service import get_batches, get_batch_by_id, save_batch_to_csv
+from backend.services.batch_service import (
+    get_batches,
+    get_batch_by_id,
+    save_batch_to_csv,
+    update_batch,
+    delete_batch
+)
 
 
 router = APIRouter(
@@ -10,14 +16,17 @@ router = APIRouter(
 )
 
 
-@router.get("/api/batches", response_model=BatchResponse)
-@router.get("/api/lots", response_model=BatchResponse)
-def read_batches():
+@router.get("/api/batches", response_model=Union[BatchResponse, List[Batch]])
+@router.get("/api/lots", response_model=Union[BatchResponse, List[Batch]])
+def read_batches(as_list: bool = False):
     """
     Returns active store inventory batches sorted by FEFO (First-Expired, First-Out).
-    Serves both /api/batches and /api/lots contract.
+    Supports both wrapped BatchResponse and plain List[Batch] for frontend convenience.
     """
-    return get_batches()
+    res = get_batches()
+    if as_list and isinstance(res, dict) and "batches" in res:
+        return res["batches"]
+    return res
 
 
 @router.get("/api/batches/{batch_id}", response_model=Batch)
@@ -40,3 +49,22 @@ def create_batch(batch_data: Dict[str, Any] = Body(...)):
     and computes ML spoilage risk using Person 1's XGBoost champion model.
     """
     return save_batch_to_csv(batch_data)
+
+
+@router.patch("/api/batches/{batch_id}")
+def patch_batch(batch_id: str, updates: Dict[str, Any] = Body(...)):
+    """Updates batch fields (quantity, price, expiry, etc.) in master inventory."""
+    res = update_batch(batch_id, updates)
+    if not res:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+    return res
+
+
+@router.delete("/api/batches/{batch_id}")
+def remove_batch(batch_id: str):
+    """Deletes a batch from master inventory."""
+    res = delete_batch(batch_id)
+    if not res:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
+    return res
+

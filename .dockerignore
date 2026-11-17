@@ -1,0 +1,15 @@
+.git
+.github
+node_modules
+frontend
+scratch
+notebooks
+docs
+output
+.env
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache

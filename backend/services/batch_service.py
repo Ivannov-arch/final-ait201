@@ -64,22 +64,55 @@ def _format_batch_record(record: dict) -> dict:
         risk_score = None
         risk_source = "dte_fallback"
 
+    qty = float(record.get("quantity", 0.0) or 0.0)
+    price = float(record.get("unit_price_myr", 5.0) or 5.0)
+    cost = float(record.get("cost_price_myr", price * 0.70) or (price * 0.70))
+    uom = str(record.get("uom", "units") or "units")
+    prod_name = str(record.get("product_name", record.get("food_name", "Unknown")))
+    lot_id = str(record.get("lot_id", record.get("batch_id", "N/A")))
+    date_in = str(record.get("date_received", record.get("dateIn", "")))
+    expiry = str(record.get("expiry_date", record.get("expiryDate", "")))
+    reorder = int(record.get("reorder_level", 15) or 15)
+    reorder_qty = int(record.get("reorder_quantity", 20) or 20)
+    is_promo = int(record.get("is_promoted", record.get("isPromoted", 0)) or 0)
+    turnover = float(record.get("turnover_ratio", 2.0) or 2.0)
+    pressure = float(record.get("stock_pressure", 1.0) or 1.0)
+
     return {
-        "batch_id": str(record.get("lot_id", "N/A")),
-        "food_name": str(record.get("product_name", "Unknown")),
-        "quantity": float(record.get("quantity", 0.0)),
-        "unit": str(record.get("uom", "units")),
+        "batch_id": lot_id,
+        "food_name": prod_name,
+        "quantity": qty,
+        "unit": uom,
         "status": status,
         "category": str(record.get("category", "Produce")),
-        "unit_price_myr": float(record.get("unit_price_myr", 5.0)),
+        "unit_price_myr": price,
         "days_to_expiry": dte,
         "risk_tier": risk_tier,
         "risk_label": risk_label,
         "risk_score": risk_score,
         "risk_source": risk_source,
         "shelf_life_days": float(record.get("shelf_life_days") or max(1, dte + 7)),
-        "turnover_ratio": float(record.get("turnover_ratio") or 2.0),
-        "stock_pressure": float(record.get("stock_pressure") or 1.0)
+        "turnover_ratio": turnover,
+        "stock_pressure": pressure,
+        # Frontend-compatible aliases
+        "id": lot_id,
+        "product": prod_name,
+        "stockQty": qty,
+        "qty": f"{qty} {uom}",
+        "uom": uom,
+        "sellPrice": f"RM {price:.2f}/{uom}",
+        "costPrice": f"RM {cost:.2f}/{uom}",
+        "unitPrice": price,
+        "expiryDate": expiry,
+        "dateIn": date_in,
+        "dteNum": dte,
+        "dte": "1 day" if dte == 1 else f"{dte} days",
+        "risk": risk_label,
+        "riskType": risk_tier,
+        "reorderLevel": reorder,
+        "reorderQuantity": reorder_qty,
+        "isPromoted": is_promo,
+        "supplier": str(record.get("supplier_name", record.get("supplier", "Direct Procurement")))
     }
 
 
@@ -261,3 +294,75 @@ def save_batch_to_csv(batch_data: dict):
         "csv_updated": csv_saved,
         "batch": new_row
     }
+
+
+def update_batch(batch_id: str, updates: dict) -> dict | None:
+    """Updates an existing batch in inventory_master.json and CSV."""
+    records = []
+    if INVENTORY_MASTER_JSON.exists():
+        try:
+            with open(INVENTORY_MASTER_JSON, "r", encoding="utf-8") as f:
+                records = json.load(f)
+        except Exception:
+            records = []
+
+    idx = next((i for i, r in enumerate(records) if str(r.get("lot_id")) == str(batch_id)), -1)
+    if idx < 0:
+        return None
+
+    # Map payload fields
+    target = records[idx]
+    if "quantity" in updates:
+        target["quantity"] = float(updates["quantity"])
+    if "stockQty" in updates:
+        target["quantity"] = float(updates["stockQty"])
+    if "unit_price_myr" in updates or "unitPrice" in updates or "sellPrice" in updates:
+        p = updates.get("unit_price_myr") or updates.get("unitPrice") or updates.get("sellPrice")
+        try:
+            val = float(str(p).replace("RM", "").replace("/kg", "").replace("/unit", "").strip())
+            target["unit_price_myr"] = f"{val:.2f}"
+        except Exception:
+            pass
+    if "expiry_date" in updates or "expiryDate" in updates:
+        target["expiry_date"] = updates.get("expiry_date") or updates.get("expiryDate")
+    if "days_to_expiry" in updates or "dteNum" in updates:
+        target["days_to_expiry"] = int(updates.get("days_to_expiry") or updates.get("dteNum") or 5)
+    if "reorder_level" in updates or "reorderLevel" in updates:
+        target["reorder_level"] = int(updates.get("reorder_level") or updates.get("reorderLevel") or 15)
+    if "product_name" in updates or "product" in updates:
+        target["product_name"] = updates.get("product_name") or updates.get("product")
+    if "category" in updates:
+        target["category"] = updates.get("category")
+    if "status" in updates:
+        target["status"] = updates.get("status")
+
+    # If quantity <= 0, remove
+    if float(target.get("quantity", 0)) <= 0:
+        records.pop(idx)
+        with open(INVENTORY_MASTER_JSON, "w", encoding="utf-8") as f:
+            json.dump(records, f, indent=2)
+        return {"status": "deleted", "lot_id": batch_id}
+
+    with open(INVENTORY_MASTER_JSON, "w", encoding="utf-8") as f:
+        json.dump(records, f, indent=2)
+
+    return {"status": "updated", "lot_id": batch_id, "batch": _format_batch_record(target)}
+
+
+def delete_batch(batch_id: str) -> dict | None:
+    """Deletes a batch by ID from inventory_master.json."""
+    if not INVENTORY_MASTER_JSON.exists():
+        return None
+    try:
+        with open(INVENTORY_MASTER_JSON, "r", encoding="utf-8") as f:
+            records = json.load(f)
+        before = len(records)
+        records = [r for r in records if str(r.get("lot_id")) != str(batch_id)]
+        if len(records) == before:
+            return None
+        with open(INVENTORY_MASTER_JSON, "w", encoding="utf-8") as f:
+            json.dump(records, f, indent=2)
+        return {"status": "deleted", "lot_id": batch_id}
+    except Exception:
+        return None
+

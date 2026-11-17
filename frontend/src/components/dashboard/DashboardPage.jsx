@@ -58,7 +58,8 @@ export default function DashboardPage({ onNavigateHome }) {
       fetch('/api/batches')
         .then(r => r.json())
         .then(data => {
-          if (Array.isArray(data) && data.length > 0) setBatches(data)
+          const list = Array.isArray(data) ? data : (data && Array.isArray(data.batches) ? data.batches : null)
+          if (list && list.length > 0) setBatches(list)
         })
         .catch(() => {})
     }
