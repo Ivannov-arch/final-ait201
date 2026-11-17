@@ -91,7 +91,8 @@ export default function InventoryFefoRiskPage({
       reorderLevel: '',
       turnoverRatio: '',
       dateIn: today,
-      expiryDate: expStr
+      expiryDate: expStr,
+      isPromoted: false
     }
   })
 
@@ -490,6 +491,7 @@ export default function InventoryFefoRiskPage({
       dteNum,
       risk,
       riskType,
+      isPromoted: Number(editBatch.isPromoted) ? 1 : 0,
       recommended: riskType === 'high' ? 'Donate to Food Bank' : riskType === 'med' ? 'Dynamic Markdown' : 'Normal Sale'
     }
 
@@ -539,6 +541,7 @@ export default function InventoryFefoRiskPage({
       qty: qtyDisplay,
       dateIn: newBatchForm.dateIn || 'Oct 30, 2026',
       expiryDate: newBatchForm.expiryDate || 'Nov 06, 2026',
+      isPromoted: newBatchForm.isPromoted ? 1 : 0,
       dte,
       dteNum,
       risk,
@@ -566,7 +569,8 @@ export default function InventoryFefoRiskPage({
       reorderLevel: '',
       turnoverRatio: '',
       dateIn: 'Oct 30, 2026',
-      expiryDate: 'Nov 06, 2026'
+      expiryDate: 'Nov 06, 2026',
+      isPromoted: false
     })
 
     showToast(`Batch ${newId} (${createdBatch.product}) added successfully to FEFO rotation`)
@@ -1618,6 +1622,18 @@ export default function InventoryFefoRiskPage({
                 </div>
               </div>
 
+              {/* ISSUE-06: promotion flag — ML feature input (is_promoted) */}
+              <div className="fg-inv-form-field">
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={Number(editBatch.isPromoted) === 1}
+                    onChange={(e) => setEditBatch({ ...editBatch, isPromoted: e.target.checked ? 1 : 0 })}
+                  />
+                  On promotion (ML feature: is_promoted)
+                </label>
+              </div>
+
               {/* Automatic FEFO & DTE Live Preview */}
               <div className="fg-inv-form-field">
                 <label>Days to Expiry (DTE) &amp; Risk Preview</label>
@@ -1780,6 +1796,18 @@ export default function InventoryFefoRiskPage({
                      required
                    />
                  </div>
+               </div>
+
+               {/* ISSUE-06: promotion flag — ML feature input (is_promoted) */}
+               <div className="fg-inv-form-field">
+                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                   <input
+                     type="checkbox"
+                     checked={Boolean(newBatchForm.isPromoted)}
+                     onChange={(e) => setNewBatchForm({ ...newBatchForm, isPromoted: e.target.checked })}
+                   />
+                   On promotion (ML feature: is_promoted)
+                 </label>
                </div>
 
                {/* Automatic FEFO & DTE Live Preview */}

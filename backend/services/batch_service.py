@@ -20,8 +20,9 @@ def _ml_risk(record: dict) -> dict | None:
     the shelf-stable policy inside predict_spoilage_risk, not by the model.
     """
     try:
-        from src.ml.spoilage import predict_spoilage_risk
+        from src.ml.spoilage import predict_spoilage_risk, _calendar_features
         dte = float(record.get("days_to_expiry", 5) or 5)
+        dow, weekend, month = _calendar_features(record)
         return predict_spoilage_risk({
             "days_until_expiry": dte,
             "shelf_life_days": float(record.get("shelf_life_days") or max(1, dte + 7)),
@@ -29,6 +30,11 @@ def _ml_risk(record: dict) -> dict | None:
             "base_price": float(record.get("unit_price_myr", 5.0) or 5.0),
             "daily_demand": max(1.0, float(record.get("reorder_quantity", 10) or 10) / 7),
             "stock_pressure": float(record.get("stock_pressure") or 1.0),
+            # ISSUE-06: calendar features + promo flag now sent with every call
+            "day_of_week": dow,
+            "is_weekend": weekend,
+            "month": month,
+            "is_promoted": int(record.get("is_promoted") or 0),
             "category": str(record.get("category") or "Produce"),
         })
     except Exception:
@@ -152,7 +158,8 @@ def save_batch_to_csv(batch_data: dict):
 
     # ML-powered Spoilage Risk Prediction (Person 1 Model Integration)
     try:
-        from src.ml.spoilage import predict_spoilage_risk
+        from src.ml.spoilage import predict_spoilage_risk, _calendar_features
+        dow, weekend, month = _calendar_features({"date_received": date_in})
         lot_feature_input = {
             "days_until_expiry": dte,
             "shelf_life_days": max(1, dte + 7),
@@ -161,7 +168,12 @@ def save_batch_to_csv(batch_data: dict):
             "Unit_Price": unit_price,
             "Category": category,
             "turnover_ratio": turnover,
-            "stock_pressure": round(quantity / (reorder + 1), 2)
+            "stock_pressure": round(quantity / (reorder + 1), 2),
+            # ISSUE-06: full 19-feature schema (calendar + promotion)
+            "day_of_week": dow,
+            "is_weekend": weekend,
+            "month": month,
+            "is_promoted": int(batch_data.get("isPromoted") or batch_data.get("is_promoted") or 0),
         }
         pred = predict_spoilage_risk(lot_feature_input)
         raw_label = str(pred.get("label", "LOW")).upper()
@@ -191,6 +203,7 @@ def save_batch_to_csv(batch_data: dict):
         "days_to_expiry": dte,
         "shelf_life_days": max(1, dte + 7),
         "date_received": date_in,
+        "is_promoted": int(batch_data.get("isPromoted") or batch_data.get("is_promoted") or 0),
         "reorder_level": reorder,
         "reorder_quantity": max(15, int(quantity * 0.8)),
         "turnover_ratio": f"{turnover:.2f}",

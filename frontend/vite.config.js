@@ -54,6 +54,26 @@ function sendJson(res, status, data) {
   res.end(JSON.stringify(data))
 }
 
+// ── Calendar feature derivation (ISSUE-06 fix) ───────────────────────────────
+// Training convention (7_perishable_goods_cleaned.csv): day_of_week follows
+// pandas .dt.dayofweek → Monday=0 … Sunday=6, is_weekend=1 only on Sat/Sun,
+// month = 1–12. Features are derived from date_received so the model sees the
+// same calendar features at inference time as it did during training.
+function parseLotDate(v) {
+  if (!v) return null
+  const s = String(v).trim()
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+  const d = new Date(s) // handles "Oct 30, 2026" style too
+  return isNaN(d.getTime()) ? null : d
+}
+
+function calendarFeatures(v) {
+  const d = parseLotDate(v) || new Date()
+  const dow = (d.getDay() + 6) % 7 // JS Sun=0 → pandas Mon=0
+  return { day_of_week: dow, is_weekend: dow >= 5 ? 1 : 0, month: d.getMonth() + 1 }
+}
+
 // ── Map inventory_master.json row → model lot dict (XGBoost spoilage schema) ───
 function rowToSpoilageLot(r) {
   const dte = Number(r.days_to_expiry) || 0
@@ -65,6 +85,8 @@ function rowToSpoilageLot(r) {
     base_price: parseFloat(r.unit_price_myr) || 10.0,
     daily_demand: Number(r.daily_demand) || Math.max(1, (Number(r.reorder_quantity) || 10) / 7),
     stock_pressure: Number.isFinite(stockPressure) ? stockPressure : undefined,
+    ...calendarFeatures(r.date_received || r.dateIn),
+    is_promoted: Number(r.is_promoted ?? r.isPromoted) ? 1 : 0,
     category: r.category || r.canonical_category || 'Unknown'
   }
 }
@@ -188,6 +210,7 @@ function rowToBatch(r, pred = null) {
     unitPrice:         price,
     expiryDate:        r.expiry_date,
     dateIn:            r.date_received,
+    isPromoted:        Number(r.is_promoted) ? 1 : 0,
     dteNum:            dte,
     dte:               dte === 1 ? '1 day' : `${dte} days`,
     risk,
@@ -229,6 +252,7 @@ function batchToRow(b) {
     days_to_expiry:     dte,
     shelf_life_days:    dte + 7,
     date_received:      b.dateIn || new Date().toISOString().split('T')[0],
+    is_promoted:        Number(b.isPromoted ?? b.is_promoted) ? 1 : 0,
     reorder_level:      rl,
     reorder_quantity:   Math.max(rl, Math.round(qty * 0.8)),
     turnover_ratio:     String(b.turnoverRatio || '2.00'),
@@ -462,6 +486,9 @@ function createApiMiddleware() {
         }
         if (payload.status !== undefined) {
           records[idx].status = payload.status
+        }
+        if (payload.is_promoted !== undefined || payload.isPromoted !== undefined) {
+          records[idx].is_promoted = Number(payload.is_promoted ?? payload.isPromoted) ? 1 : 0
         }
 
         // Recompute ML risk after edits (days_to_expiry / category may have changed)
