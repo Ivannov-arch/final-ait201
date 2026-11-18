@@ -3,9 +3,12 @@
 % ============================================================================
 % PACKAGES & TYPOGRAPHY
 % ============================================================================
-\usepackage[a4paper, top=24mm, bottom=24mm, left=22mm, right=22mm]{geometry}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+\usepackage[a4paper, top=26mm, bottom=24mm, left=22mm, right=22mm, headheight=22pt]{geometry}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{amsmath, amssymb}
@@ -26,7 +29,13 @@
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{listings}
+\usepackage{xurl}
 \usepackage{hyperref}
+
+% Allow graceful line breaks after underscores in long identifiers/filenames
+\let\oldunderscore\_
+\renewcommand{\_}{\oldunderscore\allowbreak}
+\emergencystretch=2em
 
 % ============================================================================
 % COLOR PALETTE (ACADEMIC NAVY / TEAL / SLATE)
@@ -52,6 +61,8 @@
     linkcolor=NavyPrimary,
     citecolor=TealAccent,
     urlcolor=RoyalAccent,
+    plainpages=false,
+    pdfpagelabels=true,
     pdftitle={FreshGuard: Dynamic Food Clearing House Simulator — Project Report},
     pdfauthor={AIT-201 Applied Machine Learning Team}
 }
@@ -80,8 +91,8 @@
 % ============================================================================
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\footnotesize\bfseries\color{NavyPrimary}FRESHGUARD --- DYNAMIC FOOD CLEARING HOUSE}
-\fancyhead[R]{\footnotesize\color{SlateMuted}AIT-201 Applied Machine Learning Project Report}
+\fancyhead[L]{\footnotesize\bfseries\color{NavyPrimary}FRESHGUARD (AIT-201)}
+\fancyhead[R]{\footnotesize\color{SlateMuted}Dynamic Food Clearing House --- Project Report}
 \fancyfoot[L]{\footnotesize\color{SlateMuted}Department of Computer Science / Applied ML (Sem 4)}
 \fancyfoot[R]{\footnotesize\bfseries\color{SlateDark}Page \thepage}
 \renewcommand{\headrulewidth}{0.5pt}
@@ -102,7 +113,7 @@
     arc=2pt,
     top=6pt, bottom=6pt, left=8pt, right=8pt,
     fonttitle=\bfseries\small\color{NavyPrimary},
-    title=#1
+    title={#1}
 }
 
 \newtcolorbox{auditnote}[1][]{
@@ -115,7 +126,7 @@
     arc=2pt,
     top=6pt, bottom=6pt, left=8pt, right=8pt,
     fonttitle=\bfseries\small\color{AmberBorder},
-    title=#1
+    title={#1}
 }
 
 \lstset{
@@ -143,45 +154,47 @@
 % TITLE PAGE
 % ----------------------------------------------------------------------------
 \begin{titlepage}
+    \pagenumbering{Alph}
     \thispagestyle{empty}
-    \vspace*{6mm}
-    {\color{RoyalAccent}\rule{\textwidth}{2.5pt}}
-    \vspace{6mm}
+    \vspace*{1mm}
+    {\color{RoyalAccent}\rule{\textwidth}{2.2pt}}
+    \vspace{4mm}
 
     {\small\bfseries\color{TealAccent}\uppercase{AIT-201 Applied Machine Learning \textbullet\ Final Technical Project Report}}
 
-    \vspace{5mm}
+    \vspace{3mm}
     {\Huge\bfseries\color{NavyPrimary}FreshGuard: Dynamic Food Clearing House Simulator\par}
-    \vspace{3.5mm}
-    {\Large\color{SlateDark}Proactive Retail Food Waste Prevention via Machine Learning Spoilage Prediction, Multi-Horizon Demand Forecasting, Anti-Moral-Hazard Clearance Policy, and Smart OSRM Logistics\par}
+    \vspace{2.5mm}
+    {\large\color{SlateDark}Proactive Retail Food Waste Prevention via Machine Learning Spoilage Prediction, Multi-Horizon Demand Forecasting, Anti-Moral-Hazard Clearance Policy, and Smart OSRM Logistics\par}
 
-    \vspace{6mm}
+    \vspace{4mm}
     {\color{BorderGray}\rule{\textwidth}{0.8pt}}
-    \vspace{6mm}
+    \vspace{4mm}
 
     \begin{tcolorbox}[
         colback=LightBg,
         colframe=BorderGray,
         boxrule=0.7pt,
         arc=3pt,
-        top=10pt, bottom=10pt, left=12pt, right=12pt
+        top=7pt, bottom=7pt, left=10pt, right=10pt
     ]
-        \renewcommand{\arraystretch}{1.28}
-        \begin{tabularx}{\textwidth}{@{} >{\bfseries\color{NavyPrimary}}l X @{}}
+        \renewcommand{\arraystretch}{1.15}
+        {\small
+        \begin{tabularx}{\textwidth}{@{} >{\bfseries\color{NavyPrimary}}l >{\raggedright\arraybackslash}X @{}}
             Course:          & AIT-201 Applied Machine Learning (Year 2, Semester 4) \\
             System Name:     & FreshGuard --- Dynamic Food Clearing House (Malaysia Retail Scope) \\
             Architecture:    & Two-Phase Modular Pipeline (Phase 1 BASE + Phase 2 UPGRADE) \\
             Core Stack:      & Python (XGBoost, LightGBM, Scikit-Learn), FastAPI, Supabase PostgreSQL, React 18 + Vite, OSRM Routing \\
             Localization:    & Malaysian Ringgit (MYR), OpenDOSM PriceCatcher, 2025--2026 Malaysian Holidays, Klang Valley Food Banks \\
             Report Date:     & November 18, 2026 \\
-        \end{tabularx}
+        \end{tabularx}}
     \end{tcolorbox}
 
-    \vspace{7mm}
-    {\normalsize\bfseries\color{NavyPrimary}Project Team \& Engineering Role Matrix}\\[4pt]
-    \renewcommand{\arraystretch}{1.22}
-    {\footnotesize
-    \begin{tabularx}{\textwidth}{@{} c >{\bfseries}l l X @{}}
+    \vspace{4.5mm}
+    {\small\bfseries\color{NavyPrimary}Project Team \& Engineering Role Matrix}\\[3pt]
+    \renewcommand{\arraystretch}{1.12}
+    {\scriptsize
+    \begin{tabularx}{\textwidth}{@{} c >{\bfseries}l l >{\raggedright\arraybackslash}X @{}}
         \toprule
         \rowcolor{NavyPrimary}
         \color{white}\textbf{Role} & \color{white}\textbf{Title} & \color{white}\textbf{Assigned Goals} & \color{white}\textbf{Primary Shipped Deliverables} \\
@@ -189,7 +202,7 @@
         Person 0 & Dataset Quality Specialist & Data Prep \& Audit & 12 cleaned datasets, 496 expiry repairs, SMOTE bootstrap, \texttt{holidays\_my.csv}, DOSM Parquet \\
         \rowcolor{LightBg}
         Person 1 & Tech Lead \& Spoilage ML & Goal 1 (Step 7) & Two-tier XGBoost classifier (\texttt{spoilage\_classifier.pkl}), dual-weighted model, FEFO sorter \\
-        Person 2 & Forecaster \& API Engineer & Goals 2 \& 10 (Step 8) & 3-horizon LightGBM models (\texttt{demand\_forecast\_final\_day\_\{1,2,3\}.pkl}), FastAPI REST server \\
+        Person 2 & Forecaster \& API Engineer & Goals 2 \& 10 (Step 8) & 3-horizon LightGBM models (\texttt{demand\_forecast\_final\_day\_*.pkl}), FastAPI REST server \\
         \rowcolor{LightBg}
         Person 3 & Data Architect \& Pipeline & Goals 3 \& 4 (Steps 9--10) & Single-store ETL (\texttt{lots\_base.csv}), 7-rule validator, canonical schema, 2,644-event simulator \\
         Person 4 & Business Logic \& Cloud DB & Goals 6 \& 9 (Step 12) & Anti-moral-hazard rule engine (45/45 tests), Supabase 5-table schema + RLS + live ingestion \\
@@ -201,13 +214,14 @@
 
     \vfill
     \begin{center}
-        {\footnotesize\color{SlateMuted}Every quantitative metric, confusion matrix entry, feature importance score, and operational KPI in this report is derived directly from executed project scripts and verified artifacts in the repository.}
+        {\scriptsize\color{SlateMuted}Every quantitative metric, confusion matrix entry, feature importance score, and operational KPI in this report is derived directly from executed project scripts and verified artifacts in the repository.}
     \end{center}
 \end{titlepage}
 
 % ----------------------------------------------------------------------------
 % ABSTRACT
 % ----------------------------------------------------------------------------
+\pagenumbering{roman}
 \begin{abstract}
 \noindent Retail grocery supply chains traditionally manage perishable inventory reactively: stock moves on First-In First-Out (FIFO) rules, discounts are improvised at the last minute, and edible surplus is either donated ad-hoc or discarded into landfills. \textbf{FreshGuard} reframes retail food waste from a post-hoc rescue problem into a proactive \emph{Dynamic Food Clearing House} that treats every perishable lot as a depreciating economic asset across Steps 7--14 of the food supply chain.
 
@@ -219,6 +233,7 @@ We design, implement, and evaluate a full-stack Applied Machine Learning platfor
 \listoffigures
 \listoftables
 \newpage
+\pagenumbering{arabic}
 
 % ============================================================================
 % SECTION 1: INTRODUCTION & PROBLEM STATEMENT
@@ -257,55 +272,54 @@ FreshGuard operates as a closed-loop cyber-physical retail simulator. Figure~\re
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=6mm and 7mm,
+    node distance=8mm and 7mm,
     box/.style={rectangle, rounded corners=3pt, draw=NavyPrimary, thick, fill=LightBg,
-                text width=3.1cm, align=center, font=\scriptsize\sffamily, minimum height=1.15cm, inner sep=4pt},
+                text width=3.3cm, align=center, font=\scriptsize\sffamily, minimum height=1.2cm, inner sep=4pt},
     mlbox/.style={rectangle, rounded corners=3pt, draw=RoyalAccent, thick, fill=RoyalAccent!8,
                 text width=3.3cm, align=center, font=\scriptsize\sffamily, minimum height=1.25cm, inner sep=4pt},
     polbox/.style={rectangle, rounded corners=3pt, draw=TealAccent, thick, fill=TealAccent!8,
-                text width=3.5cm, align=center, font=\scriptsize\sffamily, minimum height=1.25cm, inner sep=4pt},
+                text width=4.6cm, align=center, font=\scriptsize\sffamily, minimum height=1.15cm, inner sep=4pt},
     uibox/.style={rectangle, rounded corners=3pt, draw=AmberBorder, thick, fill=AmberBg!70,
                 text width=11.4cm, align=center, font=\scriptsize\sffamily, minimum height=0.95cm, inner sep=5pt},
-    arrow/.style={-{Stealth[length=2.4mm]}, thick, color=SlateDark},
+    arrow/.style={-{Stealth[length=2.2mm]}, thick, color=SlateDark},
     dasharrow/.style={-{Stealth[length=2.2mm]}, thick, dashed, color=TealAccent}
 ]
 
 % Row 1: Data Layer
 \node[box] (raw) {\textbf{1. Multi-Source Data}\\(Person 0)\\12 Cleaned Tables\\Perishable 89.9k, M5 1.27M\\DOSM MYR, Holidays MY};
 \node[box, right=of raw] (etl) {\textbf{2. Data Pipeline \& ETL}\\(Person 3)\\\texttt{lots\_base.csv} (990 lots)\\7-Rule Validator\\Canonical + 2,644 Events};
-\node[box, right=of etl] (db) {\textbf{3. Cloud DB \& Master}\\(Person 4)\\Supabase PostgreSQL\\5 Tables + 10 RLS Policies\\JSON Master + Event Ledger};
+\node[box, right=of etl] (db) {\textbf{3. Cloud DB \& Master}\\(Person 4)\\Supabase PostgreSQL\\5 Tables + 10 RLS Policies\\JSON Master + Ledger};
 
 % Row 2: ML Layer
 \node[mlbox, below=9mm of raw] (spoil) {\textbf{Tier 1+2 Spoilage ML}\\(Person 1)\\XGBoost (19 Features)\\+ Exponential Decay $\tau_c$\\+ Shelf-Stable Policy};
-\node[mlbox, below=9mm of etl] (fcst) {\textbf{3-Day Demand ML}\\(Person 2)\\LightGBM Direct ($h=1,2,3$)\\Stock-Share Disaggregation\\Advisory (\texttt{Auto-PO Locked})};
+\node[mlbox, below=9mm of etl] (fcst) {\textbf{3-Day Demand ML}\\(Person 2)\\LightGBM Direct ($h=1,2,3$)\\Stock-Share Disagg.\\Advisory (\texttt{Auto-PO Locked})};
 \node[mlbox, below=9mm of db] (cargo) {\textbf{Cargo ML \& OSRM GIS}\\(Person 5)\\Cargo Estimator ($R^2=95.5\%$)\\Cold-Chain Vehicle Specs\\Live OSRM Klang Valley};
 
-% Row 3: Policy & API Layer
-\node[polbox, below=9mm of spoil, xshift=1.85cm] (rule) {\textbf{Clearance Rule Engine (Person 4)}\\Normal Sale / Dynamic Markdown (15--40\%)\\Closed-NGO Donation (Cap $\le 30\%$)\\Anti-Moral-Hazard 50\% Redirect};
-\node[polbox, below=9mm of cargo, xshift=-1.85cm] (api) {\textbf{Serving Layer (Person 2 \& 6)}\\FastAPI REST (\texttt{/api/*})\\Vite BFF Middleware Parity\\Persistent Python ML Bridge};
+% Row 3: Policy & API Layer (cleanly centered with generous vertical clearance)
+\node[polbox, below=10mm of $(spoil.south)!0.42!(fcst.south)$] (rule) {\textbf{Clearance Rule Engine (Person 4)}\\Normal Sale / Dynamic Markdown (15--40\%)\\Closed-NGO Donation (Cap $\le 30\%$)\\Anti-Moral-Hazard 50\% Redirect};
+\node[polbox, below=10mm of $(fcst.south)!0.58!(cargo.south)$] (api) {\textbf{Serving Layer (Person 2 \& 6)}\\FastAPI REST (\texttt{/api/*})\\Vite BFF Middleware Parity\\Persistent Python ML Bridge};
 
 % Row 4: UI Layer
 \node[uibox, below=9mm of $(rule.south)!0.5!(api.south)$] (ui) {\textbf{FreshGuard 6-Step Store Web Application (Person 6 --- React 18 + Vite + GSAP + Native SVG)}\\
 FEFO Risk Inventory \textbullet\ Advisory 3-Day Forecast \textbullet\ Decision Action Modal \textbullet\ POS Sales Log \textbullet\ Pre-Rendered Route Map \textbullet\ Executive KPI Strip};
 
-% Arrows
+% Arrows (clean, non-overlapping orthogonal routing)
 \draw[arrow] (raw) -- (etl);
 \draw[arrow] (etl) -- (db);
-\draw[arrow] (etl.south) -- ++(0,-3.5mm) -| (spoil.north);
 \draw[arrow] (raw.south) -- (spoil.north);
 \draw[arrow] (etl.south) -- (fcst.north);
 \draw[arrow] (db.south) -- (cargo.north);
 
-\draw[arrow] (spoil.south) -- ++(0,-3.5mm) -| (rule.north);
-\draw[arrow] (fcst.south) -- ++(0,-3.5mm) -| (rule.north);
-\draw[arrow] (cargo.south) -- ++(0,-3.5mm) -| (api.north);
+\draw[arrow] (spoil.south) -- ++(0,-4mm) -| ([xshift=-12mm]rule.north);
+\draw[arrow] (fcst.south) -- ++(0,-4mm) -| ([xshift=12mm]rule.north);
+\draw[arrow] (cargo.south) -- ++(0,-4mm) -| ([xshift=10mm]api.north);
 \draw[arrow] (rule.east) -- (api.west);
-\draw[arrow] (db.east) -- ++(4mm,0) |- (api.east);
-\draw[arrow] (api.south) -- ++(0,-3.5mm) -| (ui.north);
-\draw[arrow] (rule.south) -- ++(0,-3.5mm) -| (ui.north);
+\draw[arrow] (db.east) -- ++(5mm,0) |- (api.east);
+\draw[arrow] (rule.south) -- ++(0,-4mm) -| ([xshift=-26mm]ui.north);
+\draw[arrow] (api.south) -- ++(0,-4mm) -| ([xshift=26mm]ui.north);
 
-% Closed loop feedback
-\draw[dasharrow] (ui.west) -- ++(-5mm,0) |- node[pos=0.25, rotate=90, above, font=\tiny\sffamily\color{TealAccent}] {POS Deduction \& Audit Feedback} (etl.west);
+% Closed loop feedback routed cleanly around left margin to top of ETL
+\draw[dasharrow] (ui.west) -- ++(-5mm,0) |- node[pos=0.28, rotate=90, above, font=\tiny\sffamily\color{TealAccent}] {POS Deduction \& Audit Feedback} ([yshift=4mm]raw.north) -| (etl.north);
 
 \end{tikzpicture}
 \caption{FreshGuard end-to-end closed-loop architecture integrating multi-source preprocessing, Person 3's ETL and canonical simulator, three ML engines, the anti-moral-hazard rule engine, cloud persistence, and the 6-step React web interface.}
@@ -321,7 +335,7 @@ Across the project's raw data repository, Person 0 audited and preprocessed 12 d
 \label{tab:datasets}
 \renewcommand{\arraystretch}{1.15}
 {\scriptsize
-\begin{tabularx}{\textwidth}{@{} l r r l X @{}}
+\begin{tabularx}{\textwidth}{@{} l r r l >{\raggedright\arraybackslash}X @{}}
 \toprule
 \rowcolor{NavyPrimary}
 \color{white}\textbf{Processed Dataset} & \color{white}\textbf{Raw Rows} & \color{white}\textbf{Clean Rows} & \color{white}\textbf{Pipeline Role} & \color{white}\textbf{Key Remediation Actions} \\
@@ -391,12 +405,12 @@ One-hot encoding the 9 normalized categories (renaming \texttt{Produce} $\to$ \t
 Benchmarked against \texttt{RandomForestClassifier} and \texttt{GradientBoostingClassifier}, \textbf{XGBoost}~\cite{chen2016xgboost} (\texttt{n\_estimators=150}, \texttt{max\_depth=6}, \texttt{learning\_rate=0.08}, \texttt{subsample=0.85}, \texttt{colsample\_bytree=0.85}, \texttt{eval\_metric="mlogloss"}) was selected as production champion (\texttt{models/spoilage\_classifier.pkl}). To address minority-class collapse on the 16.37\% MODERATE class identified during evaluation, a second dual-weighted variant (\texttt{models/spoilage\_classifier\_dual\_weighted.pkl}) was engineered in \texttt{src/ml/train\_spoilage\_dual\_weighted.py} applying sample weights $w_{\text{HIGH}} = 1.5$, $w_{\text{MODERATE}} = 2.6$, and $w_{\text{LOW}} = 1.0$.
 
 \subsubsection{Tier-2 Exponential Time-Decay Policy and Department Split}
-Because raw multi-class probability argmax does not encode asymmetric food-waste penalties as expiry becomes imminent, \texttt{src/ml/spoilage.py} layers a continuous Tier-2 policy escalation using a category-specific biological decay constant $\tau_c \in \{2\text{d Bakery},\; 3\text{d Meat/Seafood/Deli/RTE},\; 4\text{d Dairy/F\&V},\; 7\text{d Frozen/Beverages}\}$:
-\begin{equation}
-    u(\text{DTE}, c) = \exp\!\left(-\frac{\max(0, \text{DTE})}{\tau_c}\right), \qquad
-    P'(\text{HIGH}) = \frac{P(\text{HIGH}) + \alpha u}{Z}, \qquad
+Because raw multi-class probability argmax does not encode asymmetric food-waste penalties as expiry becomes imminent, \texttt{src/ml/spoilage.py} layers a continuous Tier-2 policy escalation using a category-specific biological decay constant $\tau_c$ ($2$\,d for Bakery; $3$\,d for Meat, Seafood, Deli, and Ready-to-Eat; $4$\,d for Dairy and Fruits \& Vegetables; $7$\,d for Frozen Meals and Beverages):
+\begin{align}
+    u(\text{DTE}, c) &= \exp\!\left(-\frac{\max(0, \text{DTE})}{\tau_c}\right), \\
+    P'(\text{HIGH}) &= \frac{P(\text{HIGH}) + \alpha u}{Z}, \qquad
     P'(\text{LOW}) = \frac{\max(0,\, P(\text{LOW}) - \alpha u)}{Z},
-\end{equation}
+\end{align}
 where $Z$ renormalizes probabilities to unity and $\alpha = 0.10$ is the shipped escalation strength. In addition, an updated \textbf{Hierarchical Decision Gate} (\texttt{mode="hierarchical"}) protects HIGH recall ($P(\text{HIGH}) \ge 0.40$ or $u \ge 0.55$) while elevating aging lots into MODERATE ($P(\text{MOD}) \ge 0.18$ or $u \ge 0.15$). Finally, two deployment guards ensure domain validity: (i) \texttt{SHELF\_STABLE\_CATEGORIES} (Grains \& Pulses, Oils \& Fats, Pantry, Snacks, Beverages/Liquor) bypass the perishable ML model and return policy \texttt{LOW} (0.95) unless $\text{DTE} \le 0$; and (ii) \texttt{CATEGORY\_EQUIVALENCE} maps 18 retail taxonomy aliases onto trained one-hot columns to prevent all-zero degeneracy.
 
 \subsection{Module 2: Direct Multi-Horizon Demand Forecasting (Person 2)}
@@ -446,7 +460,13 @@ Person 4 deployed a production PostgreSQL database on Supabase (\texttt{ap-south
     \item \textbf{Idempotent Cloud Ingestion:} \texttt{src/ingest/upload\_batches.py} successfully uploaded all \textbf{990 routed batches} and \textbf{2,644 simulation events} in 100-row upsert chunks with zero errors.
 \end{itemize}
 
-Person 2 exposed the unified \textbf{FastAPI REST backend} (\texttt{backend/main.py}) across six modular routers: \texttt{GET/POST/PATCH/DELETE /api/batches} (and \texttt{/api/lots}), \texttt{GET /api/forecast/\{products, product/\{name\}, horizon/\{h\}, store/\{id\}\}}, \texttt{POST /api/recommend}, \texttt{GET /api/dispatch-route/\{batch\_id\}}, \texttt{GET/POST/PATCH/DELETE /api/transactions}, and \texttt{GET /api/dashboard/summary}.
+Person 2 exposed the unified \textbf{FastAPI REST backend} (\texttt{backend/main.py}) across six modular routers:
+\begin{itemize}[leftmargin=18pt, itemsep=1pt]
+    \item \textbf{Inventory:} \texttt{GET}, \texttt{POST}, \texttt{PATCH}, \texttt{DELETE} on \texttt{/api/batches} (and \texttt{/api/lots})
+    \item \textbf{Forecasting:} \texttt{GET /api/forecast/products}, \texttt{/product/\{name\}}, \texttt{/horizon/\{h\}}, \texttt{/store/\{id\}}
+    \item \textbf{Decision \& Dispatch:} \texttt{POST /api/recommend} and \texttt{GET /api/dispatch-route/\{batch\_id\}}
+    \item \textbf{POS \& KPIs:} \texttt{GET/POST/PATCH/DELETE /api/transactions} and \texttt{GET /api/dashboard/summary}
+\end{itemize}
 
 \subsection{Six-Step Retail Web Application and POS Sales Log (Person 6)}
 Built with \textbf{React 18, Vite, modular BEM CSS, GSAP animations, and zero-dependency native SVG charts}, the frontend delivers both a B2B landing showcase and a reactive multi-tab store operations console:
@@ -473,11 +493,12 @@ Evaluated on the held-out stratified test set ($N = 17{,}976$ receipts), the zer
 \caption{Spoilage Risk Classification: XGBoost vs.\ Traditional Retail DTE Rule Baseline ($N = 17{,}976$).}
 \label{tab:spoilage_headline}
 \renewcommand{\arraystretch}{1.15}
-{\small
+\setlength{\tabcolsep}{4pt}
+{\footnotesize
 \begin{tabular}{@{} l r r r r @{}}
 \toprule
 \rowcolor{NavyPrimary}
-\color{white}\textbf{Metric} & \color{white}\textbf{XGBoost (Tier 1)} & \color{white}\textbf{Tier 1+2 ($\alpha=0.10$)} & \color{white}\textbf{DTE Rule Baseline} & \color{white}\textbf{Gain (Tier 1 vs.\ Base)} \\
+\color{white}\textbf{Metric} & \color{white}\textbf{XGBoost (T1)} & \color{white}\textbf{Tier 1+2 ($\alpha=0.10$)} & \color{white}\textbf{DTE Rule} & \color{white}\textbf{Gain (T1 vs.\ Base)} \\
 \midrule
 Overall Accuracy & \textbf{67.33\%} & 67.14\% & 32.26\% & \textbf{+35.07 pp} \\
 \rowcolor{LightBg}
@@ -531,11 +552,12 @@ Evaluated on the untouched 30-day chronological test window (\texttt{2017-07-17}
 \caption{Direct Multi-Horizon LightGBM Performance vs.\ 7-Day Seasonal Naive Baseline (Test Window: 22,680 rows/horizon).}
 \label{tab:forecast_headline}
 \renewcommand{\arraystretch}{1.15}
-{\small
+\setlength{\tabcolsep}{4.5pt}
+{\footnotesize
 \begin{tabular}{@{} c r r r r r r r @{}}
 \toprule
 \rowcolor{NavyPrimary}
-\color{white}\textbf{Horizon} & \color{white}\textbf{Val WAPE} & \color{white}\textbf{Test MAE} & \color{white}\textbf{Test RMSE} & \color{white}\textbf{Test WAPE} & \color{white}\textbf{Naive MAE} & \color{white}\textbf{Naive WAPE} & \color{white}\textbf{Forecast Skill} \\
+\color{white}\textbf{Horizon} & \color{white}\textbf{Val WAPE} & \color{white}\textbf{Test MAE} & \color{white}\textbf{Test RMSE} & \color{white}\textbf{Test WAPE} & \color{white}\textbf{Naive MAE} & \color{white}\textbf{Naive WAPE} & \color{white}\textbf{Skill} \\
 \midrule
 Day +1 & 11.45\% & \textbf{119.02} & \textbf{290.01} & \textbf{12.48\%} & 152.57 & 16.00\% & \textbf{+21.99\%} \\
 \rowcolor{LightBg}
@@ -591,7 +613,7 @@ Table~\ref{tab:limitations} consolidates the open engineering and modeling limit
 \label{tab:limitations}
 \renewcommand{\arraystretch}{1.15}
 {\scriptsize
-\begin{tabularx}{\textwidth}{@{} >{\bfseries}l X X @{}}
+\begin{tabularx}{\textwidth}{@{} >{\bfseries}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X @{}}
 \toprule
 \rowcolor{NavyPrimary}
 \color{white}\textbf{Subsystem} & \color{white}\textbf{Current Limitation} & \color{white}\textbf{Recommended Engineering Path} \\
