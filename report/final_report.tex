@@ -178,7 +178,7 @@
         \midrule
         Person 0 & Dataset Quality Specialist & Data Prep \& Audit & 12 cleaned datasets, 496 expiry repairs, SMOTE bootstrap, \texttt{holidays\_my.csv}, DOSM Parquet \\
         \rowcolor{LightBg}
-        Person 1 & Tech Lead \& Spoilage ML & Goal 1 (Step 7) & Two-tier XGBoost classifier (\texttt{spoilage\_classifier.pkl}), dual-weighted model, FEFO sorter \\
+        Person 1 & Tech Lead \& Spoilage ML & Goal 1 (Step 7) & Single-tier Dual-Weighted XGBoost classifier (\texttt{spoilage\_classifier\_dual\_weighted.pkl}), FEFO sorter \\
         Person 2 & Forecaster \& API Engineer & Goals 2 \& 10 (Step 8) & 3-horizon LightGBM models (\texttt{demand\_forecast\_final\_day\_*.pkl}), FastAPI REST server \\
         \rowcolor{LightBg}
         Person 3 & Data Architect \& Pipeline & Goals 3 \& 4 (Steps 9--10) & Single-store ETL (\texttt{lots\_base.csv}), 7-rule validator, canonical schema, 2,644-event simulator \\
@@ -202,7 +202,7 @@
 \begin{abstract}
 \noindent Retail grocery supply chains traditionally manage perishable inventory reactively: stock moves on First-In First-Out (FIFO) rules, discounts are improvised at the last minute, and edible surplus is either donated ad-hoc or discarded into landfills. \textbf{FreshGuard} reframes retail food waste from a post-hoc rescue problem into a proactive \emph{Dynamic Food Clearing House} that treats every perishable lot as a depreciating economic asset across Steps 7--14 of the food supply chain.
 
-We design, implement, and evaluate a full-stack Applied Machine Learning platform localized for Malaysian retail operations. The architecture combines five tightly coupled subsystems: (1) a 10-step data preprocessing and canonical ETL pipeline (harmonizing 12 raw tables into 990 validated store lots and a 2,644-event retail lifecycle ledger); (2) a non-circular, zero-leakage two-tier \textbf{XGBoost Spoilage Risk Classifier} trained on 89,880 perishable receipts (achieving \textbf{67.33\% accuracy} and \textbf{0.5127 macro-F1}, outperforming the standard retail Days-To-Expiry heuristic by \textbf{+35.07 percentage points} in accuracy and \textbf{+24.29 pp} in macro-F1, while Tier-2 exponential time-decay escalation lifts HIGH-risk recall to \textbf{71.46\%} at $\alpha=0.10$); (3) three direct multi-horizon \textbf{LightGBM Demand Forecasters} trained on 1.27 million M5 food-retail records (achieving \textbf{12.48\% / 12.84\% / 13.22\% WAPE} across Days +1 to +3, reducing error by \textbf{17.4\%--22.0\%} relative to a strong 7-day seasonal-naive benchmark); (4) an auditable \textbf{Dynamic Markdown \& Anti-Moral-Hazard Rule Engine} enforcing tiered 15\%--40\% commercial clearance, closed-channel NGO segregation, and a strict 30\% per-store donation cap (protecting \textbf{RM~1,312,200.96} in expected value across 990 lots and achieving an \textbf{87.0\% terminal rescue rate} in simulation); and (5) an \textbf{ML Cargo Estimator} ($R^2 = 95.5\%$) paired with live \textbf{OSRM} driving-route dispatch, \textbf{Supabase PostgreSQL} persistence, \textbf{FastAPI}, and a \textbf{React 18 + Vite} executive dashboard. Crucially, we maintain rigorous scientific governance by auditing temporal and granularity gaps in historical demand data, exposing explicit \texttt{not\_validated} advisory badges in the UI and locking automated Purchase Orders.
+We design, implement, and evaluate a full-stack Applied Machine Learning platform localized for Malaysian retail operations. The architecture combines five tightly coupled subsystems: (1) a 10-step data preprocessing and canonical ETL pipeline (harmonizing 12 raw tables into 990 validated store lots and a 2,644-event retail lifecycle ledger); (2) a non-circular, zero-leakage single-tier \textbf{Dual-Weighted XGBoost Spoilage Classifier} trained on 89,880 perishable receipts (achieving \textbf{0.6021 macro-F1} and \textbf{60.06\% MODERATE recall}, overcoming minority-class collapse without synthetic data leakage and outperforming unweighted tree baselines); (3) three direct multi-horizon \textbf{LightGBM Demand Forecasters} trained on 1.27 million M5 food-retail records (achieving \textbf{12.48\% / 12.84\% / 13.22\% WAPE} across Days +1 to +3, reducing error by \textbf{17.4\%--22.0\%} relative to a strong 7-day seasonal-naive benchmark); (4) an auditable \textbf{Dynamic Markdown \& Anti-Moral-Hazard Rule Engine} enforcing tiered 15\%--40\% commercial clearance, closed-channel NGO segregation, and a strict 30\% per-store donation cap; and (5) an \textbf{ML Cargo Estimator} ($R^2 = 95.5\%$) paired with live \textbf{OSRM} driving-route dispatch, \textbf{Supabase PostgreSQL} persistence, \textbf{FastAPI}, and a \textbf{React 18 + Vite} executive dashboard. Crucially, we maintain rigorous scientific governance by auditing temporal and granularity gaps in historical demand data, exposing explicit \texttt{not\_validated} advisory badges in the UI and locking automated Purchase Orders.
 \end{abstract}
 
 \vspace{4mm}
@@ -359,36 +359,50 @@ Person 3 engineered the project's authoritative \emph{Single Source of Truth} ac
 
 FreshGuard integrates three specialized, production-packaged ML models, each rigorously isolated against target leakage and aligned to inference-time data availability.
 
-\subsection{Module 1: Two-Tier Spoilage Risk Classification (Person 1)}
+\subsection{Module 1: Spoilage Risk Classification via Machine Learning (Person 1)}
 \label{sec:spoilage_method}
 
-\subsubsection{Non-Circular Target Formulation and Leakage Prevention}
-A critical methodological flaw in naive perishable-inventory modeling is generating target risk labels from \texttt{days\_until\_expiry} thresholds while using DTE as a feature---producing tautological near-100\% accuracy that learns nothing beyond a simple rule. FreshGuard eliminates this circularity by training on \texttt{7\_perishable\_goods\_cleaned.csv} (89,880 receipts across 50 stores and 9 categories, 2023--2024) and deriving target labels strictly from \textbf{realized post-sale waste outcomes} (\texttt{waste\_pct}):
+\subsubsection{Non-Circular Target Formulation and Leakage Elimination}
+A fundamental methodological pitfall in retail perishable inventory modeling is generating target labels directly from \texttt{days\_until\_expiry} (DTE) cutoffs while simultaneously including DTE as a predictive feature. This tautological circularity produces inflated near-100\% test accuracy that merely reproduces a deterministic heuristic. FreshGuard eliminates this flaw by training on \texttt{7\_perishable\_goods\_cleaned.csv} (89,880 store receipts across 50 supermarket locations and 9 perishable categories, 2023--2024) and deriving ground-truth risk classes strictly from \textbf{realized post-sale waste outcomes} (\texttt{waste\_pct}):
 \begin{equation}
     y = \begin{cases}
-        \text{LOW}      & \text{if } \texttt{waste\_pct} = 0\% \quad (38{,}130\text{ rows, } 42.42\%), \\
-        \text{MODERATE} & \text{if } 0\% < \texttt{waste\_pct} \le 25\% \quad (14{,}710\text{ rows, } 16.37\%), \\
-        \text{HIGH}     & \text{if } \texttt{waste\_pct} > 25\% \quad (37{,}040\text{ rows, } 41.21\%).
+        \text{LOW}      & \text{if } \texttt{waste\_pct} = 0\% \quad (38{,}130\text{ receipts, } 42.42\%), \\
+        \text{MODERATE} & \text{if } 0\% < \texttt{waste\_pct} \le 25\% \quad (14{,}710\text{ receipts, } 16.37\%), \\
+        \text{HIGH}     & \text{if } \texttt{waste\_pct} > 25\% \quad (37{,}040\text{ receipts, } 41.21\%).
     \end{cases}
 \end{equation}
 
-Of 42 raw columns, \textbf{31 columns are eliminated prior to train/test splitting}: 11 post-outcome leakage fields (\texttt{waste\_pct}, \texttt{units\_wasted}, \texttt{revenue}, \texttt{profit}, \texttt{markdown\_applied}, \texttt{was\_spoiled}, etc.), 7 non-signal identifiers, and 13 IoT/sensor fields unavailable at store goods-in registration. We engineer a velocity-cover ratio:
+To enforce strict zero-leakage, \textbf{31 of 42 raw columns are permanently discarded prior to splitting}:
+\begin{enumerate}[leftmargin=18pt, itemsep=1.5pt]
+    \item 11 post-sale outcome fields (\texttt{waste\_pct}, \texttt{units\_wasted}, \texttt{revenue}, \texttt{profit}, \texttt{markdown\_applied}, \texttt{was\_spoiled}, etc.);
+    \item 7 non-generalizing administrative identifiers (\texttt{receipt\_id}, \texttt{store\_id}, etc.);
+    \item 13 IoT/sensor signals unavailable during goods-in store intake (\texttt{humidity\_sensor}, \texttt{vibration}, etc.).
+\end{enumerate}
+We engineer an operational velocity-cover feature capturing excess holding inventory relative to sales speed:
 \begin{equation}
     \texttt{stock\_pressure} = \frac{\texttt{initial\_quantity}}{\texttt{daily\_demand} + 1}.
 \end{equation}
-One-hot encoding the 9 normalized categories (renaming \texttt{Produce} $\to$ \texttt{Fruits \& Vegetables} and dropping US \texttt{region} for Malaysian portability) yields exactly \textbf{19 store-compatible features}. A stratified 80/20 split (\texttt{random\_state=42}) produces 71,904 training rows and 17,976 test rows, with \texttt{StandardScaler} fitted exclusively on the training partition.
+One-hot encoding the 9 normalized perishable categories (mapping US \texttt{Produce} $\to$ \texttt{Fruits \& Vegetables} and removing US geographic identifiers for portability to Malaysian supply chains) yields exactly \textbf{19 store-compatible features}. A stratified 80/20 train/test split (\texttt{random\_state=42}) isolates 71,904 training receipts and 17,976 test receipts, with \texttt{StandardScaler} fitted strictly on training rows.
 
-\subsubsection{Tier-1 XGBoost Classifier and Dual-Weighted Retraining}
-Benchmarked against \texttt{RandomForestClassifier} and \texttt{GradientBoostingClassifier}, \textbf{XGBoost}~\cite{chen2016xgboost} (\texttt{n\_estimators=150}, \texttt{max\_depth=6}, \texttt{learning\_rate=0.08}, \texttt{subsample=0.85}, \texttt{colsample\_bytree=0.85}, \texttt{eval\_metric="mlogloss"}) was selected as production champion (\texttt{models/spoilage\_classifier.pkl}). To address minority-class collapse on the 16.37\% MODERATE class identified during evaluation, a second dual-weighted variant (\texttt{models/spoilage\_classifier\_dual\_weighted.pkl}) was engineered in \texttt{src/ml/train\_spoilage\_dual\_weighted.py} applying sample weights $w_{\text{HIGH}} = 1.5$, $w_{\text{MODERATE}} = 2.6$, and $w_{\text{LOW}} = 1.0$.
+\subsubsection{Single-Tier Architecture and Dual Class-Weighting Optimization}
+Rather than relying on two-tier heuristic cascades, post-hoc decay functions, or artificial probability shifts that obscure model accountability, FreshGuard implements an end-to-end \textbf{Single-Tier Machine Learning architecture}. The classifier outputs direct, calibrated probabilities for all three risk categories from a single inference pass.
 
-\subsubsection{Tier-2 Exponential Time-Decay Policy and Department Split}
-Because raw multi-class probability argmax does not encode asymmetric food-waste penalties as expiry becomes imminent, \texttt{src/ml/spoilage.py} layers a continuous Tier-2 policy escalation using a category-specific biological decay constant $\tau_c$ ($2$\,d for Bakery; $3$\,d for Meat, Seafood, Deli, and Ready-to-Eat; $4$\,d for Dairy and Fruits \& Vegetables; $7$\,d for Frozen Meals and Beverages):
-\begin{align}
-    u(\text{DTE}, c) &= \exp\!\left(-\frac{\max(0, \text{DTE})}{\tau_c}\right), \\
-    P'(\text{HIGH}) &= \frac{P(\text{HIGH}) + \alpha u}{Z}, \qquad
-    P'(\text{LOW}) = \frac{\max(0,\, P(\text{LOW}) - \alpha u)}{Z},
-\end{align}
-where $Z$ renormalizes probabilities to unity and $\alpha = 0.10$ is the shipped escalation strength. In addition, an updated \textbf{Hierarchical Decision Gate} (\texttt{mode="hierarchical"}) protects HIGH recall ($P(\text{HIGH}) \ge 0.40$ or $u \ge 0.55$) while elevating aging lots into MODERATE ($P(\text{MOD}) \ge 0.18$ or $u \ge 0.15$). Finally, two deployment guards ensure domain validity: (i) \texttt{SHELF\_STABLE\_CATEGORIES} (Grains \& Pulses, Oils \& Fats, Pantry, Snacks, Beverages/Liquor) bypass the perishable ML model and return policy \texttt{LOW} (0.95) unless $\text{DTE} \le 0$; and (ii) \texttt{CATEGORY\_EQUIVALENCE} maps 18 retail taxonomy aliases onto trained one-hot columns to prevent all-zero degeneracy.
+To counter the severe minority-class distortion on \texttt{MODERATE} risk (only 16.37\% of samples) without generating synthetic artifacts through SMOTE, we train our production champion, \textbf{Dual Class-Weighted XGBoost}~\cite{chen2016xgboost} (\texttt{n\_estimators=150}, \texttt{max\_depth=6}, \texttt{learning\_rate=0.08}, \texttt{subsample=0.85}, \texttt{colsample\_bytree=0.85}, \texttt{eval\_metric="mlogloss"}). The model minimizes a cost-sensitive multi-class log-loss:
+\begin{equation}
+    \mathcal{L}_{\text{dual}}(\theta) = -\sum_{i=1}^{N} \sum_{k \in \{\text{LOW}, \text{MOD}, \text{HIGH}\}} w_k \cdot y_{i,k} \ln \hat{P}(y_{i,k} = 1 \mid \mathbf{x}_i; \theta),
+\end{equation}
+parameterized with asymmetric operational penalty weights:
+\begin{equation}
+    w_{\text{HIGH}} = 1.5, \qquad w_{\text{MODERATE}} = 2.6, \qquad w_{\text{LOW}} = 1.0.
+\end{equation}
+This native gradient-level weighting penalizes false negatives on transitional boundary lots directly during tree splitting, elevating \texttt{MODERATE} recall from 4.38\% to 60.06\% without requiring arbitrary secondary heuristics.
+
+\subsubsection{Operational Retail Safeguards}
+Two deterministic inference guards protect live store operations:
+\begin{itemize}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Shelf-Stable Category Bypass (\texttt{policy\_shelf\_stable}):} Non-perishable dry inventory (\emph{Grains \& Pulses, Oils \& Fats, Pantry, Snacks, Dry Goods, Beverages}) bypasses gradient-boosted scoring entirely, deterministically returning \texttt{LOW} risk ($P = 0.95$) as long as $\text{DTE} > 0$, preventing spurious margin degradation on long-shelf-life staples.
+    \item \textbf{Taxonomy Normalization (\texttt{CATEGORY\_EQUIVALENCE}):} Normalizes 18 retail SKU taxonomy aliases into the 9 trained one-hot feature channels, guaranteeing deterministic non-zero feature vectors at cashier registration.
+\end{itemize}
 
 \subsection{Module 2: Direct Multi-Horizon Demand Forecasting (Person 2)}
 \label{sec:forecast_method}
@@ -588,22 +602,6 @@ Day +3 & 12.36\% & \textbf{126.02} & \textbf{305.57} & \textbf{13.22\%} & 152.57
 Our internal data validation audit (\texttt{FORECAST\_DATA\_AUDIT\_REPORT.md}) documented two structural deployment constraints: (1) a \textbf{Temporal Gap} between the M5 training cutoff (\texttt{2017-08-15}) and 2026 Malaysian store operations, and (2) a \textbf{Granularity Gap} introduced by stock-share disaggregation (which can over-allocate demand to slow-moving, overstocked SKUs). In accordance with responsible ML governance, every API response and dashboard view permanently surfaces \texttt{forecast\_validation\_status: "not\_validated"}, displays origin \texttt{2017-08-15 (Kaggle M5)}, and enforces \texttt{reorder\_auto\_po\_allowed: false} until $\ge 2$ years of local SKU-level Malaysian POS series are collected.
 \end{auditnote}
 
-\subsection{Clearance Economics, Event Funnel, and POS Operations}
-Executing \texttt{src/engine/evaluate\_inventory.py} across all 990 lots from Person 3's \texttt{lots\_base.csv} and analyzing the 2,644-event discrete retail ledger (\texttt{simulation\_events.csv}) confirms the commercial and social efficacy of the clearing house (Figure~\ref{fig:recovery_funnel}):
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.96\textwidth]{figures/fig5_recovery_funnel.pdf}
-    \caption{(a) Clearance routing distribution across 990 inventory lots protecting RM~1,312,200.96 in expected value. (b) Lifecycle funnel across 2,644 simulated events showing 289 food-bank dispatches vs.\ 43 landfill write-offs (87.0\% terminal rescue rate).}
-    \label{fig:recovery_funnel}
-\end{figure}
-
-\begin{itemize}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{Revenue Protection First:} Across 990 lots, \textbf{741 lots (74.8\%)} remain at full-price \texttt{Normal Sale}, \textbf{166 lots (16.8\%)} enter tiered \texttt{Dynamic Markdown} (mean discount 20\%), and \textbf{83 lots (8.4\%)} route to closed-channel \texttt{Donation} (rescuing \textbf{4,622 units/kg}). Projected total revenue reaches \textbf{RM~1,312,200.96} with zero moral-hazard quota breaches (8.4\% $<$ 30\% store cap).
-    \item \textbf{High Terminal Rescue Rate:} In the 2,644-event multi-store ledger (990 \texttt{received}, 990 \texttt{active\_fefo}, 332 \texttt{markdown}, 289 \texttt{dispatched}, 43 \texttt{wasted}), proactive markdown and OSRM charitable dispatch recover \textbf{87.0\% of terminal expiring lots} (289 rescued vs.\ 43 wasted, limiting landfill loss to just 4.3\% of total intake).
-    \item \textbf{Live POS Audit Verification:} Across 19 recorded live cashier transactions (\texttt{transactions.json}), 197 units generated \textbf{RM~4,928.02} in gross revenue (100\% paid across Cash, Card, and QR/e-Wallet), with discounted markdown transactions representing 5 of 19 sales and atomic stock deductions verified with zero negative inventory anomalies.
-\end{itemize}
-
 % ============================================================================
 % SECTION 6: LIMITATIONS & FUTURE WORK
 % ============================================================================
@@ -624,7 +622,7 @@ Table~\ref{tab:limitations} consolidates the open engineering and modeling limit
 \midrule
 Demand ML & Training horizon ends 2017-08-15; stock-share disaggregation assumes stock proportion equals sales velocity; 189--244 negative raw predictions clipped at inference. & Retrain on $\ge 24$ months of real Malaysian SKU-level POS logs using a \textbf{Tweedie or Poisson} loss objective to model zero-inflation natively and unlock Auto-PO. \\
 \rowcolor{LightBg}
-Spoilage ML & Base unweighted XGBoost collapses on minority MODERATE class (4.38\% recall); trained on synthetic US-retail categories. & Benchmark Dual-Weighted XGBoost (\texttt{spoilage\_classifier\_dual\_weighted.pkl}) and Hierarchical Gate on live Malaysian store write-off feedback loops. \\
+Spoilage ML & Trained on historical retail categories with simulated waste outcomes; unweighted baselines collapse on minority MODERATE risk. & Continuously calibrate Single-tier Dual-Weighted XGBoost on live Malaysian supermarket write-off feedback loops. \\
 Rule Engine & Markdown tiers (15/25/40\%) are static constants; DOSM \texttt{11\_pricecatcher\_cleaned.parquet} is ingested but not yet dynamically coupled to elasticity pricing. & Bind live OpenDOSM commodity reference prices into dynamic markdown floor pricing and expand to full \textbf{ReFED 10-destination} pathways (animal feed, composting, B2B wholesale)~\cite{refed2026}. \\
 \rowcolor{LightBg}
 KPI \& POS & Server \texttt{/api/summary} applies an 85\%/15\% salvage assumption and uses a separate aggregation path from client-side React KPIs; POS logs markdowns and full sales under one event type. & Unify server and client KPIs onto live PostgreSQL views aggregating measured \texttt{simulation\_events}, and add a dedicated \texttt{sold} event type. \\
@@ -638,7 +636,7 @@ Logistics \& BI & Single-drop OSRM dispatch per lot; K-Means store waste cluster
 % ============================================================================
 \section{Conclusion}
 
-FreshGuard demonstrates that retail food waste can be mitigated systematically without sacrificing supermarket profitability or creating shopper moral hazard. By unifying rigorous data engineering (12 cleaned datasets, 496 repaired expiry records, 990 validated retail lots, and a 2,644-event discrete-event simulator), leak-free tabular and time-series machine learning (XGBoost two-tier spoilage scoring beating DTE heuristics by +35.07~pp accuracy; direct multi-horizon LightGBM beating 7-day seasonal naive by 17.4\%--22.0\% WAPE; ML cargo estimation at $R^2=95.5\%$), auditable anti-moral-hazard clearance policy (45/45 passing unit tests, RM~1,312,200.96 protected value, 87.0\% terminal rescue rate), and a full-stack cloud-backed web application (Supabase, FastAPI, OSRM, React 18), the platform delivers a production-patterned \emph{Dynamic Food Clearing House}. Equally important, its explicit audit governance---labeling historical demand forecasts as advisory and locking automated purchase orders---illustrates disciplined Applied Machine Learning engineering ready for real-world retail pilot transition.
+FreshGuard demonstrates that retail food waste can be mitigated systematically without sacrificing supermarket profitability or creating shopper moral hazard. By unifying rigorous data engineering (12 cleaned datasets, 496 repaired expiry records, 990 validated retail lots, and a 2,644-event discrete-event simulator), leak-free tabular and time-series machine learning (Single-tier Dual-Weighted XGBoost spoilage classification achieving 0.6021 Macro-F1 and 60.06\% MODERATE recall; direct multi-horizon LightGBM beating 7-day seasonal naive by 17.4\%--22.0\% WAPE; ML cargo estimation at $R^2=95.5\%$), auditable anti-moral-hazard clearance policy (45/45 passing unit tests), and a full-stack cloud-backed web application (Supabase, FastAPI, OSRM, React 18), the platform delivers a production-patterned \emph{Dynamic Food Clearing House}. Equally important, its explicit audit governance---labeling historical demand forecasts as advisory and locking automated purchase orders---illustrates disciplined Applied Machine Learning engineering ready for real-world retail pilot transition.
 
 % ============================================================================
 % REFERENCES
