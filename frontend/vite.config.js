@@ -479,6 +479,76 @@ function createApiMiddleware() {
       return
     }
 
+    // ── POST /api/spoilage/predict → Live ML preview for forms (Add & Edit batch) ─
+    if (url === '/api/spoilage/predict' && req.method === 'POST') {
+      try {
+        const body = await collectBody(req)
+        const row = batchToRow(body)
+        const spoilageLot = rowToSpoilageLot(row)
+
+        const expStr = body.expiryDate || body.expiry_date
+        const inStr = body.dateIn || body.date_received
+        const exp = parseLotDate(expStr)
+        const inDate = parseLotDate(inStr)
+        const now = new Date()
+        const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+        if (exp) {
+          const dExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
+          const dIn = inDate ? new Date(inDate.getFullYear(), inDate.getMonth(), inDate.getDate()) : dNow
+
+          // If incoming batch has future date_in, DTE upon receipt is (dExp - dIn)
+          const dteFromNow = Math.max(0, Math.round((dExp - dNow) / 86400000))
+          const dteFromIn  = Math.max(0, Math.round((dExp - dIn) / 86400000))
+          spoilageLot.days_until_expiry = (dIn > dNow) ? dteFromIn : dteFromNow
+          spoilageLot.shelf_life_days   = Math.max(1, Math.round((dExp - dIn) / 86400000))
+
+          const cal = calendarFeatures(inDate || now)
+          spoilageLot.day_of_week = cal.day_of_week
+          spoilageLot.is_weekend  = cal.is_weekend
+          spoilageLot.month       = cal.month
+        }
+
+        const qty = parseFloat(body.stockQty ?? body.quantity) || 0
+        const rl = parseFloat(body.reorderLevel ?? body.reorder_level) || 15
+        const rq = Math.max(rl, Math.round(qty * 0.8))
+        const price = parseFloat(body.unitPrice ?? body.unit_price_myr ?? body.sellPrice) || 5.0
+        spoilageLot.initial_quantity = qty
+        spoilageLot.base_price = price
+        spoilageLot.stock_pressure = rl > 0 ? Number((qty / (rl + 1)).toFixed(2)) : 1.0
+        spoilageLot.daily_demand = Math.max(1.0, rq / 7)
+        spoilageLot.is_promoted = Number(body.isPromoted ?? body.is_promoted) ? 1 : 0
+        if (body.category) spoilageLot.category = body.category
+
+        let pred = null
+        try {
+          const preds = await predictSpoilageBatch([spoilageLot])
+          pred = preds ? preds[0] : null
+        } catch (_) {}
+
+        const dte = spoilageLot.days_until_expiry
+        const riskTier = pred?.label ? (RISK_TIER_MAP[pred.label] || 'low') : (dte <= 2 ? 'high' : dte <= 5 ? 'med' : 'low')
+        const riskLabel = pred?.label ? (RISK_LABEL_MAP[pred.label] || 'Low Risk') : (dte <= 2 ? 'High Risk' : dte <= 5 ? 'Moderate Risk' : 'Low Risk')
+        const score = pred?.score ?? null
+
+        sendJson(res, 200, {
+          ok: true,
+          dte: dte === 1 ? '1 day' : `${dte} days`,
+          dteNum: dte,
+          shelf_life_days: spoilageLot.shelf_life_days,
+          risk: riskLabel,
+          riskType: riskTier,
+          score,
+          raw_label: pred?.raw_label,
+          probabilities: pred?.probabilities,
+          source: pred ? 'ml_xgboost' : 'heuristic_dte'
+        })
+      } catch (e) {
+        sendJson(res, 500, { ok: false, error: e.message })
+      }
+      return
+    }
+
     // ── PATCH /api/batches/:id → UPDATE in local JSON + Supabase Cloud ──────────
     // Supports editing all fields and synchronizing to Supabase (BUG-INV-05 & BUG-INV-01)
     // If quantity <= 0 → directly DELETE from local JSON + Supabase Cloud ────────

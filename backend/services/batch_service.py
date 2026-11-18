@@ -41,6 +41,88 @@ def _ml_risk(record: dict) -> dict | None:
         return None
 
 
+def predict_live_spoilage(batch_data: dict) -> dict:
+    from datetime import date, datetime
+    try:
+        from src.ml.spoilage import predict_spoilage_risk, _calendar_features
+        today = date.today()
+        exp_str = str(batch_data.get("expiryDate") or batch_data.get("expiry_date") or "")
+        in_str = str(batch_data.get("dateIn") or batch_data.get("date_received") or "")
+        
+        dte = 7
+        if exp_str:
+            try:
+                exp_dt = datetime.strptime(exp_str[:10], "%Y-%m-%d").date()
+                dte = max(0, (exp_dt - today).days)
+            except Exception:
+                pass
+                
+        shelf_life = dte + 7
+        if exp_str and in_str:
+            try:
+                exp_dt = datetime.strptime(exp_str[:10], "%Y-%m-%d").date()
+                in_dt = datetime.strptime(in_str[:10], "%Y-%m-%d").date()
+                shelf_life = max(1, (exp_dt - in_dt).days)
+            except Exception:
+                pass
+                
+        qty = float(batch_data.get("stockQty") or batch_data.get("quantity") or 5)
+        price = float(batch_data.get("unitPrice") or batch_data.get("unit_price_myr") or 2.5)
+        rl = float(batch_data.get("reorderLevel") or batch_data.get("reorder_level") or 20)
+        rq = max(rl, round(qty * 0.8))
+        daily_demand = max(1.0, rq / 7.0)
+        stock_pressure = round(qty / (rl + 1.0), 2)
+        
+        category = str(batch_data.get("category") or "Produce")
+        is_promoted = int(bool(batch_data.get("isPromoted") or batch_data.get("is_promoted") or False))
+        
+        dow, weekend, month = _calendar_features({"date_received": in_str or today.isoformat()})
+        
+        lot = {
+            "days_until_expiry": dte,
+            "shelf_life_days": shelf_life,
+            "initial_quantity": qty,
+            "base_price": price,
+            "daily_demand": daily_demand,
+            "stock_pressure": stock_pressure,
+            "day_of_week": dow,
+            "is_weekend": weekend,
+            "month": month,
+            "is_promoted": is_promoted,
+            "category": category
+        }
+        pred = predict_spoilage_risk(lot)
+        label = pred.get("label", "LOW")
+        score = pred.get("score")
+        risk_map = {"HIGH": ("high", "High Risk"), "MODERATE": ("med", "Moderate Risk"), "LOW": ("low", "Low Risk")}
+        tier, label_display = risk_map.get(label, ("low", "Low Risk"))
+        return {
+            "ok": True,
+            "dte": "1 day" if dte == 1 else f"{dte} days",
+            "dteNum": dte,
+            "risk": label_display,
+            "riskType": tier,
+            "score": score,
+            "raw_label": pred.get("raw_label"),
+            "probabilities": pred.get("probabilities"),
+            "source": "ml_xgboost"
+        }
+    except Exception as e:
+        dte = int(batch_data.get("dteNum") or 5)
+        tier = "high" if dte <= 2 else "med" if dte <= 5 else "low"
+        label = "High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"
+        return {
+            "ok": True,
+            "dte": f"{dte} days",
+            "dteNum": dte,
+            "risk": label,
+            "riskType": tier,
+            "score": None,
+            "source": "heuristic_dte",
+            "error": str(e)
+        }
+
+
 def _format_batch_record(record: dict) -> dict:
     """Format an inventory record dict into the standardized batch response shape."""
     exp_str = str(record.get("expiry_date") or record.get("expiryDate") or "")
@@ -389,4 +471,85 @@ def delete_batch(batch_id: str) -> dict | None:
         return {"status": "deleted", "lot_id": batch_id}
     except Exception:
         return None
+
+
+def predict_live_spoilage(batch_data: dict) -> dict:
+    """Computes live ML spoilage risk on arbitrary form data (Add/Edit modals)."""
+    from datetime import date, datetime
+    today = date.today()
+
+    exp_str = batch_data.get("expiryDate") or batch_data.get("expiry_date")
+    in_str = batch_data.get("dateIn") or batch_data.get("date_received")
+
+    def parse_d(s):
+        if not s:
+            return None
+        s = str(s).strip()
+        for fmt in ("%Y-%m-%d", "%b %d, %Y", "%B %d, %Y"):
+            try:
+                return datetime.strptime(s, fmt).date()
+            except ValueError:
+                pass
+        return None
+
+    exp_d = parse_d(exp_str)
+    in_d = parse_d(in_str) or today
+
+    if exp_d:
+        if in_d > today:
+            dte = max(0, (exp_d - in_d).days)
+        else:
+            dte = max(0, (exp_d - today).days)
+        shelf_life = max(1, (exp_d - in_d).days)
+    else:
+        dte = int(batch_data.get("days_to_expiry") or batch_data.get("dteNum") or 7)
+        shelf_life = max(1, dte + 7)
+
+    qty = float(batch_data.get("stockQty") or batch_data.get("quantity") or 10)
+    price = float(batch_data.get("unitPrice") or batch_data.get("unit_price_myr") or 5.0)
+    reorder = float(batch_data.get("reorderLevel") or batch_data.get("reorder_level") or 15)
+    rq = max(reorder, round(qty * 0.8))
+    turnover = float(batch_data.get("turnoverRatio") or batch_data.get("turnover_ratio") or round(qty / max(1.0, rq), 2))
+    is_promoted = int(bool(batch_data.get("isPromoted") or batch_data.get("is_promoted") or False))
+    category = str(batch_data.get("category") or "Produce")
+
+    pred = None
+    try:
+        from src.ml.spoilage import predict_spoilage_risk, _calendar_features
+        dow, weekend, month = _calendar_features({"date_received": in_d.strftime("%Y-%m-%d")})
+        lot_input = {
+            "days_until_expiry": dte,
+            "shelf_life_days": shelf_life,
+            "initial_quantity": qty,
+            "base_price": price,
+            "daily_demand": max(1.0, rq / 7.0),
+            "stock_pressure": round(qty / (reorder + 1), 2),
+            "day_of_week": dow,
+            "is_weekend": weekend,
+            "month": month,
+            "is_promoted": is_promoted,
+            "category": category,
+            "turnover_ratio": turnover
+        }
+        pred = predict_spoilage_risk(lot_input)
+    except Exception:
+        pass
+
+    raw_label = (pred.get("label") if pred else None) or ("HIGH" if dte <= 2 else "MODERATE" if dte <= 5 else "LOW")
+    risk_tier = RISK_TIER_MAP.get(raw_label.upper(), "low")
+    risk_label = RISK_LABEL_MAP.get(raw_label.upper(), "Low Risk")
+    score = pred.get("score") if pred else (0.90 if dte <= 2 else 0.75 if dte <= 5 else 0.95)
+
+    return {
+        "ok": True,
+        "dte": f"{dte} days" if dte != 1 else "1 day",
+        "dteNum": dte,
+        "shelf_life_days": shelf_life,
+        "risk": risk_label,
+        "riskType": risk_tier,
+        "score": score,
+        "raw_label": raw_label,
+        "probabilities": pred.get("probabilities") if pred else None,
+        "source": "ml_xgboost" if pred else "heuristic_dte"
+    }
 

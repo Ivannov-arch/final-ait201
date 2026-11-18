@@ -102,6 +102,110 @@ export default function InventoryFefoRiskPage({
     }
   })
 
+  // Live ML Spoilage Prediction states for Add and Edit modals
+  const [addMlPreview, setAddMlPreview] = useState(null)
+  const [addMlLoading, setAddMlLoading] = useState(false)
+  const [editMlPreview, setEditMlPreview] = useState(null)
+  const [editMlLoading, setEditMlLoading] = useState(false)
+
+  // Live ML prediction for Add Batch Modal
+  useEffect(() => {
+    if (!showAddModal) return
+    let active = true
+    setAddMlLoading(true)
+
+    const timer = setTimeout(() => {
+      fetch('/api/spoilage/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: newBatchForm.category,
+          unitPrice: newBatchForm.unitPrice,
+          stockQty: newBatchForm.stockQty,
+          reorderLevel: newBatchForm.reorderLevel,
+          turnoverRatio: newBatchForm.turnoverRatio,
+          dateIn: newBatchForm.dateIn,
+          expiryDate: newBatchForm.expiryDate,
+          isPromoted: newBatchForm.isPromoted ? 1 : 0
+        })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (active && data && data.ok) {
+            setAddMlPreview(data)
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (active) setAddMlLoading(false)
+        })
+    }, 100)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [
+    showAddModal,
+    newBatchForm.category,
+    newBatchForm.unitPrice,
+    newBatchForm.stockQty,
+    newBatchForm.reorderLevel,
+    newBatchForm.turnoverRatio,
+    newBatchForm.dateIn,
+    newBatchForm.expiryDate,
+    newBatchForm.isPromoted
+  ])
+
+  // Live ML prediction for Edit Batch Modal
+  useEffect(() => {
+    if (!editBatch) return
+    let active = true
+    setEditMlLoading(true)
+
+    const timer = setTimeout(() => {
+      fetch('/api/spoilage/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: editBatch.category,
+          unitPrice: editBatch.unitPrice,
+          stockQty: editBatch.stockQty,
+          reorderLevel: editBatch.reorderLevel,
+          turnoverRatio: editBatch.turnoverRatio,
+          dateIn: editBatch.dateIn,
+          expiryDate: editBatch.expiryDate,
+          isPromoted: Number(editBatch.isPromoted) ? 1 : 0
+        })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (active && data && data.ok) {
+            setEditMlPreview(data)
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (active) setEditMlLoading(false)
+        })
+    }, 100)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [
+    editBatch?.id,
+    editBatch?.category,
+    editBatch?.unitPrice,
+    editBatch?.stockQty,
+    editBatch?.reorderLevel,
+    editBatch?.turnoverRatio,
+    editBatch?.dateIn,
+    editBatch?.expiryDate,
+    editBatch?.isPromoted
+  ])
+
   const tableContainerRef = useRef(null)
   const actionModalRef = useRef(null)
   const addModalRef = useRef(null)
@@ -511,7 +615,15 @@ export default function InventoryFefoRiskPage({
     const reorderLevel = parseFloat(editBatch.reorderLevel) || 10
     const unitPrice = parseFloat(editBatch.unitPrice) || parseFloat(String(editBatch.sellPrice || editBatch.costPrice || '').replace(/[^0-9.]/g, '')) || 5.00
     const turnoverRatio = parseFloat(editBatch.turnoverRatio) || 1.5
-    const { dte, dteNum, risk, riskType } = computeDteAndRisk(editBatch.expiryDate)
+
+    const fallback = computeDteAndRisk(editBatch.expiryDate)
+    const preview = editMlPreview || fallback
+    const dte = preview.dte || fallback.dte
+    const dteNum = preview.dteNum !== undefined ? preview.dteNum : fallback.dteNum
+    const risk = preview.risk || fallback.risk
+    const riskType = preview.riskType || fallback.riskType
+    const riskScore = preview.score !== undefined ? preview.score : (editBatch.riskScore ?? null)
+    const riskSource = preview.source || 'ml_xgboost'
 
     const updatedBatch = {
       ...editBatch,
@@ -528,12 +640,15 @@ export default function InventoryFefoRiskPage({
       dteNum,
       risk,
       riskType,
+      riskScore,
+      riskSource,
       isPromoted: Number(editBatch.isPromoted) ? 1 : 0,
       recommended: riskType === 'high' ? 'Donate to Food Bank' : riskType === 'med' ? 'Dynamic Markdown' : 'Normal Sale'
     }
 
     setBatches(prev => prev.map(b => (b.id === editBatch.id ? updatedBatch : b)))
     setEditBatch(null)
+    setEditMlPreview(null)
     showToast(`Changes saved successfully for Batch ${editBatch.id}`)
     // Persist edit to inventory_master.json + csv via local Vite API
     fetch('/api/batches', {
@@ -551,7 +666,15 @@ export default function InventoryFefoRiskPage({
       return
     }
 
-    const { dte, dteNum, risk, riskType } = computeDteAndRisk(newBatchForm.expiryDate)
+    const fallback = computeDteAndRisk(newBatchForm.expiryDate)
+    const preview = addMlPreview || fallback
+    const dte = preview.dte || fallback.dte
+    const dteNum = preview.dteNum !== undefined ? preview.dteNum : fallback.dteNum
+    const risk = preview.risk || fallback.risk
+    const riskType = preview.riskType || fallback.riskType
+    const riskScore = preview.score !== undefined ? preview.score : null
+    const riskSource = preview.source || 'ml_xgboost'
+
     // Sequential LOT number: find max existing lot number, increment by 1
     const maxLotNum = batches.reduce((max, b) => {
       const m = String(b.id || '').match(/LOT-(\d+)/)
@@ -583,6 +706,8 @@ export default function InventoryFefoRiskPage({
       dteNum,
       risk,
       riskType,
+      riskScore,
+      riskSource,
       recommended: riskType === 'high' ? 'Donate to Food Bank' : riskType === 'med' ? 'Dynamic Markdown' : 'Normal Sale'
     }
 
@@ -598,6 +723,7 @@ export default function InventoryFefoRiskPage({
     }
 
     setShowAddModal(false)
+    setAddMlPreview(null)
     setNewBatchForm({
       product: '',
       category: 'Fruits & Vegetables',
@@ -1777,17 +1903,31 @@ export default function InventoryFefoRiskPage({
 
               {/* Automatic FEFO & DTE Live Preview */}
               <div className="fg-inv-form-field">
-                <label>Days to Expiry (DTE) &amp; Risk Preview</label>
-                <div className="fg-inv-dte-readonly-box">
-                  <span>
-                    DTE: <strong>{computeDteAndRisk(editBatch.expiryDate).dte}</strong>
-                  </span>
-                  <span
-                    className={`fg-inv-risk-badge fg-inv-risk-badge--${computeDteAndRisk(editBatch.expiryDate).riskType}`}
-                    style={{ marginLeft: 8 }}
-                  >
-                    {computeDteAndRisk(editBatch.expiryDate).risk}
-                  </span>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Days to Expiry (DTE) &amp; Risk Preview</span>
+                  {editMlPreview?.source === 'ml_xgboost' && (
+                    <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }}></span>
+                      Live XGBoost ML
+                    </span>
+                  )}
+                </label>
+                <div className="fg-inv-dte-readonly-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>
+                      DTE: <strong>{editMlPreview?.dte || computeDteAndRisk(editBatch.expiryDate).dte}</strong>
+                    </span>
+                    <span
+                      className={`fg-inv-risk-badge fg-inv-risk-badge--${editMlPreview?.riskType || computeDteAndRisk(editBatch.expiryDate).riskType}`}
+                    >
+                      {editMlLoading ? 'Predicting...' : (editMlPreview?.risk || computeDteAndRisk(editBatch.expiryDate).risk)}
+                    </span>
+                  </div>
+                  {editMlPreview?.score !== undefined && editMlPreview?.score !== null && (
+                    <span style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 600 }}>
+                      Score: {Number(editMlPreview.score).toFixed(4)}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1953,17 +2093,31 @@ export default function InventoryFefoRiskPage({
 
                {/* Automatic FEFO & DTE Live Preview */}
                <div className="fg-inv-form-field">
-                 <label>Days to Expiry (DTE) &amp; Risk Preview</label>
-                 <div className="fg-inv-dte-readonly-box">
-                   <span>
-                     DTE: <strong>{computeDteAndRisk(newBatchForm.expiryDate).dte}</strong>
-                   </span>
-                   <span
-                     className={`fg-inv-risk-badge fg-inv-risk-badge--${computeDteAndRisk(newBatchForm.expiryDate).riskType}`}
-                     style={{ marginLeft: 8 }}
-                   >
-                     {computeDteAndRisk(newBatchForm.expiryDate).risk}
-                   </span>
+                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <span>Days to Expiry (DTE) &amp; Risk Preview</span>
+                   {addMlPreview?.source === 'ml_xgboost' && (
+                     <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                       <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }}></span>
+                       Live XGBoost ML
+                     </span>
+                   )}
+                 </label>
+                 <div className="fg-inv-dte-readonly-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                     <span>
+                       DTE: <strong>{addMlPreview?.dte || computeDteAndRisk(newBatchForm.expiryDate).dte}</strong>
+                     </span>
+                     <span
+                       className={`fg-inv-risk-badge fg-inv-risk-badge--${addMlPreview?.riskType || computeDteAndRisk(newBatchForm.expiryDate).riskType}`}
+                     >
+                       {addMlLoading ? 'Predicting...' : (addMlPreview?.risk || computeDteAndRisk(newBatchForm.expiryDate).risk)}
+                     </span>
+                   </div>
+                   {addMlPreview?.score !== undefined && addMlPreview?.score !== null && (
+                     <span style={{ fontSize: '0.74rem', color: '#475569', fontWeight: 600 }}>
+                       Score: {Number(addMlPreview.score).toFixed(4)}
+                     </span>
+                   )}
                  </div>
                </div>
 

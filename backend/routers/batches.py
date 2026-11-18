@@ -7,7 +7,8 @@ from backend.services.batch_service import (
     get_batch_by_id,
     save_batch_to_csv,
     update_batch,
-    delete_batch
+    delete_batch,
+    predict_live_spoilage
 )
 
 
@@ -49,6 +50,15 @@ def create_batch(batch_data: Dict[str, Any] = Body(...)):
     and computes ML spoilage risk using Person 1's XGBoost champion model.
     """
     return save_batch_to_csv(batch_data)
+
+
+@router.post("/api/spoilage/predict")
+def live_spoilage_prediction(batch_data: Dict[str, Any] = Body(...)):
+    """
+    Live on-the-fly XGBoost spoilage risk prediction for form modal preview.
+    Evaluates promotion toggle, category, stock pressure, and calendar DTE.
+    """
+    return predict_live_spoilage(batch_data)
 
 
 @router.patch("/api/batches/{batch_id}")
