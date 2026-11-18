@@ -14,8 +14,9 @@ import pandas as pd
 import numpy as np
 import joblib
 
-# Default model path
+# Default model paths
 DEFAULT_MODEL_PATH = os.path.join("models", "spoilage_classifier.pkl")
+DUAL_WEIGHTED_MODEL_PATH = os.path.join("models", "spoilage_classifier_dual_weighted.pkl")
 
 # Store-compatible feature columns (Perishable Goods dataset v2 - 19 features, region-agnostic)
 TRAINED_FEATURE_COLS = [
@@ -187,21 +188,31 @@ def apply_continuous_tier2(
     probs: dict[str, float],
     category: str,
     days_until_expiry: float,
-    alpha: float = 0.10
+    alpha: float = 0.20,
+    mode: str = "hierarchical",
+    alpha_low_to_mod: float = 0.40,
+    alpha_mod_to_high: float = 0.35
 ) -> tuple[str, float, dict[str, float], float]:
-    """Applies Tier 2 Continuous Bayesian Time-Decay Escalation to model probabilities.
+    """Applies Tier 2 Risk Policy Escalation to model probabilities.
 
-    Formulation:
-        u = exp(-dte / tau_c)  in [0, 1]
-        P'(HIGH) = (P(HIGH) + alpha * u) / Z
-        P'(LOW)  = max(0, P(LOW) - alpha * u) / Z
-        P'(MOD)  = P(MOD) / Z
+    Supports two primary modes:
+      1. 'hierarchical' (Option 1 - Default Protective Decision Gate):
+         - Protects & elevates HIGH: if P(HIGH) >= 0.40, u >= 0.55, or raw_argmax == HIGH -> HIGH.
+         - Escalates aging items to MODERATE: if not HIGH and (P(MOD) >= 0.18 or u >= 0.15) -> MODERATE.
+         - Preserves Recall HIGH >= 75% and elevates Recall MODERATE into the 30%+ range.
+      2. 'cascading' (Option 2 - Continuous Cascading Escalation):
+         - Cascades risk upwards: LOW -> MODERATE and MODERATE -> HIGH proportionally.
+      3. 'continuous' (Legacy Continuous Shift):
+         - Shifts probability mass from LOW directly to HIGH.
 
     Args:
         probs: Dict of raw class probabilities {'HIGH': p, 'MODERATE': p, 'LOW': p}
         category: Product category name
         days_until_expiry: Days remaining until expiration
-        alpha: Intervention strength (default 0.10 for balanced accuracy-recall trade-off)
+        alpha: Intervention strength for legacy continuous mode
+        mode: Policy mode ('hierarchical', 'cascading', or 'continuous')
+        alpha_low_to_mod: Low-to-Moderate shift factor for cascading mode
+        alpha_mod_to_high: Moderate-to-High shift factor for cascading mode
 
     Returns:
         tuple: (final_label, final_score, adjusted_probs, urgency_factor)
@@ -217,28 +228,84 @@ def apply_continuous_tier2(
     p_mod  = float(probs.get('MODERATE', 0.0))
     p_low  = float(probs.get('LOW', 0.0))
 
-    # Continuous shift from LOW to HIGH
-    shift = alpha * u
-    p_high_new = p_high + shift
-    p_low_new  = max(0.0, p_low - shift)
-    p_mod_new  = p_mod
+    if mode == "hierarchical":
+        # Option 1: Hierarchical Decision Gate
+        # Condition 1: HIGH protection & escalation
+        is_high = (p_high >= 0.40) or (u >= 0.55) or (p_high >= p_low and p_high >= p_mod)
+        
+        # Condition 2: MODERATE escalation (if not HIGH)
+        is_mod = (not is_high) and ((p_mod >= 0.18) or (u >= 0.15))
+        
+        if is_high:
+            final_label = "HIGH"
+            p_high_adj = max(p_high, 0.65)
+            p_mod_adj = (1.0 - p_high_adj) * (p_mod / max(1e-6, p_mod + p_low))
+            p_low_adj = 1.0 - p_high_adj - p_mod_adj
+        elif is_mod:
+            final_label = "MODERATE"
+            p_mod_adj = max(p_mod, 0.55)
+            p_low_adj = (1.0 - p_mod_adj) * 0.8
+            p_high_adj = 1.0 - p_mod_adj - p_low_adj
+        else:
+            final_label = "LOW"
+            p_low_adj = max(p_low, 0.60)
+            p_mod_adj = (1.0 - p_low_adj) * 0.7
+            p_high_adj = 1.0 - p_low_adj - p_mod_adj
 
-    total = p_high_new + p_mod_new + p_low_new
-    if total > 0:
-        p_high_new /= total
-        p_mod_new  /= total
-        p_low_new  /= total
+        adjusted_probs = {
+            'HIGH': round(float(p_high_adj), 4),
+            'MODERATE': round(float(p_mod_adj), 4),
+            'LOW': round(float(p_low_adj), 4)
+        }
+        final_score = adjusted_probs[final_label]
+        return final_label, final_score, adjusted_probs, round(u, 4)
 
-    adjusted_probs = {
-        'HIGH': round(p_high_new, 4),
-        'MODERATE': round(p_mod_new, 4),
-        'LOW': round(p_low_new, 4)
-    }
+    elif mode == "cascading":
+        # Option 2: Cascading Monotonic Escalation
+        flow_m2h = alpha_mod_to_high * u * p_mod
+        flow_l2m = alpha_low_to_mod * u * p_low
+        flow_l2h = 0.10 * (u ** 1.5) * p_low
 
-    final_label = max(adjusted_probs, key=adjusted_probs.get)
-    final_score = adjusted_probs[final_label]
+        p_high_new = p_high + flow_m2h + flow_l2h
+        p_mod_new  = max(0.0, p_mod - flow_m2h + flow_l2m)
+        p_low_new  = max(0.0, p_low - flow_l2m - flow_l2h)
 
-    return final_label, final_score, adjusted_probs, round(u, 4)
+        total = p_high_new + p_mod_new + p_low_new
+        if total > 0:
+            p_high_new /= total
+            p_mod_new  /= total
+            p_low_new  /= total
+
+        adjusted_probs = {
+            'HIGH': round(p_high_new, 4),
+            'MODERATE': round(p_mod_new, 4),
+            'LOW': round(p_low_new, 4)
+        }
+        final_label = max(adjusted_probs, key=adjusted_probs.get)
+        final_score = adjusted_probs[final_label]
+        return final_label, final_score, adjusted_probs, round(u, 4)
+
+    else:
+        # Legacy Continuous Shift
+        shift = alpha * u
+        p_high_new = p_high + shift
+        p_low_new  = max(0.0, p_low - shift)
+        p_mod_new  = p_mod
+
+        total = p_high_new + p_mod_new + p_low_new
+        if total > 0:
+            p_high_new /= total
+            p_mod_new  /= total
+            p_low_new  /= total
+
+        adjusted_probs = {
+            'HIGH': round(p_high_new, 4),
+            'MODERATE': round(p_mod_new, 4),
+            'LOW': round(p_low_new, 4)
+        }
+        final_label = max(adjusted_probs, key=adjusted_probs.get)
+        final_score = adjusted_probs[final_label]
+        return final_label, final_score, adjusted_probs, round(u, 4)
 
 def _predict_shelf_stable_risk(lot: dict, category: str, days_until_expiry: float) -> dict:
     """Policy-based risk for Dry Goods / Shelf-Stable departments (no ML).
@@ -274,7 +341,8 @@ def predict_spoilage_risk(
     lot: dict,
     model_path: str = DEFAULT_MODEL_PATH,
     apply_tier2: bool = True,
-    alpha: float = 0.10
+    alpha: float = 0.20,
+    tier2_mode: str = "hierarchical"
 ) -> dict:
     """Predicts spoilage risk level and confidence score for a single inventory lot.
 
@@ -284,14 +352,17 @@ def predict_spoilage_risk(
         non-perishable and cannot spoil microbiologically.
       - Tier 1 (Perishable departments): XGBoost Classifier predicts base risk
         profile from inventory features.
-      - Tier 2 (if apply_tier2=True): Continuous time-decay escalation dynamically boosts
+      - Tier 2 (if apply_tier2=True): Risk policy escalation dynamically boosts
         urgency as days_until_expiry draws near based on category sensitivity tau.
+        Mode 'hierarchical' (Option 1) elevates MOD to the 30%+ range while protecting HIGH.
+        Mode 'cascading' (Option 2) cascades risk upwards from LOW to MOD to HIGH.
 
     Args:
         lot: Inventory lot dictionary.
         model_path: Path to serialized model package (.pkl).
-        apply_tier2: Whether to apply continuous Tier 2 time-decay policy (default True).
-        alpha: Tier 2 time-decay sensitivity parameter (default 0.10).
+        apply_tier2: Whether to apply Tier 2 time-decay policy (default True).
+        alpha: Tier 2 sensitivity parameter (default 0.20).
+        tier2_mode: Policy mode ('hierarchical' for Option 1, 'cascading' for Option 2).
 
     Returns:
         dict: {
@@ -338,7 +409,7 @@ def predict_spoilage_risk(
 
             if apply_tier2:
                 final_label, final_score, adj_probs, u = apply_continuous_tier2(
-                    raw_probs, category, days_until_expiry, alpha=alpha
+                    raw_probs, category, days_until_expiry, alpha=alpha, mode=tier2_mode
                 )
                 return {
                     "label": final_label,
