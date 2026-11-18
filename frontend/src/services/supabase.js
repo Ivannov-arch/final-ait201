@@ -20,11 +20,42 @@ export function supabaseRowToBatch(r) {
   const qty   = Number(r.quantity) || 0
   const price = parseFloat(r.unit_price_myr) || 0
   const cost  = parseFloat(r.cost_price_myr) || price * 0.70
-  const dte   = Number(r.days_to_expiry) || 0
+  let dte   = Number(r.days_to_expiry) || 0
+  if (r.expiry_date) {
+    const exp = new Date(r.expiry_date)
+    if (!isNaN(exp.getTime())) {
+      const now = new Date()
+      const dExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
+      const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      dte = Math.round((dExp - dNow) / (1000 * 60 * 60 * 24))
+    }
+  }
 
   let riskType = 'low', risk = 'Low Risk'
-  if (dte <= 2)      { riskType = 'high'; risk = 'High Risk' }
-  else if (dte <= 5) { riskType = 'med';  risk = 'Moderate Risk' }
+  let isExpired = false
+  let dteStr = `${dte} days`
+
+  if (dte < 0) {
+    isExpired = true
+    riskType = 'expired'
+    risk = 'Expired'
+    const abs = Math.abs(dte)
+    dteStr = abs === 1 ? 'Expired (1d ago)' : `Expired (${abs}d ago)`
+  } else if (dte === 0) {
+    riskType = 'high'
+    risk = 'Critical Risk'
+    dteStr = 'Expires Today (0d)'
+  } else if (dte <= 2) {
+    riskType = 'high'
+    risk = 'High Risk'
+    dteStr = dte === 1 ? '1 day' : `${dte} days`
+  } else if (dte <= 5) {
+    riskType = 'med'
+    risk = 'Moderate Risk'
+    dteStr = `${dte} days`
+  } else {
+    dteStr = `${dte} days`
+  }
 
   return {
     id:                canonicalId,
@@ -41,16 +72,18 @@ export function supabaseRowToBatch(r) {
     expiryDate:        r.expiry_date,
     dateIn:            r.date_received,
     dteNum:            dte,
-    dte:               dte === 1 ? '1 day' : `${dte} days`,
+    dte:               dteStr,
     risk,
     riskType,
+    isExpired,
     reorderLevel:      Number(r.reorder_level) || 15,
     reorderQuantity:   Number(r.reorder_quantity) || 20,
     turnoverRatio:     r.turnover_ratio,
     supplier:          r.supplier_name || 'Direct Procurement',
     warehouseLocation: r.warehouse_location || 'Aisle 1',
     storeId:           r.store_id || 'MY-KL-001',
-    recommended:       r.recommended_route || (riskType === 'high' ? 'Donate to Food Bank'
+    recommended:       r.recommended_route || (isExpired ? 'Disposal / Waste'
+                     : riskType === 'high' ? 'Donate to Food Bank'
                      : riskType === 'med'  ? 'Dynamic Markdown'
                      :                       'Normal Sale')
   }

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import DashboardHeader from './DashboardHeader'
 import gsap from 'gsap'
-import { INITIAL_BATCHES, computeDteAndRisk, parseDateToDays } from './inventoryData'
+import { INITIAL_BATCHES, computeDteAndRisk, parseDateToDays, normalizeBatchDte } from './inventoryData'
 
 // Convert "Oct 30, 2026" → "2026-10-30" (for <input type="date"> value)
 function toInputDate(humanStr) {
@@ -22,8 +22,13 @@ function fromInputDate(isoStr) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-// Risk level mascot mapping: High Risk (worried/alert), Medium Risk (curious/thinking), Normal/Low Risk (happy/smiling)
+// Risk level mascot mapping: Expired / High Risk (worried/alert), Medium Risk (curious/thinking), Normal/Low Risk (happy/smiling)
 const RISK_MASCOT_MAP = {
+  expired: {
+    src: '/image/decision/donate.png',
+    alt: 'Expired Mascot',
+    label: 'Expired'
+  },
   high: {
     src: '/image/decision/donate.png',
     alt: 'High Risk Mascot',
@@ -50,8 +55,9 @@ export default function InventoryFefoRiskPage({
   onToggleSidebar,
   initialSearch = ''
 }) {
-  const [internalBatches, setInternalBatches] = useState(INITIAL_BATCHES)
-  const batches = externalBatches || internalBatches
+  const [internalBatches, setInternalBatches] = useState(() => INITIAL_BATCHES.map(normalizeBatchDte))
+  const rawBatches = externalBatches || internalBatches
+  const batches = useMemo(() => rawBatches.map(normalizeBatchDte), [rawBatches])
   const setBatches = onUpdateBatches || setInternalBatches
 
   const [searchTerm, setSearchTerm] = useState(initialSearch)
@@ -115,9 +121,10 @@ export default function InventoryFefoRiskPage({
   const riskCounts = useMemo(() => {
     return {
       total: batches.length,
-      high: batches.filter(b => b.riskType === 'high').length,
-      med: batches.filter(b => b.riskType === 'med').length,
-      low: batches.filter(b => b.riskType === 'low').length,
+      expired: batches.filter(b => b.isExpired || b.riskType === 'expired' || (b.dteNum !== undefined && b.dteNum < 0)).length,
+      high: batches.filter(b => !b.isExpired && (b.riskType === 'high' || b.riskType === 'critical') && (b.dteNum === undefined || b.dteNum >= 0)).length,
+      med: batches.filter(b => !b.isExpired && b.riskType === 'med' && (b.dteNum === undefined || b.dteNum >= 0)).length,
+      low: batches.filter(b => !b.isExpired && b.riskType === 'low' && (b.dteNum === undefined || b.dteNum >= 0)).length,
     }
   }, [batches])
 
@@ -177,7 +184,15 @@ export default function InventoryFefoRiskPage({
       }
       // 2. Risk filter
       if (selectedRiskFilter !== 'all') {
-        if (b.riskType !== selectedRiskFilter) return false
+        if (selectedRiskFilter === 'expired') {
+          if (!b.isExpired && b.riskType !== 'expired' && (b.dteNum === undefined || b.dteNum >= 0)) return false
+        } else if (selectedRiskFilter === 'high') {
+          if (b.isExpired || (b.dteNum !== undefined && b.dteNum < 0)) return false
+          if (b.riskType !== 'high' && b.riskType !== 'critical') return false
+        } else {
+          if (b.isExpired || (b.dteNum !== undefined && b.dteNum < 0)) return false
+          if (b.riskType !== selectedRiskFilter) return false
+        }
       }
       // 3. Category filter
       if (selectedCategoryFilter !== 'all') {
@@ -377,8 +392,10 @@ export default function InventoryFefoRiskPage({
     if (batch.appliedAction === 'markdown') return 'Dynamic Markdown'
     if (batch.appliedAction === 'donate') return 'Food Bank Dispatch'
     if (batch.appliedAction === 'normal') return 'Normal Sale'
+    if (batch.appliedAction === 'dispose') return 'Disposal / Bio-Waste'
+    if (batch.isExpired || batch.riskType === 'expired' || (batch.dteNum !== undefined && batch.dteNum < 0)) return 'Disposal / Waste'
     if (batch.recommended) return batch.recommended
-    if (batch.riskType === 'high') return 'Dynamic Markdown'
+    if (batch.riskType === 'high') return 'Donate to Food Bank'
     if (batch.riskType === 'med') return 'Dynamic Markdown'
     return 'Normal Sale'
   }
@@ -387,17 +404,20 @@ export default function InventoryFefoRiskPage({
     if (batch.appliedAction === 'markdown') return 'Sales recovery route active'
     if (batch.appliedAction === 'donate') return 'Donation route active'
     if (batch.appliedAction === 'normal') return 'Store retention selected'
+    if (batch.appliedAction === 'dispose') return 'Expired stock logged for disposal'
+    if (batch.isExpired || batch.riskType === 'expired' || (batch.dteNum !== undefined && batch.dteNum < 0)) return 'Past expiry date — retail sale prohibited'
     if (batch.riskType === 'high') return 'Prioritize markdown or donation before expiry'
     if (batch.riskType === 'med') return 'Review markdown before expiry'
     return 'Standard retail cycle'
   }
 
-  // Strictly filter for urgent critical clearance items (DTE <= 2 days, max 3 items)
+  // Strictly filter for urgent critical clearance items (DTE <= 2 days, non-expired, max 3 items)
   const priorityBatches = useMemo(() => {
     return filteredBatches
       .filter(batch => {
         const dteVal = batch.dteNum !== undefined ? batch.dteNum : parseDateToDays(batch.expiryDate)
-        return (batch.riskType === 'high' || dteVal <= 2) && dteVal <= 2
+        const isExp = batch.isExpired || batch.riskType === 'expired' || dteVal < 0
+        return !isExp && (batch.riskType === 'high' || dteVal <= 2) && dteVal <= 2
       })
       .slice(0, 3)
   }, [filteredBatches])
@@ -434,6 +454,8 @@ export default function InventoryFefoRiskPage({
       text = `${disc}Dynamic Markdown applied to Batch ${batch.id}. POS sync active.`
     } else if (actionType === 'donate') {
       text = `Donation shipment arranged for Batch ${batch.id} to Food Bank.`
+    } else if (actionType === 'dispose') {
+      text = `Batch ${batch.id} (${batch.product}) logged for Disposal / Bio-waste compost.`
     }
 
     const previousAction = batch.appliedAction || null
@@ -593,6 +615,7 @@ export default function InventoryFefoRiskPage({
 
   // Render a standardized action button to reduce visual noise while preserving function.
   const renderActionButton = (b, isMobile = false) => {
+    const isExp = b.isExpired || b.riskType === 'expired' || (b.dteNum !== undefined && b.dteNum < 0)
     const mobileClass = isMobile ? 'fg-inv-decision-trigger-btn--mobile' : ''
     const stateClass = b.appliedAction === 'markdown'
       ? 'fg-inv-decision-trigger-btn--markdown'
@@ -600,7 +623,11 @@ export default function InventoryFefoRiskPage({
         ? 'fg-inv-decision-trigger-btn--donate'
         : b.appliedAction === 'normal'
           ? 'fg-inv-decision-trigger-btn--normal'
-          : `fg-inv-decision-trigger-btn--${b.riskType}`
+          : b.appliedAction === 'dispose'
+            ? 'fg-inv-decision-trigger-btn--dispose'
+            : isExp
+              ? 'fg-inv-decision-trigger-btn--expired'
+              : `fg-inv-decision-trigger-btn--${b.riskType}`
 
     const label = b.appliedAction === 'markdown'
       ? 'Markdown active'
@@ -608,11 +635,15 @@ export default function InventoryFefoRiskPage({
         ? 'Donation ready'
         : b.appliedAction === 'normal'
           ? 'Normal sale'
-          : b.riskType === 'high'
-            ? 'Review action'
-            : b.riskType === 'med'
-              ? 'Review action'
-              : 'Normal sale'
+          : b.appliedAction === 'dispose'
+            ? 'Disposed'
+            : isExp
+              ? 'Expired — Action'
+              : b.riskType === 'high'
+                ? 'Review action'
+                : b.riskType === 'med'
+                  ? 'Review action'
+                  : 'Normal sale'
 
     return (
       <button
@@ -725,6 +756,17 @@ export default function InventoryFefoRiskPage({
           >
             <span>All</span>
             <strong>{riskCounts.total}</strong>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedRiskFilter === 'expired'}
+            className={`fg-inv-chip fg-inv-chip--expired ${selectedRiskFilter === 'expired' ? 'is-active' : ''}`}
+            onClick={() => setSelectedRiskFilter(prev => prev === 'expired' ? 'all' : 'expired')}
+          >
+            <span>Expired</span>
+            <strong>{riskCounts.expired}</strong>
           </button>
 
           <button
@@ -1360,7 +1402,8 @@ export default function InventoryFefoRiskPage({
                     <span className="fg-inv-banner-stat">
                       <span className="fg-inv-banner-stat-label">DTE</span>
                       <span className="fg-inv-banner-stat-value" style={{
-                        color: selectedBatchForAction.dteNum <= 2 ? '#c82d32'
+                        color: (selectedBatchForAction.isExpired || selectedBatchForAction.riskType === 'expired' || selectedBatchForAction.dteNum < 0) ? '#991b1b'
+                             : selectedBatchForAction.dteNum <= 2 ? '#c82d32'
                              : selectedBatchForAction.dteNum <= 5 ? '#d97706'
                              : '#1b9b55',
                         fontWeight: 800
@@ -1387,121 +1430,204 @@ export default function InventoryFefoRiskPage({
             </div>
 
             {/* ── Action Grid: asymmetric layout — Markdown is featured, others are compact ── */}
-            <div className="fg-inv-action-grid-v2">
-
-              {/* ── FEATURED: Dynamic Markdown (full-width top, most likely action) ── */}
-              <div className="fg-inv-action-card-featured fg-inv-action-card--markdown">
-                <div className="fg-inv-featured-left">
-                  <div className="fg-inv-featured-eyebrow">
-                    <div className="fg-inv-action-icon-sm fg-inv-action-icon--amber">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" />
-                      </svg>
+            {selectedBatchForAction.isExpired || selectedBatchForAction.riskType === 'expired' || (selectedBatchForAction.dteNum !== undefined && selectedBatchForAction.dteNum < 0) ? (
+              <div className="fg-inv-action-grid-v2">
+                {/* ── FEATURED FOR EXPIRED: Disposal / Bio-Waste Safety Route ── */}
+                <div className="fg-inv-action-card-featured fg-inv-action-card--disposal">
+                  <div className="fg-inv-featured-left">
+                    <div className="fg-inv-featured-eyebrow">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-featured-label" style={{ color: '#991b1b', fontWeight: 800 }}>Disposal &amp; Bio-Waste Route</span>
+                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red" style={{ marginLeft: '4px' }}>
+                        Mandatory Safety Action
+                      </span>
                     </div>
-                    <span className="fg-inv-featured-label">Dynamic Markdown</span>
-                    {!ruleEngineLoading && ruleEngineResult && ruleEngineResult.discount_percent > 0 && (
-                      <span className="fg-inv-featured-discount-pill">
-                        {ruleEngineResult.discount_percent}% off
+
+                    <div className="fg-inv-featured-engine">
+                      <span className="fg-inv-featured-price" style={{ color: '#991b1b' }}>
+                        Expired Inventory — Retail Sale Prohibited
                       </span>
-                    )}
-                    {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Dynamic Markdown' && (
-                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn" style={{ marginLeft: '4px' }}>
-                        Recommended
+                      <span className="fg-inv-featured-reason">
+                        Product passed expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Food safety compliance strictly prohibits retail markdown or selling expired food. Route immediately to licensed bio-waste or composting.
                       </span>
-                    )}
-                    {ruleEngineLoading && (
-                      <span style={{ fontSize: '0.72rem', color: '#92400e', opacity: 0.7 }}>calculating...</span>
-                    )}
+                    </div>
                   </div>
 
-                  {!ruleEngineLoading && ruleEngineResult ? (
-                    <div className="fg-inv-featured-engine">
-                      <span className="fg-inv-featured-price">
-                        RM {ruleEngineResult.discounted_price_myr}
-                        <span className="fg-inv-featured-price-label">/ unit after discount</span>
-                      </span>
-                      <span className="fg-inv-featured-value">
-                        Est. recovery: RM {ruleEngineResult.expected_value_myr}
-                      </span>
-                      <span className="fg-inv-featured-reason">{ruleEngineResult.reason}</span>
-                      {ruleEngineResult.moral_hazard_flag && (
-                        <span className="fg-inv-moral-hazard-tag">⚠ Donation cap reached — redirected to 50% markdown</span>
+                  <button
+                    type="button"
+                    className="fg-inv-action-btn fg-inv-action-btn--red fg-inv-featured-cta"
+                    onClick={() => handleApplyAction('dispose')}
+                  >
+                    Log Disposal →
+                  </button>
+                </div>
+
+                {/* ── Bottom row for Expired: Emergency NGO + Prohibited Markdown Notice ── */}
+                <div className="fg-inv-action-row-secondary">
+                  {/* Emergency NGO Route */}
+                  <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
+                    <div className="fg-inv-compact-top">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-compact-title">Emergency NGO Pick-up</span>
+                    </div>
+                    <p className="fg-inv-compact-desc">Closed-channel transfer only if authorized by bio-refinery or animal rescue partners.</p>
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn-compact fg-inv-action-btn--red"
+                      onClick={() => handleApplyAction('donate')}
+                    >
+                      Arrange →
+                    </button>
+                  </div>
+
+                  {/* Prohibited Dynamic Markdown */}
+                  <div className="fg-inv-action-card-compact fg-inv-action-card--normal" style={{ opacity: 0.65, background: '#f8fafc' }}>
+                    <div className="fg-inv-compact-top">
+                      <div className="fg-inv-action-icon-sm" style={{ background: '#e2e8f0', color: '#64748b' }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-compact-title" style={{ color: '#64748b' }}>Dynamic Markdown</span>
+                      <span className="fg-inv-compact-rec-tag" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>Prohibited</span>
+                    </div>
+                    <p className="fg-inv-compact-desc">Expired items cannot be sold at discounted price in consumer retail channels.</p>
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn-compact"
+                      style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}
+                      disabled
+                    >
+                      Locked (Expired)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="fg-inv-action-grid-v2">
+
+                {/* ── FEATURED: Dynamic Markdown (full-width top, most likely action) ── */}
+                <div className="fg-inv-action-card-featured fg-inv-action-card--markdown">
+                  <div className="fg-inv-featured-left">
+                    <div className="fg-inv-featured-eyebrow">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--amber">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-featured-label">Dynamic Markdown</span>
+                      {!ruleEngineLoading && ruleEngineResult && ruleEngineResult.discount_percent > 0 && (
+                        <span className="fg-inv-featured-discount-pill">
+                          {ruleEngineResult.discount_percent}% off
+                        </span>
+                      )}
+                      {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Dynamic Markdown' && (
+                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn" style={{ marginLeft: '4px' }}>
+                          Recommended
+                        </span>
+                      )}
+                      {ruleEngineLoading && (
+                        <span style={{ fontSize: '0.72rem', color: '#92400e', opacity: 0.7 }}>calculating...</span>
                       )}
                     </div>
-                  ) : (
-                    <p style={{ fontSize: '0.83rem', color: '#78350f', margin: '4px 0 0' }}>
-                      Accelerate sell-through with a time-based discount.
+
+                    {!ruleEngineLoading && ruleEngineResult ? (
+                      <div className="fg-inv-featured-engine">
+                        <span className="fg-inv-featured-price">
+                          RM {ruleEngineResult.discounted_price_myr}
+                          <span className="fg-inv-featured-price-label">/ unit after discount</span>
+                        </span>
+                        <span className="fg-inv-featured-value">
+                          Est. recovery: RM {ruleEngineResult.expected_value_myr}
+                        </span>
+                        <span className="fg-inv-featured-reason">{ruleEngineResult.reason}</span>
+                        {ruleEngineResult.moral_hazard_flag && (
+                          <span className="fg-inv-moral-hazard-tag">⚠ Donation cap reached — redirected to 50% markdown</span>
+                        )}
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '0.83rem', color: '#78350f', margin: '4px 0 0' }}>
+                        Accelerate sell-through with a time-based discount.
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="fg-inv-action-btn fg-inv-action-btn--amber fg-inv-featured-cta"
+                    onClick={() => handleApplyAction('markdown')}
+                  >
+                    Apply Markdown →
+                  </button>
+                </div>
+
+                {/* ── Bottom row: Normal Sale + Donate (compact, secondary weight) ── */}
+                <div className="fg-inv-action-row-secondary">
+
+                  {/* Normal Sale */}
+                  <div className="fg-inv-action-card-compact fg-inv-action-card--normal">
+                    <div className="fg-inv-compact-top">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--green">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-compact-title">Normal Sale</span>
+                      {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Normal Sale' && (
+                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--green">Recommended</span>
+                      )}
+                    </div>
+                    <p className="fg-inv-compact-desc">Full price, standard retail channel.</p>
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn-compact fg-inv-action-btn--green"
+                      onClick={() => handleApplyAction('normal')}
+                    >
+                      Apply →
+                    </button>
+                  </div>
+
+                  {/* Donate */}
+                  <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
+                    <div className="fg-inv-compact-top">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-compact-title">Donate</span>
+                      {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Donation' && !ruleEngineResult.moral_hazard_flag && (
+                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red">Recommended</span>
+                      )}
+                      {!ruleEngineLoading && ruleEngineResult?.moral_hazard_flag && (
+                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn">Cap full</span>
+                      )}
+                    </div>
+                    <p className="fg-inv-compact-desc">
+                      {ruleEngineResult?.moral_hazard_flag
+                        ? '30% donation quota reached. Redirects to markdown.'
+                        : 'Closed NGO channel — zero retail exposure.'}
                     </p>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  className="fg-inv-action-btn fg-inv-action-btn--amber fg-inv-featured-cta"
-                  onClick={() => handleApplyAction('markdown')}
-                >
-                  Apply Markdown →
-                </button>
-              </div>
-
-              {/* ── Bottom row: Normal Sale + Donate (compact, secondary weight) ── */}
-              <div className="fg-inv-action-row-secondary">
-
-                {/* Normal Sale */}
-                <div className="fg-inv-action-card-compact fg-inv-action-card--normal">
-                  <div className="fg-inv-compact-top">
-                    <div className="fg-inv-action-icon-sm fg-inv-action-icon--green">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
-                      </svg>
-                    </div>
-                    <span className="fg-inv-compact-title">Normal Sale</span>
-                    {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Normal Sale' && (
-                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--green">Recommended</span>
-                    )}
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn-compact fg-inv-action-btn--red"
+                      onClick={() => handleApplyAction('donate')}
+                    >
+                      Arrange →
+                    </button>
                   </div>
-                  <p className="fg-inv-compact-desc">Full price, standard retail channel.</p>
-                  <button
-                    type="button"
-                    className="fg-inv-action-btn-compact fg-inv-action-btn--green"
-                    onClick={() => handleApplyAction('normal')}
-                  >
-                    Apply →
-                  </button>
-                </div>
 
-                {/* Donate */}
-                <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
-                  <div className="fg-inv-compact-top">
-                    <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                      </svg>
-                    </div>
-                    <span className="fg-inv-compact-title">Donate</span>
-                    {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Donation' && !ruleEngineResult.moral_hazard_flag && (
-                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red">Recommended</span>
-                    )}
-                    {!ruleEngineLoading && ruleEngineResult?.moral_hazard_flag && (
-                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn">Cap full</span>
-                    )}
-                  </div>
-                  <p className="fg-inv-compact-desc">
-                    {ruleEngineResult?.moral_hazard_flag
-                      ? '30% donation quota reached. Redirects to markdown.'
-                      : 'Closed NGO channel — zero retail exposure.'}
-                  </p>
-                  <button
-                    type="button"
-                    className="fg-inv-action-btn-compact fg-inv-action-btn--red"
-                    onClick={() => handleApplyAction('donate')}
-                  >
-                    Arrange →
-                  </button>
                 </div>
-
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -6,7 +6,7 @@ import ProfitDailyChart from './FoodRescuedTrendChart'
 import ReasonForRecoveryChart from './ReasonForRecoveryChart'
 import RecentActivitiesTable from './RecentActivitiesTable'
 import { INITIAL_ACTIVITIES } from './activitiesData'
-import { INITIAL_BATCHES } from './inventoryData'
+import { INITIAL_BATCHES, normalizeBatchDte } from './inventoryData'
 import SalesLogPage from './SalesLogPage'
 import DemandForecastingPage from './DemandForecastingPage'
 import InventoryFefoRiskPage from './InventoryFefoRiskPage'
@@ -25,7 +25,7 @@ export default function DashboardPage({ onNavigateHome }) {
   }
 
   // ── Inventory state: 100% sourced directly from inventory_master.json ────────
-  const [batches, setBatches] = useState(INITIAL_BATCHES)
+  const [batches, setBatches] = useState(() => INITIAL_BATCHES.map(normalizeBatchDte))
   const [batchesLoading, setBatchesLoading] = useState(true)
   const [activities, setActivities] = useState(INITIAL_ACTIVITIES)
   const [profit, setProfit] = useState(0)
@@ -46,7 +46,7 @@ export default function DashboardPage({ onNavigateHome }) {
               `%c[FreshGuard Supabase] ⚡ Connected to Supabase Cloud (${data.length} batches live)`,
               'color: #16a34a; font-weight: bold;'
             )
-            setBatches(data.map(supabaseRowToBatch))
+            setBatches(data.map(supabaseRowToBatch).map(normalizeBatchDte))
             return
           }
         }
@@ -59,7 +59,7 @@ export default function DashboardPage({ onNavigateHome }) {
         .then(r => r.json())
         .then(data => {
           const list = Array.isArray(data) ? data : (data && Array.isArray(data.batches) ? data.batches : null)
-          if (list && list.length > 0) setBatches(list)
+          if (list && list.length > 0) setBatches(list.map(normalizeBatchDte))
         })
         .catch(() => {})
     }
@@ -221,13 +221,24 @@ export default function DashboardPage({ onNavigateHome }) {
         }).catch(() => {})
       }
 
+    } else if (actionType === 'dispose') {
+      actionLabel = 'Disposal · Bio-waste Logged (Expired Stock)'
+      statusLabel = 'Disposed'
+      statusType = 'danger'
+      earnedValue = 0
+
+      setBatches(prev => prev.filter(b => b.id !== batch.id))
+      fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
+        method: 'DELETE'
+      }).catch(() => {})
+
     } else {
       return
     }
 
     setProfit(prev => prev + earnedValue)
 
-    const riskTierMap = { high: 'High', med: 'Moderate', low: 'Low' }
+    const riskTierMap = { expired: 'Expired', high: 'High', med: 'Moderate', low: 'Low' }
     const riskTierLabel = riskTierMap[batch.riskType] || 'Low'
     const now = new Date()
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

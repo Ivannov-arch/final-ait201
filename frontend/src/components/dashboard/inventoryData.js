@@ -12,24 +12,68 @@ export function parseDateToDays(expiryStr) {
     const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const diffMs = dExp - dNow
     const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
-    return Math.max(0, diffDays)
+    return diffDays
   }
   return 7
 }
 
 export function computeDteAndRisk(expiryStr) {
   const days = parseDateToDays(expiryStr)
+  if (days < 0) {
+    const absDays = Math.abs(days)
+    const dte = absDays === 1 ? 'Expired (1d ago)' : `Expired (${absDays}d ago)`
+    return {
+      dte,
+      dteNum: days,
+      risk: 'Expired',
+      riskType: 'expired',
+      isExpired: true,
+      recommended: 'Disposal / Waste'
+    }
+  }
+  if (days === 0) {
+    return {
+      dte: 'Expires Today (0d)',
+      dteNum: 0,
+      risk: 'Critical Risk',
+      riskType: 'high',
+      isExpired: false,
+      recommended: 'Donate to Food Bank'
+    }
+  }
   const dte = days === 1 ? '1 day' : `${days} days`
   let risk = 'Low Risk'
   let riskType = 'low'
+  let recommended = 'Normal Sale'
   if (days <= 2) {
     risk = 'High Risk'
     riskType = 'high'
+    recommended = 'Donate to Food Bank'
   } else if (days <= 5) {
     risk = 'Moderate Risk'
     riskType = 'med'
+    recommended = 'Dynamic Markdown'
   }
-  return { dte, dteNum: days, risk, riskType }
+  return { dte, dteNum: days, risk, riskType, isExpired: false, recommended }
+}
+
+export function normalizeBatchDte(batch) {
+  if (!batch) return batch
+  const expiry = batch.expiryDate || batch.expiry_date
+  if (!expiry) return batch
+
+  const computed = computeDteAndRisk(expiry)
+  const isExp = computed.isExpired
+
+  return {
+    ...batch,
+    dte: computed.dte,
+    dteNum: computed.dteNum,
+    risk: isExp ? 'Expired' : (batch.riskSource === 'ml_xgboost' ? batch.risk : computed.risk),
+    riskType: isExp ? 'expired' : (batch.riskSource === 'ml_xgboost' ? batch.riskType : computed.riskType),
+    isExpired: isExp,
+    recommended: isExp ? 'Disposal / Waste' : (batch.recommended || computed.recommended)
+  }
 }
 
 export const INITIAL_BATCHES = [

@@ -5265,6 +5265,13 @@ button {
   white-space: nowrap;
   letter-spacing: 0.01em;
 }
+.fg-inv-risk-badge--expired {
+  background: #7f1d1d;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(127, 29, 29, 0.45);
+  border: 1px solid #991b1b;
+}
+
 .fg-inv-risk-badge--high {
   background: #c82d32;
   color: #fff;
@@ -5325,6 +5332,28 @@ button {
   justify-content: center;
   padding: 0.55rem 1rem;
   margin-top: 0.5rem;
+}
+.fg-inv-decision-trigger-btn--expired {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #991b1b;
+  font-weight: 800;
+}
+.fg-inv-decision-trigger-btn--expired .fg-inv-trigger-dot {
+  background: #991b1b;
+}
+.fg-inv-decision-trigger-btn--expired:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+  color: #fff;
+}
+.fg-inv-decision-trigger-btn--dispose {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+.fg-inv-decision-trigger-btn--dispose .fg-inv-trigger-dot {
+  background: #94a3b8;
 }
 .fg-inv-decision-trigger-btn--high {
   background: #fef2f2;
@@ -5629,6 +5658,11 @@ button {
   font-size: 0.72rem;
   font-weight: 800;
 }
+.fg-inv-decision-badge--expired {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
 .fg-inv-decision-badge--high {
   background: #fde8e9;
   color: #c82d32;
@@ -5692,6 +5726,13 @@ button {
 .fg-inv-action-card-featured:hover {
   box-shadow: 0 6px 20px #e87a1e18;
   transform: translateY(-1px);
+}
+.fg-inv-action-card--disposal {
+  border-color: #fecaca;
+  background: linear-gradient(100deg, #fef2f2 0%, #fff1f2 100%);
+}
+.fg-inv-action-card--disposal:hover {
+  box-shadow: 0 6px 20px rgba(185, 28, 28, 0.18);
 }
 
 .fg-inv-featured-left {
@@ -6665,6 +6706,15 @@ button {
     border-color 0.2s ease;
 }
 
+.fg-inv-decision-banner--expired {
+  background: #fef2f2 !important;
+  border-color: #f87171 !important;
+}
+
+.fg-inv-decision-banner--expired .fg-inv-decision-img {
+  border-color: #ef4444 !important;
+}
+
 .fg-inv-decision-banner--high {
   background: #fef2f2 !important;
   border-color: #fecaca !important;
@@ -7189,6 +7239,17 @@ button {
   box-shadow: inset 0 0 0 1px rgba(27, 155, 85, 0.12);
 }
 
+.fg-inv-chip--expired {
+  color: #991b1b;
+}
+
+.fg-inv-chip--expired.is-active {
+  background: rgba(185, 28, 28, 0.12);
+  border-color: rgba(185, 28, 28, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.18);
+  color: #7f1d1d;
+}
+
 .fg-inv-chip--critical.is-active {
   background: rgba(198, 46, 34, 0.1);
   border-color: rgba(198, 46, 34, 0.18);
@@ -7309,6 +7370,16 @@ button {
   border-radius: 18px;
   border: 1px solid rgba(17, 38, 26, 0.08);
   background: rgba(255, 255, 255, 0.78);
+}
+
+.fg-inv-priority-card--expired {
+  background: linear-gradient(
+    180deg,
+    rgba(254, 242, 242, 0.95),
+    rgba(255, 255, 255, 0.88)
+  );
+  border-color: rgba(185, 28, 28, 0.25);
+  box-shadow: inset 3px 0 0 #991b1b;
 }
 
 .fg-inv-priority-card--high {
@@ -7462,6 +7533,12 @@ button {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #597266;
+}
+
+.fg-inv-risk-badge--expired {
+  background: rgba(185, 28, 28, 0.12);
+  color: #7f1d1d;
+  border: 1px solid rgba(185, 28, 28, 0.28);
 }
 
 .fg-inv-risk-badge--high {

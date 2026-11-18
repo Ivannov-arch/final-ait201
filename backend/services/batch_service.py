@@ -43,26 +43,50 @@ def _ml_risk(record: dict) -> dict | None:
 
 def _format_batch_record(record: dict) -> dict:
     """Format an inventory record dict into the standardized batch response shape."""
-    try:
-        dte = int(record.get("days_to_expiry", 5))
-    except (ValueError, TypeError):
-        dte = 5
-    status = "Near Expiry" if dte <= 2 else "Available"
-
-    # Risk priority: Person 1's XGBoost model (or shelf-stable policy) →
-    # stored risk_label → DTE heuristic.
-    pred = _ml_risk(record)
-    if pred and pred.get("label"):
-        lbl = str(pred["label"]).upper()
-        risk_tier = RISK_TIER_MAP.get(lbl, "low")
-        risk_label = RISK_LABEL_MAP.get(lbl, "Low Risk")
-        risk_score = pred.get("score")
-        risk_source = pred.get("source", "ml_xgboost")
+    exp_str = str(record.get("expiry_date") or record.get("expiryDate") or "")
+    dte = 5
+    if exp_str:
+        try:
+            from datetime import date, datetime
+            if "T" in exp_str:
+                exp_dt = datetime.fromisoformat(exp_str.split("T")[0]).date()
+            else:
+                exp_dt = datetime.strptime(exp_str[:10], "%Y-%m-%d").date()
+            dte = (exp_dt - date.today()).days
+        except Exception:
+            try:
+                dte = int(record.get("days_to_expiry", 5))
+            except (ValueError, TypeError):
+                dte = 5
     else:
-        risk_tier = str(record.get("risk_tier") or ("high" if dte <= 2 else "med" if dte <= 5 else "low")).lower()
-        risk_label = str(record.get("risk_label") or ("High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"))
+        try:
+            dte = int(record.get("days_to_expiry", 5))
+        except (ValueError, TypeError):
+            dte = 5
+
+    if dte < 0:
+        status = "Expired"
+        risk_tier = "expired"
+        risk_label = "Expired"
         risk_score = None
-        risk_source = "dte_fallback"
+        risk_source = "calendar_expired"
+    else:
+        status = "Near Expiry" if dte <= 2 else "Available"
+
+        # Risk priority: Person 1's XGBoost model (or shelf-stable policy) →
+        # stored risk_label → DTE heuristic.
+        pred = _ml_risk(record)
+        if pred and pred.get("label"):
+            lbl = str(pred["label"]).upper()
+            risk_tier = RISK_TIER_MAP.get(lbl, "low")
+            risk_label = RISK_LABEL_MAP.get(lbl, "Low Risk")
+            risk_score = pred.get("score")
+            risk_source = pred.get("source", "ml_xgboost")
+        else:
+            risk_tier = str(record.get("risk_tier") or ("high" if dte <= 2 else "med" if dte <= 5 else "low")).lower()
+            risk_label = str(record.get("risk_label") or ("High Risk" if dte <= 2 else "Moderate Risk" if dte <= 5 else "Low Risk"))
+            risk_score = None
+            risk_source = "dte_fallback"
 
     qty = float(record.get("quantity", 0.0) or 0.0)
     price = float(record.get("unit_price_myr", 5.0) or 5.0)

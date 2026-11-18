@@ -186,17 +186,52 @@ function rowToBatch(r, pred = null) {
   const qty   = Number(r.quantity) || 0
   const price = parseFloat(r.unit_price_myr) || 0
   const cost  = parseFloat(r.cost_price_myr) || price * 0.70
-  const dte   = Number(r.days_to_expiry) || 0
 
-  // Risk priority: ML/policy prediction (XGBoost + Tier2, or shelf-stable
+  // Calculate DTE dynamically from expiry_date if available
+  let dte = Number(r.days_to_expiry)
+  if (r.expiry_date) {
+    const exp = new Date(r.expiry_date)
+    if (!isNaN(exp.getTime())) {
+      const now = new Date()
+      const dExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
+      const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      dte = Math.round((dExp - dNow) / (1000 * 60 * 60 * 24))
+    }
+  }
+  if (isNaN(dte)) dte = 0
+
+  // Risk priority: Expired status → ML/policy prediction (XGBoost + Tier2, or shelf-stable
   // policy) when available → DTE heuristic fallback.
   let riskType = 'low', risk = 'Low Risk', riskSource = 'dte_heuristic'
-  if (pred && pred.label) {
+  let isExpired = false
+  let dteStr = `${dte} days`
+
+  if (dte < 0) {
+    isExpired = true
+    riskType = 'expired'
+    risk = 'Expired'
+    const abs = Math.abs(dte)
+    dteStr = abs === 1 ? 'Expired (1d ago)' : `Expired (${abs}d ago)`
+  } else if (dte === 0) {
+    riskType = 'high'
+    risk = 'Critical Risk'
+    dteStr = 'Expires Today (0d)'
+  } else if (pred && pred.label) {
     riskType   = RISK_TIER_MAP[pred.label] || 'low'
     risk       = RISK_LABEL_MAP[pred.label] || 'Low Risk'
     riskSource = pred.source || 'ml_xgboost'
-  } else if (dte <= 2)      { riskType = 'high'; risk = 'High Risk' }
-  else if (dte <= 5) { riskType = 'med';  risk = 'Moderate Risk' }
+    dteStr     = dte === 1 ? '1 day' : `${dte} days`
+  } else if (dte <= 2) {
+    riskType = 'high'
+    risk = 'High Risk'
+    dteStr = dte === 1 ? '1 day' : `${dte} days`
+  } else if (dte <= 5) {
+    riskType = 'med'
+    risk = 'Moderate Risk'
+    dteStr = `${dte} days`
+  } else {
+    dteStr = `${dte} days`
+  }
 
   return {
     id:                r.lot_id,
@@ -212,9 +247,10 @@ function rowToBatch(r, pred = null) {
     dateIn:            r.date_received,
     isPromoted:        Number(r.is_promoted) ? 1 : 0,
     dteNum:            dte,
-    dte:               dte === 1 ? '1 day' : `${dte} days`,
+    dte:               dteStr,
     risk,
     riskType,
+    isExpired,
     riskScore:         pred ? (pred.score ?? null) : (r.risk_score !== undefined ? Number(r.risk_score) || null : null),
     riskSource,
     reorderLevel:      Number(r.reorder_level) || 15,
@@ -223,7 +259,8 @@ function rowToBatch(r, pred = null) {
     supplier:          r.supplier_name,
     warehouseLocation: r.warehouse_location,
     storeId:           r.store_id,
-    recommended:       riskType === 'high' ? 'Donate to Food Bank'
+    recommended:       isExpired ? 'Disposal / Waste'
+                     : riskType === 'high' ? 'Donate to Food Bank'
                      : riskType === 'med'  ? 'Dynamic Markdown'
                      :                       'Normal Sale'
   }
@@ -937,7 +974,8 @@ function createApiMiddleware() {
     if (url === '/api/recommend' && req.method === 'POST') {
       try {
         const body = await collectBody(req)
-        const dte    = Math.max(parseInt(body.days_to_expiry) || 0, 0)
+        const rawDte = parseInt(body.days_to_expiry)
+        const dte    = isNaN(rawDte) ? 0 : rawDte
         const qty    = Math.max(parseFloat(body.quantity)     || 0, 0)
         const price  = Math.max(parseFloat(body.unit_price_myr) || 0, 0)
         const demand = Math.max(parseFloat(body.demand_forecast_3d) || 0, 0)
@@ -954,8 +992,13 @@ function createApiMiddleware() {
         let route, discount, channel, moralHazard, reason
 
         // ── Retail Decision Tree (FEFO Priority) ───────────────────────────
+        // 0. Already Expired (DTE < 0) — Prohibit retail markdown, route to disposal
+        if (dte < 0) {
+          route = 'Disposal'; discount = 0.0; channel = 'waste_compost'; moralHazard = false
+          reason = `Product expired (${Math.abs(dte)}d ago). Food safety regulations strictly prohibit retail markdown or sale. Route to licensed bio-waste/compost.`
+
         // 1. Critical Expiry (DTE <= 1) — Spoilage imminent; prioritize donation
-        if (dte <= 1) {
+        } else if (dte <= 1) {
           const quotaOk = totalSurplus <= 0 || (donatedSoFar + qty) <= totalSurplus * DONATION_QUOTA_CAP
           if (quotaOk) {
             route = 'Donation'; discount = 1.0; channel = 'closed_ngo'; moralHazard = false
