@@ -463,63 +463,90 @@ Built with \textbf{React 18, Vite, modular BEM CSS, GSAP animations, and zero-de
 \subsection{Spoilage Risk Classification Performance}
 \label{sec:spoilage_results}
 
-Evaluated on the held-out stratified test set ($N = 17{,}976$ receipts), the zero-leakage XGBoost classifier decisively outperforms the standard retail DTE heuristic ($\text{DTE} \le 7 \to \text{HIGH}$, $\text{DTE} \le 30 \to \text{MODERATE}$, else $\text{LOW}$), as shown in Table~\ref{tab:spoilage_headline} and Figure~\ref{fig:spoilage_cm}.
+We evaluate five supervised classification architectures on the held-out stratified test set ($N = 17{,}976$ receipts; 89,880 total receipts): \textbf{XGBoost, Random Forest, Decision Tree, Logistic Regression, and Support Vector Machine (Linear SVM)}. To resolve real-world perishable class imbalances without synthetic data leakage, we perform a controlled ablation study comparing standard unweighted training against \textbf{Dual Class-Weighting} ($w_{\text{HIGH}}=1.5, w_{\text{MOD}}=2.6, w_{\text{LOW}}=1.0$). Ground-truth spoilage categories correspond to operational retail clearinghouse thresholds: \texttt{HIGH} ($>25\%$ waste risk), \texttt{MODERATE} ($1\%$--$25\%$), and \texttt{LOW} ($<1\%$).
+
+\subsubsection{Overall Model Benchmark and Weighting Ablation}
+Table~\ref{tab:spoilage_ablation_summary} summarizes the complete performance across all 10 experimental configurations, drawn directly from our empirical benchmark.
 
 \begin{table}[H]
 \centering
-\caption{Spoilage Risk Classification: XGBoost vs.\ Traditional Retail DTE Rule Baseline ($N = 17{,}976$).}
-\label{tab:spoilage_headline}
-\renewcommand{\arraystretch}{1.15}
-\setlength{\tabcolsep}{4pt}
+\caption{Overall Performance Benchmark: Unweighted vs.\ Dual Class-Weighted Spoilage Classification ($N = 17{,}976$).}
+\label{tab:spoilage_ablation_summary}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3.5pt}
 {\footnotesize
-\begin{tabular}{@{} l r r r r @{}}
+\begin{tabular}{@{} l l c c c c c c r @{}}
 \toprule
 \rowcolor{NavyPrimary}
-\color{white}\textbf{Metric} & \color{white}\textbf{XGBoost (T1)} & \color{white}\textbf{Tier 1+2 ($\alpha=0.10$)} & \color{white}\textbf{DTE Rule} & \color{white}\textbf{Gain (T1 vs.\ Base)} \\
+\color{white}\textbf{Model} & \color{white}\textbf{Weighting} & \color{white}\textbf{Accuracy} & \color{white}\textbf{Macro F1} & \color{white}\textbf{Weighted F1} & \color{white}\textbf{Rec.\ HIGH} & \color{white}\textbf{Rec.\ MOD} & \color{white}\textbf{Rec.\ LOW} & \color{white}\textbf{Time (s)} \\
 \midrule
-Overall Accuracy & \textbf{67.33\%} & 67.14\% & 32.26\% & \textbf{+35.07 pp} \\
-\rowcolor{LightBg}
-Macro-Averaged F1 & \textbf{0.5127} & 0.5060 & 0.2698 & \textbf{+24.29 pp} \\
-Weighted F1 & \textbf{0.6239} & --- & 0.2827 & \textbf{+34.12 pp} \\
-\rowcolor{LightBg}
-HIGH-Risk Recall & 68.75\% & \textbf{71.46\%} & 58.98\% & +9.77 pp (+12.48 pp T2) \\
-HIGH-Risk Precision & \textbf{69.29\%} & 66.34\% & 40.04\% & +29.25 pp \\
-\rowcolor{LightBg}
-LOW-Risk Recall & \textbf{90.24\%} & --- & 7.67\% & \textbf{+82.57 pp} \\
-MODERATE-Risk Recall & 4.38\% & --- & 28.72\% & $-24.34$ pp (see §\ref{sec:spoilage_discussion}) \\
+\multirow{2}{*}{\textbf{XGBoost}} & Unweighted & \textbf{67.33\%} & 0.5127 & 0.6239 & 68.75\% & 4.38\% & \textbf{90.24\%} & 3.22 \\
+ & \textbf{Dual-Weighted} & 63.35\% & \textbf{0.6021} & \textbf{0.6493} & 53.08\% & \textbf{60.06\%} & 74.59\% & 2.88 \\
+\midrule
+\multirow{2}{*}{\textbf{Random Forest}} & Unweighted & 66.28\% & 0.5311 & 0.6275 & 66.40\% & 10.06\% & 87.86\% & 2.10 \\
+ & Dual-Weighted & 63.66\% & 0.5733 & 0.6378 & 60.77\% & 33.96\% & 77.93\% & 2.28 \\
+\midrule
+\multirow{2}{*}{\textbf{Decision Tree}} & Unweighted & 57.23\% & 0.5165 & 0.5730 & 60.57\% & 29.88\% & 64.53\% & \textbf{0.63} \\
+ & Dual-Weighted & 57.17\% & 0.5120 & 0.5712 & 60.38\% & 27.80\% & 65.38\% & 0.67 \\
+\midrule
+\multirow{2}{*}{\textbf{Logistic Reg.}} & Unweighted & 53.96\% & 0.3908 & 0.4906 & 58.80\% & 0.00\% & 70.08\% & 1.13 \\
+ & Dual-Weighted & 47.71\% & 0.4158 & 0.4669 & \textbf{68.53\%} & 20.36\% & 38.04\% & 0.94 \\
+\midrule
+\multirow{2}{*}{\textbf{SVM (Linear)}} & Unweighted & 53.55\% & 0.3881 & 0.4872 & 59.27\% & 0.00\% & 68.66\% & 4.50 \\
+ & Dual-Weighted & 47.55\% & 0.4159 & 0.4669 & 67.87\% & 21.01\% & 38.05\% & 4.59 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
+The benchmark demonstrates three key findings:
+\begin{enumerate}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Dual-Weighted XGBoost achieves top balanced performance:} It attains the highest Macro F1 score across all evaluated models (\textbf{0.6021}, a +8.94~pp improvement over unweighted XGBoost) and highest Weighted F1 (\textbf{0.6493}), training in under 3 seconds.
+    \item \textbf{Trade-off between raw accuracy and class equity:} While unweighted models display slightly higher accuracy (67.33\% vs.\ 63.35\%), this is an artifact of majority-class bias toward \texttt{LOW} risk (accounting for 50.84\% of test receipts).
+    \item \textbf{Tree ensembles dominate linear baselines:} Tree-based models (XGBoost and Random Forest) outperform linear models (Logistic Regression and SVM) by over 15~pp in Macro F1 and 10~pp in overall accuracy due to nonlinear interactions between stock pressure and expiry velocity.
+\end{enumerate}
+
+\subsubsection{The MODERATE Class Pathology and Empirical Recall Jump}
+\label{sec:moderate_jump}
+
+In supermarket perishable inventory, the \texttt{MODERATE} class represents the most anomalous and problematic distribution (the ``pathological class'') for three primary reasons:
+\begin{itemize}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Minority Distribution with High Boundary Ambiguity:} \texttt{MODERATE} accounts for only 16.37\% of all inventory receipts (2,942 out of 17,976 test samples), whereas \texttt{LOW} comprises 50.84\% and \texttt{HIGH} comprises 32.79\%. Moreover, \texttt{MODERATE} occupies the transitional decision boundary between fresh goods and severe spoilage, making standard loss penalties gravitate toward the dominant extremes.
+    \item \textbf{Near-Total Collapse under Unweighted Loss:} As illustrated in Figure~\ref{fig:moderate_recall_jump}, every unweighted model severely neglects or completely collapses on \texttt{MODERATE}:
+    \begin{itemize}
+        \item Logistic Regression and SVM achieve \textbf{0.00\% recall} (predicting zero moderate cases across all 17,976 test instances).
+        \item Unweighted XGBoost achieves only \textbf{4.38\% recall} (capturing only 129 out of 2,942 moderate receipts).
+        \item Unweighted Random Forest reaches only \textbf{10.06\% recall}.
+    \end{itemize}
+    \item \textbf{Operational Cost of Missing Moderate Lots:} In a retail clearinghouse, identifying \texttt{MODERATE} risk is the single most valuable operational window: it triggers early dynamic markdowns (15\%--25\%) while products are still fresh enough to sell commercially. Once missed, these lots progress undetected into \texttt{HIGH} spoilage ($>25\%$), where commercial clearance is no longer viable and goods must be liquidated at steep losses or discarded.
+\end{itemize}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.96\textwidth]{figures/fig1_spoilage_cm_comparison.pdf}
-    \caption{Test-set confusion matrices ($N=17{,}976$) comparing (a) the shipped zero-leakage XGBoost classifier against (b) the traditional DTE rule baseline. The baseline falsely flags 4,572 zero-waste (LOW) receipts as HIGH, whereas XGBoost achieves 90.24\% LOW recall and 68.75\% HIGH recall.}
-    \label{fig:spoilage_cm}
+    \includegraphics[width=0.88\textwidth]{figures/02_recall_moderate_jump_comparison.png}
+    \caption{Empirical comparison of MODERATE-risk recall between unweighted and dual class-weighted models. Standard unweighted models suffer near-total collapse on the ambiguous MODERATE class (0.00\%--10.06\%), while Dual Class-Weighting drives an exceptional jump to 60.06\% in XGBoost (+55.68~pp) and 33.96\% in Random Forest.}
+    \label{fig:moderate_recall_jump}
 \end{figure}
 
-\subsubsection{Per-Category Generalization and Feature Attribution}
-XGBoost beats the DTE heuristic across \textbf{all 9 perishable categories} by 23.5~pp (\texttt{Meat}: 62.06\% vs.\ 38.54\%) up to 55.6~pp (\texttt{Frozen\_Meals}: 85.14\% vs.\ 29.56\%, where the baseline scores \textbf{0.00\% HIGH recall} because frozen shelf lives exceed 7 days). Feature gain attribution (Figure~\ref{fig:spoilage_fi}) proves why the model outperforms expiry rules: \textbf{demand-velocity features} (\texttt{daily\_demand} 16.44\% + \texttt{stock\_pressure} 13.86\% = \textbf{30.30\%}) outrank \textbf{expiry/shelf-life features} (\texttt{days\_until\_expiry} 17.73\% + \texttt{shelf\_life\_days} 7.08\% = \textbf{24.81\%}). The model genuinely captures the physical mechanism of retail waste: \emph{excess stock sitting relative to sales velocity}, modulated by category dynamics (\texttt{Frozen\_Meals} 12.66\%) and weekend demand cycles (\texttt{is\_weekend} + \texttt{day\_of\_week} = 13.34\%).
+By assigning a rebalancing penalty of $w_{\text{MOD}} = 2.6$ and $w_{\text{HIGH}} = 1.5$, Dual Class-Weighting forces the learning objective to penalize false negatives on the transitional boundary. Consequently, \textbf{XGBoost MODERATE recall experiences a massive jump from 4.38\% to 60.06\%} (+55.68~pp, a $13.7\times$ sensitivity increase), Random Forest jumps from 10.06\% to 33.96\% (+23.90~pp), and even linear baselines regain sensitivity (Logistic Regression jumps from 0.00\% to 20.36\%; SVM jumps from 0.00\% to 21.01\%).
+
+\subsubsection{Confusion Matrix Distribution Shift}
+\label{sec:confusion_matrices}
+
+Figure~\ref{fig:confusion_matrices_shift} presents the full $3 \times 3$ confusion matrices across all five evaluated architectures, directly contrasting unweighted against dual-weighted regimes.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.86\textwidth]{figures/fig2_spoilage_feature_importance.pdf}
-    \caption{Relative gain feature importance across the 19 store-compatible features in the shipped XGBoost Spoilage Classifier. Velocity and stock pressure collectively exceed expiry-based signals.}
-    \label{fig:spoilage_fi}
+    \includegraphics[width=0.98\textwidth]{figures/05_confusion_matrices_unweighted_vs_dual_weighted.png}
+    \caption{Confusion matrix comparison across five classification architectures ($N = 17{,}976$) under unweighted (top row) and dual class-weighted (bottom row) training. The top row reveals a hollow center diagonal where MODERATE instances are falsely classified as LOW or HIGH. Dual weighting restores diagonal integrity and balances predictive coverage across all three operational tiers.}
+    \label{fig:confusion_matrices_shift}
 \end{figure}
 
-\subsubsection{Tier-2 Escalation Trade-Off and Minority-Class Discussion}
-\label{sec:spoilage_discussion}
-Figure~\ref{fig:tier2_alpha} quantifies the deliberate asymmetry of the Tier-2 exponential time-decay layer across $\alpha \in [0.00, 0.20]$. At the shipped operating point $\alpha = 0.10$, Tier-2 flips 665 test labels (3.70\%), trading a minimal \textbf{$-0.19$ pp} accuracy cost (67.33\% $\to$ 67.14\%) to secure \textbf{+2.71 pp} in HIGH-risk recall (68.75\% $\to$ 71.46\%)---a $14\times$ recall-to-accuracy gain ratio appropriate when missed spoilage destroys physical food while false positives trigger benign commercial markdowns.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.84\textwidth]{figures/fig3_tier2_alpha_tradeoff.pdf}
-    \caption{Monotonic recall-vs.-accuracy trade-off across Tier-2 escalation strength $\alpha$. The shipped parameter ($\alpha=0.10$) yields +2.71~pp HIGH-risk recall for a 0.19~pp accuracy trade.}
-    \label{fig:tier2_alpha}
-\end{figure}
-
-Critically, Table~\ref{tab:spoilage_headline} exposes that the unweighted Tier-1 model suffers \textbf{minority-class collapse on MODERATE} (4.38\% recall, predicting MODERATE on only 2.14\% of rows because MODERATE represents just 16.37\% of training data and straddles the HIGH/LOW boundary). Rather than concealing this flaw, the engineering team implemented two explicit remedies in the final release (commit \texttt{8686d95}): (1) a \textbf{Hierarchical Decision Gate} (\texttt{mode="hierarchical"}) elevating uncertain/aging lots into MODERATE while protecting HIGH recall $\ge 75\%$, and (2) a \textbf{Dual-Weighted XGBoost model} ($w_{\text{MOD}}=2.6$, $w_{\text{HIGH}}=1.5$) to rebalance class gradients without external data. On the live 58-batch store inventory, runtime verification confirmed \textbf{42 batches scored by live XGBoost} (\texttt{ml\_xgboost}) and \textbf{16 dry-goods batches governed by shelf-stable policy} (\texttt{policy\_shelf\_stable}), with zero heuristic fallbacks.
+The confusion matrices clearly demonstrate the structural transformation achieved by Dual Class-Weighting:
+\begin{itemize}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Restoration of the Center Diagonal:} In the unweighted matrices (top row), the center cell is virtually vacant. In unweighted XGBoost, 1,749 true \texttt{MODERATE} instances were incorrectly predicted as \texttt{LOW} and 1,064 as \texttt{HIGH}. Dual weighting (bottom row) shifts 1,767 instances correctly onto the center diagonal.
+    \item \textbf{Enhanced High-Risk Precision:} Concurrently, Dual-Weighted XGBoost elevates \texttt{HIGH} precision from 69.29\% to \textbf{81.66\%} (F1 \texttt{HIGH} = 0.6434). This ensures that items flagged for emergency clearance or food-bank donation possess high empirical spoilage probability, preventing premature markdown of viable stock.
+    \item \textbf{Production Selection:} While Decision Trees remain invariant to weighting due to single-split greedy partitioning, Dual-Weighted XGBoost delivers the best multi-tier operational balance, achieving 60.06\% \texttt{MODERATE} recall, 53.08\% \texttt{HIGH} recall, and 74.59\% \texttt{LOW} recall. It is therefore selected as the primary spoilage engine in the FreshGuard pipeline.
+\end{itemize}
 
 \subsection{Multi-Horizon Demand Forecasting Performance}
 Evaluated on the untouched 30-day chronological test window (\texttt{2017-07-17}--\texttt{2017-08-15}, $N = 22{,}680$ observations per horizon), the three direct LightGBM models consistently outperform the strong 7-day seasonal-naive retail baseline ($\hat{y}_t = y_{t-7}$), as detailed in Table~\ref{tab:forecast_headline} and Figure~\ref{fig:forecast_wape}.
