@@ -7,26 +7,44 @@ export default function ReasonForRecoveryChart({ batches = [] }) {
   const centerValRef = useRef(null)
 
   // Compute live rescue distribution dynamically from batches (BUG-CHART-02 fix)
-  const { salesKg, donateKg, totalKg, salesPct, donatePct } = useMemo(() => {
+  const { salesKg, donateKg, disposalKg, totalKg, salesPct, donatePct, disposalPct, activeChannels } = useMemo(() => {
     let sKg = 0
     let dKg = 0
+    let xKg = 0  // disposal / expired
+
     batches.forEach(b => {
       const q = b.stockQty !== undefined ? Number(b.stockQty) : (parseFloat(b.qty) || 12)
-      if (b.appliedAction === 'donate' || b.dteNum <= 1 || b.riskType === 'high') {
+      const isDisposed = b.appliedAction === 'dispose'
+      const isExpired  = b.isExpired || b.riskType === 'expired' || (typeof b.dteNum === 'number' && b.dteNum < 0)
+
+      if (isDisposed || isExpired) {
+        xKg += q
+      } else if (b.appliedAction === 'donate' || b.dteNum <= 1 || b.riskType === 'high') {
         dKg += q
       } else {
         sKg += q
       }
     })
-    const tot = sKg + dKg || 1240
-    const sPct = Math.min(95, Math.max(5, Math.round((sKg / tot) * 100))) || 65
-    const dPct = 100 - sPct
+
+    const tot = sKg + dKg + xKg || 1240
+    // Clamp disposal first, then split the remainder between sales/donate
+    const xPct = xKg > 0 ? Math.min(90, Math.max(1, Math.round((xKg / tot) * 100))) : 0
+    const remaining = 100 - xPct
+    const rawSPct = Math.round((sKg / (sKg + dKg || 1)) * remaining)
+    const sPct = sKg + dKg === 0 ? 0 : Math.min(remaining - 1, Math.max(1, rawSPct))
+    const dPct = remaining - sPct
+
+    const channels = [sPct > 0 ? 1 : 0, dPct > 0 ? 1 : 0, xPct > 0 ? 1 : 0].reduce((a, b) => a + b, 0) || 2
+
     return {
-      salesKg: Math.round(sKg) || 806,
-      donateKg: Math.round(dKg) || 434,
-      totalKg: Math.round(tot),
-      salesPct: sPct,
-      donatePct: dPct
+      salesKg:     Math.round(sKg) || 806,
+      donateKg:    Math.round(dKg) || 434,
+      disposalKg:  Math.round(xKg),
+      totalKg:     Math.round(tot),
+      salesPct:    sPct || 65,
+      donatePct:   dPct || 35,
+      disposalPct: xPct,
+      activeChannels: channels
     }
   }, [batches])
 
@@ -44,7 +62,14 @@ export default function ReasonForRecoveryChart({ batches = [] }) {
       color: '#3b82f6',
       weight: `${donateKg.toLocaleString('en-MY')} kg`,
       description: 'Food Bank NGO Redistribution'
-    }
+    },
+    ...(disposalPct > 0 ? [{
+      label: 'Disposal',
+      percent: disposalPct,
+      color: '#7f1d1d',
+      weight: `${disposalKg.toLocaleString('en-MY')} kg`,
+      description: 'Bio-Waste / Expired Route'
+    }] : [])
   ]
 
   const radius = 70
@@ -123,10 +148,12 @@ export default function ReasonForRecoveryChart({ batches = [] }) {
       <div className="fg-card__header">
         <div>
           <h2 className="fg-card__title">Channel Action Breakdown</h2>
-          <p className="fg-card__subtitle">Product salvage distribution: Sales vs. Food Bank</p>
+          <p className="fg-card__subtitle">
+            Product salvage distribution: Sales vs. Food Bank{disposalPct > 0 ? ' vs. Disposal' : ''}
+          </p>
         </div>
         <span className="fg-card__badge" style={{ background: '#eaf7ee', color: '#1b9b55' }}>
-          2 Active Channels
+          {activeChannels} Active Channel{activeChannels !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -198,7 +225,9 @@ export default function ReasonForRecoveryChart({ batches = [] }) {
               <span className="fg-donut-center-unit">kg</span>
             </div>
             <span className="fg-donut-center-label">
-              {hoveredIdx !== null ? `${items[hoveredIdx].label} · ${items[hoveredIdx].percent}%` : 'Total Salvaged'}
+              {hoveredIdx !== null && items[hoveredIdx]
+                ? `${items[hoveredIdx].label} · ${items[hoveredIdx].percent}%`
+                : 'Total Salvaged'}
             </span>
           </div>
         </div>
