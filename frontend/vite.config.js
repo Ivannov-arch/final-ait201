@@ -820,6 +820,26 @@ function createApiMiddleware() {
           if (route) {
             const distKm = (route.distance / 1000).toFixed(2)
             const etaMin = Math.round(route.duration / 60)
+            // Person 5: ML Cargo Specification (mirrors dispatch_estimator.py)
+            const recs = readJson(MASTER_JSON)
+            const matchedRow = recs.find(r => matchBatchId(r.lot_id, batchId))
+            const qtyNum = parseFloat(matchedRow?.quantity || 40)
+            const cat = matchedRow?.category || 'Produce'
+            const isCold = ['Meat', 'Seafood', 'Dairy', 'Prepared Food'].some(c => cat.includes(c))
+            const cargoKg = Math.max(1.0, Math.round(qtyNum * 0.25 * 10) / 10)
+            let vTitle = 'Cargo Van', vType = 'van'
+            if (cargoKg <= 25) { vTitle = 'Motorcycle Courier'; vType = 'motorcycle' }
+            else if (cargoKg > 200) { vTitle = 'Food Bank Truck'; vType = 'truck' }
+
+            const cargoSpecs = {
+              estimated_cargo_kg: cargoKg,
+              vehicle_title: vTitle,
+              vehicle_type: vType,
+              cold_chain_required: isCold,
+              cold_chain_type: isCold ? 'Refrigerated Transport (Chilled)' : 'Ambient Dry Transport',
+              transport_urgency: (Number(matchedRow?.days_to_expiry) <= 1) ? '🚨 CRITICAL EMERGENCY (≤ 1 Day Expiry)' : 'STANDARD PLANNED DISPATCH'
+            }
+
             sendJson(res, 200, {
               batch_id:    batchId,
               receiver,
@@ -828,6 +848,7 @@ function createApiMiddleware() {
               geometry:    route.geometry,          // GeoJSON {type:'LineString', coordinates:[[lng,lat],...]}
               is_fallback: false,
               source:      'osrm_public',
+              cargo_specs: cargoSpecs
             })
             return
           }
@@ -840,6 +861,26 @@ function createApiMiddleware() {
       const dLon = ((receiver.lng - STORE_LNG) * Math.PI) / 180
       const a = Math.sin(dLat/2)**2 + Math.cos(STORE_LAT*Math.PI/180)*Math.cos(receiver.lat*Math.PI/180)*Math.sin(dLon/2)**2
       const distKm = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(2)
+
+      const recs = readJson(MASTER_JSON)
+      const matchedRow = recs.find(r => matchBatchId(r.lot_id, batchId))
+      const qtyNum = parseFloat(matchedRow?.quantity || 40)
+      const cat = matchedRow?.category || 'Produce'
+      const isCold = ['Meat', 'Seafood', 'Dairy', 'Prepared Food'].some(c => cat.includes(c))
+      const cargoKg = Math.max(1.0, Math.round(qtyNum * 0.25 * 10) / 10)
+      let vTitle = 'Cargo Van', vType = 'van'
+      if (cargoKg <= 25) { vTitle = 'Motorcycle Courier'; vType = 'motorcycle' }
+      else if (cargoKg > 200) { vTitle = 'Food Bank Truck'; vType = 'truck' }
+
+      const cargoSpecs = {
+        estimated_cargo_kg: cargoKg,
+        vehicle_title: vTitle,
+        vehicle_type: vType,
+        cold_chain_required: isCold,
+        cold_chain_type: isCold ? 'Refrigerated Transport (Chilled)' : 'Ambient Dry Transport',
+        transport_urgency: (Number(matchedRow?.days_to_expiry) <= 1) ? '🚨 CRITICAL EMERGENCY (≤ 1 Day Expiry)' : 'STANDARD PLANNED DISPATCH'
+      }
+
       sendJson(res, 200, {
         batch_id:    batchId,
         receiver,
@@ -848,6 +889,7 @@ function createApiMiddleware() {
         geometry:    null,
         is_fallback: true,
         source:      'haversine',
+        cargo_specs: cargoSpecs
       })
       return
     }
