@@ -33,7 +33,10 @@ from sklearn.metrics import (
     confusion_matrix, f1_score
 )
 import warnings
+from pathlib import Path
 warnings.filterwarnings('ignore')
+
+ROOT = Path(__file__).resolve().parent.parent
 
 SEEDS   = [42, 7, 123, 999, 2024]
 TARGET  = 'spoilage_risk'
@@ -41,8 +44,8 @@ FEAT    = ['Stock_Quantity','Unit_Price','Sales_Volume',
            'Inventory_Turnover_Rate','Reorder_Quantity',
            'Reorder_Level','percentage','days_until_expiry']
 
-RAW_PATH   = 'data/raw/7. Grocery_Inventory new v1.csv'
-FIXED_PATH = 'data/processed/7_grocery_inventory_cleaned.csv'
+RAW_PATH   = ROOT / 'data/raw/7. Grocery_Inventory new v1.csv'
+FIXED_PATH = ROOT / 'data/processed/7_grocery_inventory_cleaned.csv'
 
 
 # ── Labelling function (same thresholds for both scenarios) ───────────────────

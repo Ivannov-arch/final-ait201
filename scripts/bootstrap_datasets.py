@@ -23,11 +23,13 @@ NOTE on Dataset 1 (food_waste_ml):
 import pandas as pd
 import numpy as np
 import os
+from pathlib import Path
 from collections import Counter
 from imblearn.over_sampling import SMOTE, SMOTENC
 
-PROC = 'data/processed/'
-BOOT = 'data/processed/bootstrapped/'
+ROOT = Path(__file__).resolve().parent.parent
+PROC = str(ROOT / 'data' / 'processed') + os.sep
+BOOT = str(ROOT / 'data' / 'processed' / 'bootstrapped') + os.sep
 os.makedirs(BOOT, exist_ok=True)
 
 SEED = 42

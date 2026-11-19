@@ -17,15 +17,18 @@ from sklearn.metrics import (
     confusion_matrix, f1_score
 )
 import warnings
+from pathlib import Path
 warnings.filterwarnings('ignore')
+
+ROOT = Path(__file__).resolve().parent.parent
 
 SEEDS   = [42, 7, 123, 999, 2024]
 FEAT    = ['quantity','price','expiry_days','temperature',
            'day_of_week','is_weekend','predicted_demand','product_encoded']
 TARGET  = 'risk_level'
 
-RAW_PATH   = 'data/processed/11_food_waste_ml_cleaned.csv'
-SMOTE_PATH = 'data/processed/bootstrapped/11_food_waste_ml_bootstrapped.csv'
+RAW_PATH   = ROOT / 'data/processed/11_food_waste_ml_cleaned.csv'
+SMOTE_PATH = ROOT / 'data/processed/bootstrapped/11_food_waste_ml_bootstrapped.csv'
 
 # ── Load data ────────────────────────────────────────────────────────────────
 df_raw   = pd.read_csv(RAW_PATH)

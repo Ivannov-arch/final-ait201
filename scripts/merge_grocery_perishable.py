@@ -33,10 +33,12 @@ COLUMN MAPPING  (PG -> GI equivalent):
 import pandas as pd
 import numpy as np
 import os
+from pathlib import Path
 from imblearn.over_sampling import SMOTE
 
-PROC = 'data/processed/'
-BOOT = 'data/processed/bootstrapped/'
+ROOT = Path(__file__).resolve().parent.parent
+PROC = str(ROOT / 'data' / 'processed') + os.sep
+BOOT = str(ROOT / 'data' / 'processed' / 'bootstrapped') + os.sep
 SEED = 42
 
 os.makedirs(BOOT, exist_ok=True)

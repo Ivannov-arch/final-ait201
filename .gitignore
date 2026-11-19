@@ -77,3 +77,13 @@ desktop.ini
 *.sublime-project
 *.sublime-workspace
 
+# Temporary & Generated Tool Artifacts
+catboost_info/
+**/catboost_info/
+scratch/
+.archify/
+archify/
+*.zip
+*.log
+.pytest_cache/
+

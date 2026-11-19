@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 import os
+from pathlib import Path
 
-RAW = 'data/raw/'
-OUT = 'data/processed/'
+ROOT = Path(__file__).resolve().parent.parent
+RAW = str(ROOT / 'data' / 'raw') + os.sep
+OUT = str(ROOT / 'data' / 'processed') + os.sep
 os.makedirs(OUT, exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────

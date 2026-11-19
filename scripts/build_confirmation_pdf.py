@@ -57,7 +57,12 @@ class NumberedCanvas(canvas.Canvas):
         self.restoreState()
 
 
-def build_pdf(filename="docs/Confirmation_Person3_Data_Architect.pdf"):
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
+def build_pdf(filename=None):
+    if filename is None:
+        filename = str(ROOT / "docs" / "Confirmation_Person3_Data_Architect.pdf")
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     doc = SimpleDocTemplate(
         filename,
