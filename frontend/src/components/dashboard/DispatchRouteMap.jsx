@@ -51,9 +51,9 @@ const ALL_RECEIVERS = [
   {
     id: 'REC-02',
     name: 'The Lost Food Project (TLFP)',
-    location: 'Kota Damansara, Petaling Jaya',
-    lat: 3.1517,
-    lng: 101.5947,
+    location: 'Seksyen 5, Kota Damansara, PJ',
+    lat: 3.1585,
+    lng: 101.5892,
     cold_storage: true,
     accepted: 'All Perishable & Dry Categories',
   },
@@ -149,7 +149,13 @@ export default function DispatchRouteMap({ batch, isVisible, onRouteLoaded }) {
     const receiverIdx = ALL_RECEIVERS.findIndex(
       (r) => r.name === b.assignedReceiver?.name
     )
-    const receiver = receiverIdx >= 0 ? ALL_RECEIVERS[receiverIdx] : ALL_RECEIVERS[0]
+    const baseReceiver = receiverIdx >= 0 ? ALL_RECEIVERS[receiverIdx] : ALL_RECEIVERS[0]
+    const receiver = {
+      ...baseReceiver,
+      lat: b.assignedReceiver?.coords?.[0] ?? baseReceiver.lat,
+      lng: b.assignedReceiver?.coords?.[1] ?? baseReceiver.lng,
+      location: b.assignedReceiver?.location ?? baseReceiver.location
+    }
 
     // ── Step 1: Fetch cargo specs from backend (no geometry needed from here) ─
     let cargoSpecs = null
