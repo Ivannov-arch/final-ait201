@@ -5734,6 +5734,20 @@ button {
 .fg-inv-action-card--disposal:hover {
   box-shadow: 0 6px 20px rgba(185, 28, 28, 0.18);
 }
+.fg-inv-action-card--rescue {
+  border-color: #bbf7d0;
+  background: linear-gradient(100deg, #f0fdf4 0%, #ecfdf5 100%);
+}
+.fg-inv-action-card--rescue:hover {
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.18);
+}
+.fg-inv-action-btn--emerald {
+  background: #15803d;
+  color: #ffffff;
+}
+.fg-inv-action-btn--emerald:hover {
+  background: #166534;
+}
 
 .fg-inv-featured-left {
   display: flex;

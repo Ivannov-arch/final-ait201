@@ -758,11 +758,11 @@ export default function InventoryFefoRiskPage({
     const label = b.appliedAction === 'markdown'
       ? 'Markdown active'
       : b.appliedAction === 'donate'
-        ? 'Donation ready'
+        ? 'Donated · NGO'
         : b.appliedAction === 'normal'
           ? 'Normal sale'
           : b.appliedAction === 'dispose'
-            ? 'Disposed'
+            ? 'Disposed (Bio-waste)'
             : isExp
               ? 'Expired — Action'
               : b.riskType === 'high'
@@ -1557,86 +1557,175 @@ export default function InventoryFefoRiskPage({
 
             {/* ── Action Grid: asymmetric layout — Markdown is featured, others are compact ── */}
             {selectedBatchForAction.isExpired || selectedBatchForAction.riskType === 'expired' || (selectedBatchForAction.dteNum !== undefined && selectedBatchForAction.dteNum < 0) ? (
-              <div className="fg-inv-action-grid-v2">
-                {/* ── FEATURED FOR EXPIRED: Disposal / Bio-Waste Safety Route ── */}
-                <div className="fg-inv-action-card-featured fg-inv-action-card--disposal">
-                  <div className="fg-inv-featured-left">
-                    <div className="fg-inv-featured-eyebrow">
-                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
+              (() => {
+                const cat = (selectedBatchForAction.category || '').toLowerCase()
+                const isPerishable = cat.includes('meat') || cat.includes('poultry') || cat.includes('seafood') || cat.includes('fish') || (cat.includes('dairy') && !cat.includes('dry'))
+
+                if (!isPerishable) {
+                  // SHELF-STABLE / SAFE EXPIRED (Bakery, Biscuits, Grains, Produce, Dry Goods):
+                  // FEATURED: Food Bank Surplus Rescue (Reverse Logistics)
+                  return (
+                    <div className="fg-inv-action-grid-v2">
+                      <div className="fg-inv-action-card-featured fg-inv-action-card--rescue">
+                        <div className="fg-inv-featured-left">
+                          <div className="fg-inv-featured-eyebrow">
+                            <div className="fg-inv-action-icon-sm" style={{ background: '#dcfce7', color: '#15803d' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                              </svg>
+                            </div>
+                            <span className="fg-inv-featured-label" style={{ color: '#15803d', fontWeight: 800 }}>Dispatch to Food Bank (Rescue Route)</span>
+                            <span className="fg-inv-compact-rec-tag" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', marginLeft: '4px' }}>
+                              Recommended Triage
+                            </span>
+                          </div>
+
+                          <div className="fg-inv-featured-engine">
+                            <span className="fg-inv-featured-price" style={{ color: '#15803d' }}>
+                              Anti-Moral-Hazard Protocol · Route to Verified NGO
+                            </span>
+                            <span className="fg-inv-featured-reason">
+                              Passed retail expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Shelf-stable dry goods &amp; bakery remain suitable for closed-loop food bank redistribution (e.g. The Lost Food Project). Prevents landfill waste and fulfills ESG diversion targets.
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="fg-inv-action-btn fg-inv-action-btn--emerald fg-inv-featured-cta"
+                          onClick={() => handleApplyAction('donate')}
+                        >
+                          Dispatch to Food Bank →
+                        </button>
                       </div>
-                      <span className="fg-inv-featured-label" style={{ color: '#991b1b', fontWeight: 800 }}>Disposal &amp; Bio-Waste Route</span>
-                      <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red" style={{ marginLeft: '4px' }}>
-                        Mandatory Safety Action
-                      </span>
+
+                      <div className="fg-inv-action-row-secondary">
+                        <div className="fg-inv-action-card-compact fg-inv-action-card--disposal">
+                          <div className="fg-inv-compact-top">
+                            <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </div>
+                            <span className="fg-inv-compact-title">Log Bio-Waste Disposal</span>
+                            <span className="fg-inv-compact-rec-tag" style={{ background: '#f1f5f9', color: '#64748b' }}>Fallback</span>
+                          </div>
+                          <p className="fg-inv-compact-desc">Fallback route if food bank collection is unavailable or package seal is compromised.</p>
+                          <button
+                            type="button"
+                            className="fg-inv-action-btn-compact fg-inv-action-btn--red"
+                            onClick={() => handleApplyAction('dispose')}
+                          >
+                            Log Disposal →
+                          </button>
+                        </div>
+
+                        <div className="fg-inv-action-card-compact fg-inv-action-card--normal" style={{ opacity: 0.65, background: '#f8fafc' }}>
+                          <div className="fg-inv-compact-top">
+                            <div className="fg-inv-action-icon-sm" style={{ background: '#e2e8f0', color: '#64748b' }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                              </svg>
+                            </div>
+                            <span className="fg-inv-compact-title" style={{ color: '#64748b' }}>Dynamic Markdown</span>
+                            <span className="fg-inv-compact-rec-tag" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>Prohibited</span>
+                          </div>
+                          <p className="fg-inv-compact-desc">Expired items cannot be sold at discounted price in consumer retail channels.</p>
+                          <button
+                            type="button"
+                            className="fg-inv-action-btn-compact"
+                            style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}
+                            disabled
+                          >
+                            Locked (Expired)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+
+                // PERISHABLE EXPIRED (Meat, Poultry, Seafood, Fresh Dairy):
+                // FEATURED: Mandatory Bio-Waste Disposal for biological food safety
+                return (
+                  <div className="fg-inv-action-grid-v2">
+                    <div className="fg-inv-action-card-featured fg-inv-action-card--disposal">
+                      <div className="fg-inv-featured-left">
+                        <div className="fg-inv-featured-eyebrow">
+                          <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </div>
+                          <span className="fg-inv-featured-label" style={{ color: '#991b1b', fontWeight: 800 }}>Disposal &amp; Bio-Waste Route</span>
+                          <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red" style={{ marginLeft: '4px' }}>
+                            Mandatory Food Safety Action
+                          </span>
+                        </div>
+
+                        <div className="fg-inv-featured-engine">
+                          <span className="fg-inv-featured-price" style={{ color: '#991b1b' }}>
+                            Perishable Stock Expired — Human Consumption Prohibited
+                          </span>
+                          <span className="fg-inv-featured-reason">
+                            Product passed expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Food safety compliance strictly prohibits retail sale or normal donation of expired meat/dairy. Route immediately to licensed bio-waste or composting.
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="fg-inv-action-btn fg-inv-action-btn--red fg-inv-featured-cta"
+                        onClick={() => handleApplyAction('dispose')}
+                      >
+                        Log Disposal →
+                      </button>
                     </div>
 
-                    <div className="fg-inv-featured-engine">
-                      <span className="fg-inv-featured-price" style={{ color: '#991b1b' }}>
-                        Expired Inventory — Retail Sale Prohibited
-                      </span>
-                      <span className="fg-inv-featured-reason">
-                        Product passed expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Food safety compliance strictly prohibits retail markdown or selling expired food. Route immediately to licensed bio-waste or composting.
-                      </span>
+                    <div className="fg-inv-action-row-secondary">
+                      <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
+                        <div className="fg-inv-compact-top">
+                          <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                            </svg>
+                          </div>
+                          <span className="fg-inv-compact-title">Emergency Bio-Refinery</span>
+                        </div>
+                        <p className="fg-inv-compact-desc">Closed-channel transfer only for authorized animal feed or biogas energy conversion.</p>
+                        <button
+                          type="button"
+                          className="fg-inv-action-btn-compact fg-inv-action-btn--red"
+                          onClick={() => handleApplyAction('donate')}
+                        >
+                          Arrange →
+                        </button>
+                      </div>
+
+                      <div className="fg-inv-action-card-compact fg-inv-action-card--normal" style={{ opacity: 0.65, background: '#f8fafc' }}>
+                        <div className="fg-inv-compact-top">
+                          <div className="fg-inv-action-icon-sm" style={{ background: '#e2e8f0', color: '#64748b' }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                            </svg>
+                          </div>
+                          <span className="fg-inv-compact-title" style={{ color: '#64748b' }}>Dynamic Markdown</span>
+                          <span className="fg-inv-compact-rec-tag" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>Prohibited</span>
+                        </div>
+                        <p className="fg-inv-compact-desc">Expired items cannot be sold at discounted price in consumer retail channels.</p>
+                        <button
+                          type="button"
+                          className="fg-inv-action-btn-compact"
+                          style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}
+                          disabled
+                        >
+                          Locked (Expired)
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    className="fg-inv-action-btn fg-inv-action-btn--red fg-inv-featured-cta"
-                    onClick={() => handleApplyAction('dispose')}
-                  >
-                    Log Disposal →
-                  </button>
-                </div>
-
-                {/* ── Bottom row for Expired: Emergency NGO + Prohibited Markdown Notice ── */}
-                <div className="fg-inv-action-row-secondary">
-                  {/* Emergency NGO Route */}
-                  <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
-                    <div className="fg-inv-compact-top">
-                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
-                      </div>
-                      <span className="fg-inv-compact-title">Emergency NGO Pick-up</span>
-                    </div>
-                    <p className="fg-inv-compact-desc">Closed-channel transfer only if authorized by bio-refinery or animal rescue partners.</p>
-                    <button
-                      type="button"
-                      className="fg-inv-action-btn-compact fg-inv-action-btn--red"
-                      onClick={() => handleApplyAction('donate')}
-                    >
-                      Arrange →
-                    </button>
-                  </div>
-
-                  {/* Prohibited Dynamic Markdown */}
-                  <div className="fg-inv-action-card-compact fg-inv-action-card--normal" style={{ opacity: 0.65, background: '#f8fafc' }}>
-                    <div className="fg-inv-compact-top">
-                      <div className="fg-inv-action-icon-sm" style={{ background: '#e2e8f0', color: '#64748b' }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                        </svg>
-                      </div>
-                      <span className="fg-inv-compact-title" style={{ color: '#64748b' }}>Dynamic Markdown</span>
-                      <span className="fg-inv-compact-rec-tag" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>Prohibited</span>
-                    </div>
-                    <p className="fg-inv-compact-desc">Expired items cannot be sold at discounted price in consumer retail channels.</p>
-                    <button
-                      type="button"
-                      className="fg-inv-action-btn-compact"
-                      style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}
-                      disabled
-                    >
-                      Locked (Expired)
-                    </button>
-                  </div>
-                </div>
-              </div>
+                )
+              })()
             ) : (
               <div className="fg-inv-action-grid-v2">
 

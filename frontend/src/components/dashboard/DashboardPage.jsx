@@ -215,9 +215,15 @@ export default function DashboardPage({ onNavigateHome }) {
         statusLabel = 'Dispatched'
         earnedValue = 0
 
-        setBatches(prev => prev.filter(b => b.id !== batch.id))
+        setBatches(prev => prev.map(b => b.id === batch.id ? {
+          ...b,
+          appliedAction: 'donate',
+          status: 'Dispatched to Food Bank'
+        } : b))
         fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
-          method: 'DELETE'
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'Dispatched to Food Bank' })
         }).catch(() => {})
       }
 
@@ -227,9 +233,15 @@ export default function DashboardPage({ onNavigateHome }) {
       statusType = 'danger'
       earnedValue = 0
 
-      setBatches(prev => prev.filter(b => b.id !== batch.id))
+      setBatches(prev => prev.map(b => b.id === batch.id ? {
+        ...b,
+        appliedAction: 'dispose',
+        status: 'Disposed (Bio-waste)'
+      } : b))
       fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
-        method: 'DELETE'
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Disposed' })
       }).catch(() => {})
 
     } else {

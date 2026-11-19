@@ -18,10 +18,10 @@ router = APIRouter(
 )
 
 STORE_LOCATION = {
-    "name": "FreshGuard Retail Hub (MY-KL-001)",
-    "address": "Jalan Bukit Bintang, Kuala Lumpur",
-    "lat": 3.1466,
-    "lng": 101.7118
+    "name": "FreshGuard Kota Damansara Hub (MY-KL-001)",
+    "address": "Kota Damansara, Petaling Jaya, Selangor",
+    "lat": 3.1517,
+    "lng": 101.5947
 }
 
 RECEIVERS = [
@@ -39,9 +39,9 @@ RECEIVERS = [
     {
         "id": "REC-02",
         "name": "The Lost Food Project (TLFP)",
-        "location": "Kota Damansara, Petaling Jaya",
-        "lat": 3.1517,
-        "lng": 101.5947,
+        "location": "Seksyen 5, Kota Damansara, PJ",
+        "lat": 3.1585,
+        "lng": 101.5892,
         "capacity_kg": 500,
         "available_kg": 380,
         "cold_storage": True,

@@ -109,6 +109,10 @@ function rowToSpoilageLot(r) {
     days_until_expiry: dte,
     shelf_life_days: Number(r.shelf_life_days) || (dte + 7),
     initial_quantity: Number(r.quantity) || 0,
+    quantity: Number(r.quantity) || 0,
+    uom: r.uom || 'units',
+    unit: r.uom || 'units',
+    storage_temp: r.storage_temp,
     base_price: parseFloat(r.unit_price_myr) || 10.0,
     daily_demand: Number(r.daily_demand) || Math.max(1, (Number(r.reorder_quantity) || 10) / 7),
     stock_pressure: Number.isFinite(stockPressure) ? stockPressure : undefined,
@@ -280,6 +284,7 @@ function rowToBatch(r, pred = null) {
     isExpired,
     riskScore:         pred ? (pred.score ?? null) : (r.risk_score !== undefined ? Number(r.risk_score) || null : null),
     riskSource,
+    cargoSpecs:         pred?.cargo_specs || null,
     reorderLevel:      Number(r.reorder_level) || 15,
     reorderQuantity:   Number(r.reorder_quantity) || 20,
     turnoverRatio:     r.turnover_ratio,
@@ -820,24 +825,32 @@ function createApiMiddleware() {
           if (route) {
             const distKm = (route.distance / 1000).toFixed(2)
             const etaMin = Math.round(route.duration / 60)
-            // Person 5: ML Cargo Specification (mirrors dispatch_estimator.py)
+            // Person 5: ML Cargo Specification via Python dispatch_estimator model
             const recs = readJson(MASTER_JSON)
             const matchedRow = recs.find(r => matchBatchId(r.lot_id, batchId))
-            const qtyNum = parseFloat(matchedRow?.quantity || 40)
-            const cat = matchedRow?.category || 'Produce'
-            const isCold = ['Meat', 'Seafood', 'Dairy', 'Prepared Food'].some(c => cat.includes(c))
-            const cargoKg = Math.max(1.0, Math.round(qtyNum * 0.25 * 10) / 10)
-            let vTitle = 'Cargo Van', vType = 'van'
-            if (cargoKg <= 25) { vTitle = 'Motorcycle Courier'; vType = 'motorcycle' }
-            else if (cargoKg > 200) { vTitle = 'Food Bank Truck'; vType = 'truck' }
-
-            const cargoSpecs = {
-              estimated_cargo_kg: cargoKg,
-              vehicle_title: vTitle,
-              vehicle_type: vType,
-              cold_chain_required: isCold,
-              cold_chain_type: isCold ? 'Refrigerated Transport (Chilled)' : 'Ambient Dry Transport',
-              transport_urgency: (Number(matchedRow?.days_to_expiry) <= 1) ? '🚨 CRITICAL EMERGENCY (≤ 1 Day Expiry)' : 'STANDARD PLANNED DISPATCH'
+            let cargoSpecs = null
+            if (matchedRow) {
+              try {
+                const preds = await predictSpoilageBatch([rowToSpoilageLot(matchedRow)])
+                cargoSpecs = preds?.[0]?.cargo_specs || null
+              } catch (_) {}
+            }
+            if (!cargoSpecs) {
+              const qtyNum = parseFloat(matchedRow?.quantity || 40)
+              const cat = matchedRow?.category || 'Produce'
+              const isCold = ['Meat', 'Seafood', 'Dairy', 'Prepared Food'].some(c => cat.includes(c))
+              const cargoKg = Math.max(1.0, Math.round(qtyNum * 0.25 * 10) / 10)
+              let vTitle = 'Cargo Van', vType = 'van'
+              if (cargoKg <= 25) { vTitle = 'Motorcycle Courier'; vType = 'motorcycle' }
+              else if (cargoKg > 200) { vTitle = 'Food Bank Truck'; vType = 'truck' }
+              cargoSpecs = {
+                estimated_cargo_kg: cargoKg,
+                vehicle_title: vTitle,
+                vehicle_type: vType,
+                cold_chain_required: isCold,
+                cold_chain_type: isCold ? 'Refrigerated Transport (Chilled)' : 'Ambient Dry Transport',
+                transport_urgency: (Number(matchedRow?.days_to_expiry) <= 1) ? 'Critical Emergency (≤ 1 Day Expiry)' : 'Standard Planned Dispatch'
+              }
             }
 
             sendJson(res, 200, {
@@ -864,21 +877,30 @@ function createApiMiddleware() {
 
       const recs = readJson(MASTER_JSON)
       const matchedRow = recs.find(r => matchBatchId(r.lot_id, batchId))
-      const qtyNum = parseFloat(matchedRow?.quantity || 40)
-      const cat = matchedRow?.category || 'Produce'
-      const isCold = ['Meat', 'Seafood', 'Dairy', 'Prepared Food'].some(c => cat.includes(c))
-      const cargoKg = Math.max(1.0, Math.round(qtyNum * 0.25 * 10) / 10)
-      let vTitle = 'Cargo Van', vType = 'van'
-      if (cargoKg <= 25) { vTitle = 'Motorcycle Courier'; vType = 'motorcycle' }
-      else if (cargoKg > 200) { vTitle = 'Food Bank Truck'; vType = 'truck' }
+      let cargoSpecs = null
+      if (matchedRow) {
+        try {
+          const preds = await predictSpoilageBatch([rowToSpoilageLot(matchedRow)])
+          cargoSpecs = preds?.[0]?.cargo_specs || null
+        } catch (_) {}
+      }
+      if (!cargoSpecs) {
+        const qtyNum = parseFloat(matchedRow?.quantity || 40)
+        const cat = matchedRow?.category || 'Produce'
+        const isCold = ['Meat', 'Seafood', 'Dairy', 'Prepared Food'].some(c => cat.includes(c))
+        const cargoKg = Math.max(1.0, Math.round(qtyNum * 0.25 * 10) / 10)
+        let vTitle = 'Cargo Van', vType = 'van'
+        if (cargoKg <= 25) { vTitle = 'Motorcycle Courier'; vType = 'motorcycle' }
+        else if (cargoKg > 200) { vTitle = 'Food Bank Truck'; vType = 'truck' }
 
-      const cargoSpecs = {
-        estimated_cargo_kg: cargoKg,
-        vehicle_title: vTitle,
-        vehicle_type: vType,
-        cold_chain_required: isCold,
-        cold_chain_type: isCold ? 'Refrigerated Transport (Chilled)' : 'Ambient Dry Transport',
-        transport_urgency: (Number(matchedRow?.days_to_expiry) <= 1) ? '🚨 CRITICAL EMERGENCY (≤ 1 Day Expiry)' : 'STANDARD PLANNED DISPATCH'
+        cargoSpecs = {
+          estimated_cargo_kg: cargoKg,
+          vehicle_title: vTitle,
+          vehicle_type: vType,
+          cold_chain_required: isCold,
+          cold_chain_type: isCold ? 'Refrigerated Transport (Chilled)' : 'Ambient Dry Transport',
+          transport_urgency: (Number(matchedRow?.days_to_expiry) <= 1) ? 'Critical Emergency (≤ 1 Day Expiry)' : 'Standard Planned Dispatch'
+        }
       }
 
       sendJson(res, 200, {

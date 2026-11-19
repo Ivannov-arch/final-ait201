@@ -8,12 +8,12 @@
  * Pattern mirrors: Zero-HungerImpeccable / src/features/distribution-map/components/MapArea.jsx
  *
  * Features:
- * - 🏪 Origin marker  — FreshGuard Retail Hub (Kota Damansara)
- * - 🏦 Receiver marker — Target food bank (dynamic per batch)
- * - 🛣️ OSRM polyline  — Real road route from /api/dispatch-route/{batch_id}
- * - 📍 Haversine fallback straight line if OSRM/FastAPI offline
- * - 💬 Popups — partner name, distance km, ETA minutes, cold-chain badge
- * - 📦 Cargo ML spec panel — from dispatch_estimator.py output
+ * -  Origin marker  — FreshGuard Retail Hub (Kota Damansara)
+ * -  Receiver marker — Target food bank (dynamic per batch)
+ * - ️ OSRM polyline  — Real road route from /api/dispatch-route/{batch_id}
+ * -  Haversine fallback straight line if OSRM/FastAPI offline
+ * -  Popups — partner name, distance km, ETA minutes, cold-chain badge
+ * -  Cargo ML spec panel — from dispatch_estimator.py output
  */
 
 import { useEffect, useCallback, useState, useRef } from 'react'
@@ -91,7 +91,7 @@ function haversineKm(lat1, lon1, lat2, lon2) {
 }
 
 // ── SVG icon factory (no external image dependency) ──────────────────────────
-function makeIcon(emoji, bgColor, size = 36) {
+function makeIcon(label, bgColor, size = 34) {
   return L.divIcon({
     className: '',
     html: `
@@ -100,11 +100,11 @@ function makeIcon(emoji, bgColor, size = 36) {
         background:${bgColor};
         border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);
-        box-shadow:0 3px 12px rgba(0,0,0,0.3);
-        border:2.5px solid #fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.25);
+        border:2px solid #fff;
         display:flex; align-items:center; justify-content:center;
       ">
-        <span style="transform:rotate(45deg); font-size:${Math.round(size * 0.5)}px; line-height:1;">${emoji}</span>
+        <span style="transform:rotate(45deg); font-size:${Math.round(size * 0.36)}px; font-weight:700; color:#fff; line-height:1; font-family:system-ui,sans-serif; letter-spacing:-0.02em;">${label}</span>
       </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size],
@@ -132,12 +132,14 @@ function MapController({ isVisible, fitBounds }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // Main component
 // ═══════════════════════════════════════════════════════════════════════════
-export default function DispatchRouteMap({ batch, isVisible }) {
+export default function DispatchRouteMap({ batch, isVisible, onRouteLoaded }) {
   const [routeData, setRouteData] = useState(null)        // OSRM/fallback result
   const [routeStatus, setRouteStatus] = useState('idle')  // idle|loading|ok|fallback
   const [cargoData, setCargoData] = useState(null)        // dispatch_estimator output
 
-  // ── Fetch OSRM route + cargo data when batch changes ────────────────────
+  // ── Fetch route: cargo specs from backend, OSRM geometry direct from browser ─
+  // OSRM is called client-side so the user's browser internet connection is used,
+  // bypassing any server-side network restrictions.
   const fetchRoute = useCallback(async (b) => {
     if (!b) return
     setRouteStatus('loading')
@@ -149,22 +151,46 @@ export default function DispatchRouteMap({ batch, isVisible }) {
     )
     const receiver = receiverIdx >= 0 ? ALL_RECEIVERS[receiverIdx] : ALL_RECEIVERS[0]
 
+    // ── Step 1: Fetch cargo specs from backend (no geometry needed from here) ─
+    let cargoSpecs = null
     try {
       const res = await fetch(`/api/dispatch-route/${encodeURIComponent(b.id)}`, {
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(5000),
       })
       if (res.ok) {
         const data = await res.json()
-        setRouteData({ ...data, receiver })
-        setCargoData(data.cargo_specs || null)
-        setRouteStatus('ok')
-        return
+        cargoSpecs = data.cargo_specs || null
       }
-    } catch (_) {
-      // Network / CORS / backend not running — fall through to haversine
-    }
+    } catch (_) { /* backend offline — cargo panel hidden, route still works */ }
 
-    // Haversine fallback
+    // ── Step 2: Call OSRM directly from browser (client-side network) ─────────
+    const osrmUrl =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${STORE_LOCATION.lng},${STORE_LOCATION.lat};${receiver.lng},${receiver.lat}` +
+      `?overview=full&geometries=geojson&steps=false`
+
+    try {
+      const osrmRes = await fetch(osrmUrl, { signal: AbortSignal.timeout(10000) })
+      if (osrmRes.ok) {
+        const osrmData = await osrmRes.json()
+        const route = osrmData.routes?.[0]
+        if (route) {
+          setRouteData({
+            receiver,
+            distance_km: (route.distance / 1000).toFixed(2),
+            eta_minutes: Math.round(route.duration / 60),
+            geometry: route.geometry,   // GeoJSON LineString with real road coords
+            is_fallback: false,
+            source: 'osrm_direct',
+          })
+          setCargoData(cargoSpecs)
+          setRouteStatus('ok')
+          return
+        }
+      }
+    } catch (_) { /* OSRM unreachable — fall through to haversine */ }
+
+    // ── Step 3: Haversine straight-line fallback (no internet) ────────────────
     const distKm = haversineKm(
       STORE_LOCATION.lat, STORE_LOCATION.lng,
       receiver.lat, receiver.lng
@@ -176,12 +202,20 @@ export default function DispatchRouteMap({ batch, isVisible }) {
       geometry: null,
       is_fallback: true,
     })
+    setCargoData(cargoSpecs)
     setRouteStatus('fallback')
   }, [])
 
   useEffect(() => {
     if (batch) fetchRoute(batch)
   }, [batch, fetchRoute])
+
+  // Sync loaded route metrics (distance, eta) back to parent manifest modal
+  useEffect(() => {
+    if (routeData && onRouteLoaded) {
+      onRouteLoaded(routeData)
+    }
+  }, [routeData, onRouteLoaded])
 
   // ── Derived display values ───────────────────────────────────────────────
   const distKm = routeData?.distance_km
@@ -212,8 +246,8 @@ export default function DispatchRouteMap({ batch, isVisible }) {
       : null
 
   // ── Marker icons ─────────────────────────────────────────────────────────
-  const storeIcon = makeIcon('🏪', '#1b9b55', 40)
-  const receiverIcon = makeIcon(isCold ? '❄️' : '🏦', '#3b82f6', 40)
+  const storeIcon = makeIcon('HUB', '#1b9b55', 36)
+  const receiverIcon = makeIcon(isCold ? 'COLD' : 'NGO', '#2563eb', 36)
 
   return (
     <div className="fg-route-map-wrapper">
@@ -227,17 +261,17 @@ export default function DispatchRouteMap({ batch, isVisible }) {
         )}
         {routeStatus === 'ok' && (
           <span className="fg-route-map-status fg-route-map-status--ok">
-            🛣️ OSRM Road Route · {distKm} km · ETA {etaMins} min
+            Road Route (OSRM) · {distKm} km · ETA {etaMins} min
           </span>
         )}
         {routeStatus === 'fallback' && (
           <span className="fg-route-map-status fg-route-map-status--warn">
-            ⚠️ Straight-line estimate (FastAPI offline) · ~{distKm} km
+            Straight-line estimate (no internet) · ~{distKm} km
           </span>
         )}
         {routeStatus === 'idle' && (
           <span className="fg-route-map-status fg-route-map-status--idle">
-            🗺️ Interactive Route Map
+            Interactive Route Map
           </span>
         )}
       </div>
@@ -246,7 +280,7 @@ export default function DispatchRouteMap({ batch, isVisible }) {
       <MapContainer
         center={[3.12, 101.65]}
         zoom={12}
-        style={{ width: '100%', height: '340px', borderRadius: '10px', overflow: 'hidden' }}
+        style={{ width: '100%', height: '100%', minHeight: '360px', borderRadius: '0', overflow: 'hidden' }}
         scrollWheelZoom
         className="fg-route-map-canvas"
       >
@@ -264,9 +298,9 @@ export default function DispatchRouteMap({ batch, isVisible }) {
         <Marker position={[STORE_LOCATION.lat, STORE_LOCATION.lng]} icon={storeIcon}>
           <Popup maxWidth={240}>
             <div style={{ minWidth: 180 }}>
-              <strong style={{ color: '#147b43' }}>🏪 {STORE_LOCATION.name}</strong><br />
+              <strong style={{ color: '#147b43' }}>{STORE_LOCATION.name}</strong><br />
               <span style={{ color: '#666', fontSize: '0.8rem' }}>{STORE_LOCATION.address}</span><br />
-              <span style={{ fontSize: '0.78rem' }}>📦 Dispatch Origin</span>
+              <span style={{ fontSize: '0.78rem' }}>Dispatch Origin</span>
             </div>
           </Popup>
         </Marker>
@@ -275,7 +309,7 @@ export default function DispatchRouteMap({ batch, isVisible }) {
         {ALL_RECEIVERS.map((rec) => {
           const isActive = receiver?.name === rec.name
           const icon = makeIcon(
-            rec.cold_storage ? '❄️' : '🤝',
+            rec.cold_storage ? 'COLD' : 'NGO',
             isActive ? '#2563eb' : '#9ca3af',
             isActive ? 32 : 26
           )
@@ -286,7 +320,7 @@ export default function DispatchRouteMap({ batch, isVisible }) {
                   <strong>{rec.name}</strong><br />
                   <span style={{ color: '#666', fontSize: '0.78rem' }}>{rec.location}</span><br />
                   <span style={{ fontSize: '0.75rem' }}>
-                    {rec.cold_storage ? '❄️ Cold Storage' : '📦 Ambient'}
+                    {rec.cold_storage ? 'Cold Storage' : 'Ambient'}
                   </span><br />
                   <span style={{ fontSize: '0.72rem', color: '#888' }}>Accepts: {rec.accepted}</span>
                 </div>
@@ -300,19 +334,19 @@ export default function DispatchRouteMap({ batch, isVisible }) {
           <Marker position={[receiver.lat, receiver.lng]} icon={receiverIcon}>
             <Popup maxWidth={260}>
               <div style={{ minWidth: 200 }}>
-                <strong style={{ color: '#2563eb' }}>🏦 {receiver.name}</strong><br />
+                <strong style={{ color: '#2563eb' }}>{receiver.name}</strong><br />
                 <span style={{ color: '#666', fontSize: '0.78rem' }}>{receiver.location}</span><br />
                 <hr style={{ margin: '4px 0', borderColor: '#e5e7eb' }} />
                 <div style={{ display: 'flex', gap: 12, fontSize: '0.8rem', marginTop: 4 }}>
-                  <span>📏 <strong>{distKm} km</strong></span>
-                  <span>⏱ <strong>{etaMins} min ETA</strong></span>
+                  <span>Distance: <strong>{distKm} km</strong></span>
+                  <span>ETA: <strong>{etaMins} min</strong></span>
                 </div>
                 <div style={{ fontSize: '0.76rem', marginTop: 4, color: '#666' }}>
-                  {isCold ? '❄️ Cold-Chain Storage Available' : '📦 Ambient / Dry Goods'}
+                  {isCold ? 'Cold-Chain Storage Available' : 'Ambient / Dry Goods'}
                 </div>
                 {routeData?.is_fallback && (
                   <div style={{ fontSize: '0.7rem', color: '#f59e0b', marginTop: 4 }}>
-                    ⚠️ Straight-line estimate (OSRM offline)
+                    Straight-line estimate (OSRM unreachable)
                   </div>
                 )}
               </div>
@@ -333,67 +367,13 @@ export default function DispatchRouteMap({ batch, isVisible }) {
             <Popup maxWidth={220}>
               <span style={{ fontSize: '0.82rem' }}>
                 {routeData?.geometry?.coordinates?.length > 1
-                  ? `🛣️ OSRM Road Route · ${distKm} km · ETA ${etaMins} min`
-                  : `📏 Straight-line estimate · ${distKm} km`}
+                  ? `Road Route (OSRM) · ${distKm} km · ETA ${etaMins} min`
+                  : `Straight-line estimate · ${distKm} km`}
               </span>
             </Popup>
           </Polyline>
         )}
       </MapContainer>
-
-      {/* ── Route Info Strip ──────────────────────────────────────────── */}
-      {routeData && (
-        <div className="fg-route-map-infostrip">
-          <div className="fg-route-map-infoitem">
-            <span className="fg-route-map-infoitem__label">Origin</span>
-            <span className="fg-route-map-infoitem__value">🏪 {STORE_LOCATION.address}</span>
-          </div>
-          <div className="fg-route-map-infoarrow">→</div>
-          <div className="fg-route-map-infoitem">
-            <span className="fg-route-map-infoitem__label">Destination</span>
-            <span className="fg-route-map-infoitem__value">
-              🏦 {receiverName}
-              {isCold && <span className="fg-route-map-badge fg-route-map-badge--cold">❄️ Cold-Chain</span>}
-            </span>
-          </div>
-          <div className="fg-route-map-infodivider" />
-          <div className="fg-route-map-infoitem fg-route-map-infoitem--stat">
-            <span className="fg-route-map-infoitem__label">Distance</span>
-            <span className="fg-route-map-infoitem__value fg-route-map-infoitem__value--big">{distKm} km</span>
-          </div>
-          <div className="fg-route-map-infoitem fg-route-map-infoitem--stat">
-            <span className="fg-route-map-infoitem__label">ETA</span>
-            <span className="fg-route-map-infoitem__value fg-route-map-infoitem__value--big">{etaMins} min</span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Cargo ML Spec Panel (Person 5 dispatch_estimator output) ─── */}
-      {cargoData && (
-        <div className="fg-route-map-cargopanel">
-          <div className="fg-route-map-cargopanel__title">📦 ML Cargo Specification (Person 5)</div>
-          <div className="fg-route-map-cargopanel__grid">
-            <div className="fg-route-map-cargopanel__item">
-              <span>Estimated Cargo</span>
-              <strong>{cargoData.estimated_cargo_kg} kg</strong>
-            </div>
-            <div className="fg-route-map-cargopanel__item">
-              <span>Vehicle</span>
-              <strong>{cargoData.vehicle_title}</strong>
-            </div>
-            <div className="fg-route-map-cargopanel__item">
-              <span>Cold-Chain</span>
-              <strong>{cargoData.cold_chain_type}</strong>
-            </div>
-            <div className="fg-route-map-cargopanel__item">
-              <span>Urgency</span>
-              <strong style={{ color: cargoData.transport_urgency?.includes('CRITICAL') ? '#c82d32' : '#147b43' }}>
-                {cargoData.transport_urgency?.includes('CRITICAL') ? '🚨 Critical' : '✅ Standard'}
-              </strong>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

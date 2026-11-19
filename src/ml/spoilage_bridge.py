@@ -28,6 +28,7 @@ if ROOT not in sys.path:
 
 try:
     from src.ml.spoilage import predict_spoilage_risk
+    from src.ml.dispatch_estimator import estimate_dispatch_cargo
 except Exception as e:  # missing joblib/xgboost/sklearn etc.
     print(json.dumps({"ok": False, "error": f"import_failed: {e}"}), flush=True)
     sys.exit(1)
@@ -41,7 +42,15 @@ for line in sys.stdin:
     try:
         msg = json.loads(line)
         lots = msg.get("lots", [])
-        results = [predict_spoilage_risk(lot) for lot in lots]
+        results = []
+        for lot in lots:
+            pred = predict_spoilage_risk(lot)
+            try:
+                cargo = estimate_dispatch_cargo(lot)
+                pred["cargo_specs"] = cargo
+            except Exception:
+                pred["cargo_specs"] = None
+            results.append(pred)
         print(json.dumps({"ok": True, "results": results}), flush=True)
     except Exception as e:
         print(json.dumps({"ok": False, "error": str(e)}), flush=True)

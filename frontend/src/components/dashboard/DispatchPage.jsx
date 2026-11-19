@@ -7,7 +7,7 @@ import './dispatchPage.css'
 
 const UNDO_WINDOW_MS = 10000 // 10-second undo window
 
-// Default receivers in Lembah Klang (Kuala Lumpur & Selangor)
+// Default receivers in Lembah Klang (with real OSRM distances from Kota Damansara Hub: 3.1517° N, 101.5947° E)
 const DEFAULT_RECEIVERS = [
   {
     id: 'REC-01',
@@ -16,16 +16,20 @@ const DEFAULT_RECEIVERS = [
     coords: [3.1448, 101.7139],
     capacityKg: 250,
     availableKg: 160,
-    accepted: 'Vegetables, Fruits, Bakery, Prepared'
+    accepted: 'Vegetables, Fruits, Bakery, Prepared',
+    distanceKm: '18.9',
+    etaMinutes: 24
   },
   {
     id: 'REC-02',
     name: 'The Lost Food Project (TLFP)',
-    location: 'Kota Damansara, Petaling Jaya',
-    coords: [3.1517, 101.5947],
+    location: 'Seksyen 5, Kota Damansara, PJ',
+    coords: [3.1585, 101.5892],
     capacityKg: 500,
     availableKg: 380,
-    accepted: 'All Perishable & Dry Categories'
+    accepted: 'All Perishable & Dry Categories',
+    distanceKm: '1.1',
+    etaMinutes: 3
   },
   {
     id: 'REC-03',
@@ -34,7 +38,9 @@ const DEFAULT_RECEIVERS = [
     coords: [3.0645, 101.5302],
     capacityKg: 800,
     availableKg: 620,
-    accepted: 'Produce, Dairy, Meat, Dry Goods'
+    accepted: 'Produce, Dairy, Meat, Dry Goods',
+    distanceKm: '19.4',
+    etaMinutes: 22
   },
   {
     id: 'REC-04',
@@ -43,7 +49,9 @@ const DEFAULT_RECEIVERS = [
     coords: [3.1485, 101.6912],
     capacityKg: 120,
     availableKg: 75,
-    accepted: 'Bakery, Prepared Food, Fruits'
+    accepted: 'Bakery, Prepared Food, Fruits',
+    distanceKm: '14.9',
+    etaMinutes: 20
   }
 ]
 
@@ -64,18 +72,10 @@ function matchReceiverForBatch(batch) {
   // Prioritize highest available capacity
   const chosen = [...pool].sort((a, b) => (b.availableKg || 0) - (a.availableKg || 0))[0] || DEFAULT_RECEIVERS[0]
 
-  // Spatial distance from Store (KL Central: ~3.1390, 101.6869)
-  const storeLat = 3.1390, storeLng = 101.6869
-  const [recLat, recLng] = chosen.coords || [3.1448, 101.7139]
-  const dLat = (recLat - storeLat) * 111.0
-  const dLng = (recLng - storeLng) * 111.0 * Math.cos(storeLat * (Math.PI / 180))
-  const roadDist = Math.max(2.1, parseFloat((Math.sqrt(dLat * dLat + dLng * dLng) * 1.35).toFixed(1)))
-  const etaMins = Math.max(8, Math.round(roadDist * 2.2 + 3))
-
   return {
     receiver: chosen,
-    distanceKm: roadDist.toFixed(1),
-    etaMinutes: etaMins
+    distanceKm: chosen.distanceKm || '19.4',
+    etaMinutes: chosen.etaMinutes || 22
   }
 }
 
@@ -87,6 +87,37 @@ const getCategoryColorClass = (cat) => {
   if (c.includes('bake') || c.includes('bread') || c.includes('pastry') || c.includes('grain')) return 'bakery'
   if (c.includes('meat') || c.includes('poultry') || c.includes('chicken') || c.includes('beef') || c.includes('seafood') || c.includes('fish')) return 'meat'
   return 'default'
+}
+
+// Food Safety & Compliance Gate: Check if batch is legally & safely eligible for Food Bank donation
+export function isEligibleForFoodBank(batch) {
+  const dte = Number(batch.dteNum ?? 0)
+  const isExp = batch.isExpired || batch.riskType === 'expired' || dte < 0
+  const cat = (batch.category || '').toLowerCase()
+  const prod = (batch.product || '').toLowerCase()
+
+  // Biological hazard categories when expired: Eggs, Raw Dairy, Meat, Poultry, Seafood
+  const isPerishableHazard =
+    cat.includes('dairy') ||
+    cat.includes('meat') ||
+    cat.includes('poultry') ||
+    cat.includes('seafood') ||
+    cat.includes('fish') ||
+    prod.includes('egg') ||
+    prod.includes('duck') ||
+    prod.includes('milk') ||
+    prod.includes('cheese') ||
+    prod.includes('chicken') ||
+    prod.includes('beef') ||
+    prod.includes('sour cream') ||
+    prod.includes('yogurt')
+
+  // If already expired and high-risk perishable, strictly REJECT from food bank donation!
+  if (isExp && isPerishableHazard) {
+    return false
+  }
+
+  return true
 }
 
 // ── Person 5: Client-side cargo estimator (mirrors dispatch_estimator.py logic) ──
@@ -114,27 +145,35 @@ function normalizeQtyToKg(qty, uom, category) {
 }
 
 function computeVehicleSpec(batch) {
+  // If real ML model cargo_specs from XGBoost regressor (dispatch_cargo_estimator.pkl) is present, use it
+  if (batch.cargoSpecs && typeof batch.cargoSpecs.estimated_cargo_kg === 'number') {
+    const cs = batch.cargoSpecs
+    return {
+      vehicleLabel: cs.vehicle_title || (cs.vehicle_type === 'motorcycle' ? 'Motorcycle' : cs.vehicle_type === 'truck' ? 'Food Bank Truck' : 'Cargo Van'),
+      vehicleType: cs.vehicle_type || 'van',
+      vehicleCapacity: cs.vehicle_capacity || (cs.vehicle_type === 'motorcycle' ? '≤ 25 kg' : cs.vehicle_type === 'truck' ? '> 200 kg' : '25–200 kg'),
+      cargoKg: Number(cs.estimated_cargo_kg.toFixed(1)),
+      isColdChain: Boolean(cs.cold_chain_required)
+    }
+  }
+
   const qty = parseInt(batch.qty, 10) || 12
-  const uom = batch.unit || 'kg'
+  const uom = batch.uom || batch.unit || 'kg'
   const cat = batch.category || ''
 
   const qtyKg = normalizeQtyToKg(qty, uom, cat)
-  // Surplus estimate: ~25% of stock flagged for dispatch (mirrors dispatch_estimator heuristic)
   const cargoKg = Math.max(1.0, Math.round(qtyKg * 0.25 * 10) / 10)
 
-  let vehicleEmoji, vehicleLabel, vehicleType, vehicleCapacity
+  let vehicleLabel, vehicleType, vehicleCapacity
   if (cargoKg <= 25) {
-    vehicleEmoji = '🛵'
     vehicleLabel = 'Motorcycle'
     vehicleType = 'motorcycle'
     vehicleCapacity = uom === 'kg' ? '≤ 25 kg' : uom === 'pack' ? '≤ 25 kg (~40–50 packs)' : `≤ 25 kg`
   } else if (cargoKg <= 200) {
-    vehicleEmoji = '🚐'
     vehicleLabel = 'Cargo Van'
     vehicleType = 'van'
     vehicleCapacity = uom === 'kg' ? '25–200 kg' : uom === 'pack' ? '25–200 kg (~50–350 packs)' : `25–200 kg`
   } else {
-    vehicleEmoji = '🚛'
     vehicleLabel = 'Food Bank Truck'
     vehicleType = 'truck'
     vehicleCapacity = '> 200 kg heavy freight'
@@ -142,7 +181,7 @@ function computeVehicleSpec(batch) {
 
   const isColdChain = COLD_CHAIN_CATEGORIES.some(c => cat.includes(c))
 
-  return { vehicleEmoji, vehicleLabel, vehicleType, vehicleCapacity, cargoKg, isColdChain }
+  return { vehicleLabel, vehicleType, vehicleCapacity, cargoKg, isColdChain }
 }
 
 
@@ -159,6 +198,7 @@ export default function DispatchPage({
   const pageSize = 6
 
   const [selectedBatchForRoute, setSelectedBatchForRoute] = useState(null)
+  const [liveRouteInfo, setLiveRouteInfo] = useState(null)
   const [dispatchedBatchIds, setDispatchedBatchIds] = useState(new Set())
   const [notification, setNotification] = useState(null)
 
@@ -192,32 +232,32 @@ export default function DispatchPage({
 
       // Compute Waste-Risk Score (0% - 100%) based on Step 11 Tabular Model parameters
       let wasteScore = 0
-      let timeToWaste = ''
+      let dispatchWindow = ''
       let urgency = 'low'
       let tempDrift = '+0.4°C'
       let demandGap = '-12%'
 
       if (dteNum <= 1) {
         wasteScore = Math.min(96, 88 + (idx % 7))
-        timeToWaste = '14–18 Hours'
+        dispatchWindow = 'Immediate (< 24 Hours)'
         urgency = 'critical'
         tempDrift = '+2.8°C (Deviation Alert)'
         demandGap = '-64% (Heavy Surplus)'
       } else if (dteNum <= 2) {
         wasteScore = Math.min(84, 78 + (idx % 5))
-        timeToWaste = '28–36 Hours'
+        dispatchWindow = 'Urgent (1–2 Days)'
         urgency = 'critical'
         tempDrift = '+1.9°C'
         demandGap = '-48%'
       } else if (dteNum <= 4) {
         wasteScore = Math.min(72, 58 + (idx % 10))
-        timeToWaste = '60–72 Hours'
+        dispatchWindow = 'Elevated (2–4 Days)'
         urgency = 'elevated'
         tempDrift = '+0.8°C'
         demandGap = '-25%'
       } else {
         wasteScore = Math.max(18, 25 - (dteNum * 2))
-        timeToWaste = '> 5 Days'
+        dispatchWindow = 'Stable (> 5 Days)'
         urgency = 'low'
         tempDrift = 'Nominal (Cold-chain ok)'
         demandGap = 'Balanced'
@@ -229,12 +269,13 @@ export default function DispatchPage({
       const distanceKm = match.distanceKm
       const etaMinutes = match.etaMinutes
 
-      const isDispatched = dispatchedBatchIds.has(b.id)
+      const isDispatched = dispatchedBatchIds.has(b.id) || b.appliedAction === 'donate'
 
       return {
         ...b,
         wasteScore,
-        timeToWaste,
+        dispatchWindow,
+        timeToWaste: dispatchWindow,
         urgency,
         tempDrift,
         demandGap,
@@ -266,7 +307,13 @@ export default function DispatchPage({
   // Filtered queue — handles tabs and search without causing unmount blinks
   const filteredQueue = useMemo(() => {
     return enrichedBatches.filter(b => {
-      const isHandled = b.isDispatched || pendingBatchIds.has(b.id)
+      // Exclude batches that were already logged for bio-waste disposal in Inventory
+      if (b.appliedAction === 'dispose') return false
+
+      // Food Safety Protocol: Exclude expired perishable lots (Eggs, Dairy, Meat, Seafood) from Food Bank donation!
+      if (!isEligibleForFoodBank(b)) return false
+
+      const isHandled = b.isDispatched || pendingBatchIds.has(b.id) || b.appliedAction === 'donate'
 
       // Tab filter
       if (filterTab === 'critical') {
@@ -282,7 +329,7 @@ export default function DispatchPage({
         return true
       }
 
-      // 'all' tab displays every monitored lot continuously
+      // 'all' tab displays every eligible monitored lot continuously (excluding disposed & bio-waste hazards)
 
       // Search filter
       if (searchQuery.trim()) {
@@ -305,16 +352,31 @@ export default function DispatchPage({
   }, [filteredQueue, currentPage, pageSize])
 
   // Counts for tabs (pending dispatch counts toward dispatched tab)
-  const countAll = enrichedBatches.length
-  const countCritical = enrichedBatches.filter(b => b.wasteScore >= 80 && !b.isDispatched && !pendingBatchIds.has(b.id)).length
-  const countElevated = enrichedBatches.filter(b => b.wasteScore >= 50 && b.wasteScore < 80 && !b.isDispatched && !pendingBatchIds.has(b.id)).length
-  const countDispatched = dispatchedBatchIds.size + pendingBatchIds.size
+  const countAll = enrichedBatches.filter(b => b.appliedAction !== 'dispose' && isEligibleForFoodBank(b)).length
+  const countCritical = enrichedBatches.filter(b => b.wasteScore >= 80 && !b.isDispatched && !pendingBatchIds.has(b.id) && b.appliedAction !== 'donate' && b.appliedAction !== 'dispose' && isEligibleForFoodBank(b)).length
+  const countElevated = enrichedBatches.filter(b => b.wasteScore >= 50 && b.wasteScore < 80 && !b.isDispatched && !pendingBatchIds.has(b.id) && b.appliedAction !== 'donate' && b.appliedAction !== 'dispose' && isEligibleForFoodBank(b)).length
+  const countDispatched = enrichedBatches.filter(b => (dispatchedBatchIds.has(b.id) || pendingBatchIds.has(b.id) || b.appliedAction === 'donate') && isEligibleForFoodBank(b)).length
+
+  // Safety Gate: Expired perishable lots restricted from Food Bank and diverted to Bio-Waste
+  const bioWasteRestrictedLots = useMemo(() => {
+    return enrichedBatches.filter(b => !isEligibleForFoodBank(b) && b.appliedAction !== 'dispose')
+  }, [enrichedBatches])
 
   // Summary Metrics
-  const criticalCount = enrichedBatches.filter(b => b.wasteScore >= 80 && !b.isDispatched).length
+  const criticalCount = countCritical
   const criticalWeight = enrichedBatches
-    .filter(b => b.wasteScore >= 80 && !b.isDispatched)
+    .filter(b => b.wasteScore >= 80 && !b.isDispatched && !pendingBatchIds.has(b.id) && b.appliedAction !== 'donate' && b.appliedAction !== 'dispose' && isEligibleForFoodBank(b))
     .reduce((acc, curr) => acc + (curr.weightKg || 0), 0)
+
+  // Dynamic Total Partner NGO Intake Capacity from DEFAULT_RECEIVERS
+  const totalReceiverCapacityKg = useMemo(() => {
+    return DEFAULT_RECEIVERS.reduce((acc, r) => acc + (r.availableKg || 0), 0)
+  }, [])
+  const totalPartnerHubs = DEFAULT_RECEIVERS.length
+
+  // Redirected / Dispatched Surplus Metrics
+  const dispatchedLots = enrichedBatches.filter(b => dispatchedBatchIds.has(b.id) || pendingBatchIds.has(b.id) || b.appliedAction === 'donate')
+  const dispatchedWeight = dispatchedLots.reduce((acc, curr) => acc + (curr.weightKg || 0), 0)
 
   const avgWasteScore = Math.round(
     enrichedBatches.reduce((acc, curr) => acc + curr.wasteScore, 0) / (enrichedBatches.length || 1)
@@ -377,7 +439,14 @@ export default function DispatchPage({
     // If already in pending, re-clicking is a no-op (countdown already ticking)
     if (pendingDispatch[batch.id]) return
 
+    const enrichedBatch = {
+      ...batch,
+      distanceKm: liveRouteInfo?.distance_km ?? batch.distanceKm,
+      etaMinutes: liveRouteInfo?.eta_minutes ?? batch.etaMinutes,
+    }
+
     setSelectedBatchForRoute(null)
+    setLiveRouteInfo(null)
     setShowMapInModal(false)
     setUndoCountdowns(prev => ({ ...prev, [batch.id]: 10 }))
 
@@ -397,15 +466,15 @@ export default function DispatchPage({
 
     // After 10s, auto-commit
     const timeoutId = setTimeout(() => {
-      commitDispatch(batch)
+      commitDispatch(enrichedBatch)
       clearPendingEntry(batch.id)
     }, UNDO_WINDOW_MS)
 
     setPendingDispatch(prev => ({
       ...prev,
-      [batch.id]: { batch, timeoutId, startedAt: Date.now() }
+      [batch.id]: { batch: enrichedBatch, timeoutId, startedAt: Date.now() }
     }))
-  }, [pendingDispatch, commitDispatch, clearPendingEntry])
+  }, [pendingDispatch, commitDispatch, clearPendingEntry, liveRouteInfo])
 
   // Action: Undo a pending dispatch during the undo window
   const handleUndoDispatch = useCallback((batchId) => {
@@ -623,8 +692,8 @@ export default function DispatchPage({
           Unified Header Section
           -------------------------------------------------------------------- */}
       <DashboardHeader
-        title="Waste-Risk Intelligence & Smart Dispatch"
-        subtitle="Supervised waste-risk scoring model (trained on 8,000 retail records) paired with automated OSRM route matching to verified Lembah Klang food banks."
+        title="Smart Dispatch &amp; Logistics"
+        subtitle="Automated surplus dispatch paired with OSRM road routing to verified Lembah Klang food banks."
         onToggleSidebar={onToggleSidebar}
         actions={
           <button
@@ -632,7 +701,10 @@ export default function DispatchPage({
             className="fg-dispatch-btn fg-dispatch-btn--primary"
             onClick={() => {
               const topBatch = enrichedBatches.find(b => b.wasteScore >= 80 && !b.isDispatched)
-              if (topBatch) setSelectedBatchForRoute(topBatch)
+              if (topBatch) {
+                setLiveRouteInfo(null)
+                setSelectedBatchForRoute(topBatch)
+              }
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -740,7 +812,7 @@ export default function DispatchPage({
             <AnimatedNumber value={criticalCount} suffix=" Lots" /> <span style={{ fontSize: '1rem', fontWeight: 600 }}>(<AnimatedNumber value={criticalWeight} suffix=" kg" />)</span>
           </div>
           <div className="fg-dispatch-metric-card__sub">
-            <span className="fg-dispatch-metric-card__trend">Waste Risk ≥ 80%</span>
+            <span className="fg-dispatch-metric-card__trend">Critical Urgency (DTE ≤ 1d)</span>
             <span>· Requires closed-loop donation</span>
           </div>
         </div>
@@ -759,11 +831,30 @@ export default function DispatchPage({
             </div>
           </div>
           <div className="fg-dispatch-metric-card__value">
-            <AnimatedNumber value={1670} suffix=" kg" />
+            <AnimatedNumber value={totalReceiverCapacityKg} suffix=" kg" />
           </div>
           <div className="fg-dispatch-metric-card__sub">
-            <span className="fg-dispatch-metric-card__trend fg-dispatch-metric-card__trend--sky">4 Partner Hubs</span>
-            <span>· Lembah Klang Online</span>
+            <span className="fg-dispatch-metric-card__trend fg-dispatch-metric-card__trend--sky">{totalPartnerHubs} Partner Hubs</span>
+            <span>· Intake Capacity Active</span>
+          </div>
+        </div>
+
+        <div className="fg-dispatch-metric-card">
+          <div className="fg-dispatch-metric-card__header">
+            <span className="fg-dispatch-metric-card__label">Diverted Surplus Today</span>
+            <div className="fg-dispatch-metric-card__icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+          </div>
+          <div className="fg-dispatch-metric-card__value">
+            <AnimatedNumber value={dispatchedWeight} suffix=" kg" />
+          </div>
+          <div className="fg-dispatch-metric-card__sub">
+            <span className="fg-dispatch-metric-card__trend" style={{ color: '#147b43' }}>{countDispatched} Lots Dispatched</span>
+            <span>· Closed-loop rescued</span>
           </div>
         </div>
 
@@ -784,6 +875,17 @@ export default function DispatchPage({
               </p>
             </div>
           </div>
+
+          {bioWasteRestrictedLots.length > 0 && (
+            <div className="fg-dispatch-safety-callout" role="alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span>
+                <strong>Food Safety Compliance Gate:</strong> {bioWasteRestrictedLots.length} expired perishable lot(s) ({bioWasteRestrictedLots.map(b => b.product).slice(0, 2).join(', ')}{bioWasteRestrictedLots.length > 2 ? '...' : ''}) are strictly restricted from Food Bank donation and diverted to Bio-Waste Disposal in Inventory.
+              </span>
+            </div>
+          )}
 
           {/* Interactive Controls Bar with View Mode Switcher */}
           <div className="fg-dispatch-controls">
@@ -960,76 +1062,26 @@ export default function DispatchPage({
                       </div>
                     </div>
 
-                    {/* Column 2: Machine Learning Risk & Spoilage Telemetry */}
+                    {/* Column 2: Machine Learning Risk & Logistics Spec */}
                     <div className="fg-dispatch-card__col-risk">
                       <div className="fg-dispatch-card__risk-head">
                         <span className={`fg-dispatch-risk-pill fg-dispatch-risk-pill--${scoreClass}`}>
-                          {batch.wasteScore}% Waste Risk
+                          {batch.risk || (isCritical ? 'High Risk' : isElevated ? 'Moderate Risk' : 'Low Risk')}
                         </span>
                         {isHandled ? (
-                          <span className="fg-dispatch-badge--done">✓ Dispatched</span>
+                          <span className="fg-dispatch-badge--done">Dispatched</span>
                         ) : isCritical ? (
-                          <span className="fg-dispatch-badge--urgent">⚠️ Action Needed</span>
+                          <span className="fg-dispatch-badge--urgent">Action Needed</span>
                         ) : null}
                       </div>
-                      <div className="fg-dispatch-card__track">
-                        <div
-                          className={`fg-dispatch-card__fill fg-dispatch-card__fill--${scoreClass}`}
-                          style={{ width: `${batch.wasteScore}%` }}
-                          data-target-width={`${batch.wasteScore}%`}
-                        />
-                      </div>
-                      <div className="fg-dispatch-card__telemetry">
-                        <span
-                          className={`fg-dispatch-telemetry-chip ${isCritical ? 'fg-dispatch-telemetry-chip--critical' : isElevated ? 'fg-dispatch-telemetry-chip--warning' : ''}`}
-                          title="Predictive time window before organic degradation reaches landfill threshold"
-                        >
-                          Loss: <strong>{batch.timeToWaste}</strong>
-                        </span>
-                        <span
-                          className={`fg-dispatch-telemetry-chip ${batch.demandGap?.includes('-') ? (isCritical ? 'fg-dispatch-telemetry-chip--critical' : 'fg-dispatch-telemetry-chip--warning') : ''}`}
-                          title="Forecast vs sales deficit. Negative values indicate surplus inventory likely to exceed shelf life"
-                        >
-                          Gap: <strong>{batch.demandGap}</strong>
-                        </span>
-                        <span
-                          className={`fg-dispatch-telemetry-chip ${batch.tempDrift?.includes('+') ? (isCritical ? 'fg-dispatch-telemetry-chip--critical' : 'fg-dispatch-telemetry-chip--warning') : ''}`}
-                          title="Cold-chain temperature deviation from the 4°C safe baseline"
-                        >
-                          Temp: <strong>{batch.tempDrift}</strong>
-                        </span>
-                      </div>
 
-                      {/* Person 5 — Vehicle & Cold-Chain Badges */}
                       {batch.vehicleSpec && (
-                        <div className="fg-dispatch-card__vehicle-badges">
-                          <span
-                            className={`fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--${batch.vehicleSpec.vehicleType}`}
-                            title={`Recommended dispatch vehicle: ${batch.vehicleSpec.vehicleLabel} (${batch.vehicleSpec.vehicleCapacity})`}
-                          >
-                            {batch.vehicleSpec.vehicleEmoji} {batch.vehicleSpec.vehicleLabel}
-                          </span>
-                          {batch.vehicleSpec.isColdChain ? (
-                            <span
-                              className="fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--cold"
-                              title="Cold-chain required: Refrigerated transport (≤ 4°C)"
-                            >
-                              ❄️ Refrigerated
-                            </span>
-                          ) : (
-                            <span
-                              className="fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--ambient"
-                              title="Ambient transport — no refrigeration required"
-                            >
-                              📦 Ambient
-                            </span>
-                          )}
-                          <span
-                            className="fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--cargo"
-                            title={`Estimated surplus cargo: ${batch.vehicleSpec.cargoKg} kg`}
-                          >
-                            ~{batch.vehicleSpec.cargoKg} kg cargo
-                          </span>
+                        <div className="fg-dispatch-card__spec-line">
+                          <span className="fg-dispatch-card__spec-item">{batch.vehicleSpec.vehicleLabel}</span>
+                          <span className="fg-dispatch-card__dot">·</span>
+                          <span className="fg-dispatch-card__spec-item">{batch.vehicleSpec.isColdChain ? 'Refrigerated' : 'Ambient'}</span>
+                          <span className="fg-dispatch-card__dot">·</span>
+                          <span className="fg-dispatch-card__spec-item">~{batch.vehicleSpec.cargoKg} kg</span>
                         </div>
                       )}
                     </div>
@@ -1081,7 +1133,7 @@ export default function DispatchPage({
                             <button
                               type="button"
                               className="fg-dispatch-btn fg-dispatch-btn--outline fg-dispatch-btn--xs"
-                              onClick={() => setSelectedBatchForRoute(batch)}
+                              onClick={() => { setLiveRouteInfo(null); setSelectedBatchForRoute(batch) }}
                             >
                               Route
                             </button>
@@ -1158,7 +1210,7 @@ export default function DispatchPage({
       {selectedBatchForRoute && (
         <div
           className="fg-dispatch-modal-backdrop"
-          onClick={() => { setSelectedBatchForRoute(null); setShowMapInModal(false) }}
+          onClick={() => { setSelectedBatchForRoute(null); setLiveRouteInfo(null); setShowMapInModal(false) }}
           role="dialog"
           aria-modal="true"
         >
@@ -1173,21 +1225,25 @@ export default function DispatchPage({
               <button
                 type="button"
                 className="fg-dispatch-modal__close"
-                onClick={() => { setSelectedBatchForRoute(null); setShowMapInModal(false) }}
+                onClick={() => { setSelectedBatchForRoute(null); setLiveRouteInfo(null); setShowMapInModal(false) }}
                 aria-label="Close Modal"
               >
                 ✕
               </button>
             </div>
 
-            <div className="fg-dispatch-modal__body">
-              <div className="fg-dispatch-modal__notice">
-                <strong>Anti-Moral-Hazard Protocol:</strong> Closed-loop donation to verified NGO ({selectedBatchForRoute.assignedReceiver.name}). Surplus cannot be released onto retail floor.
-              </div>
+            {/* notice bar: full-width */}
+            <div className="fg-dispatch-modal__notice fg-dispatch-modal__notice--bar">
+              <strong>Anti-Moral-Hazard Protocol:</strong> Closed-loop donation to verified NGO ({selectedBatchForRoute.assignedReceiver.name}). Surplus cannot be released onto retail floor.
+            </div>
 
-              <div>
-                <h4 className="fg-dispatch-modal__section-title">Batch & ML Scoring Overview</h4>
-                <div className="fg-dispatch-manifest-grid">
+            {/* 2-col split: left info, right map */}
+            <div className="fg-dispatch-modal__split">
+
+              {/* LEFT: stacked info cards */}
+              <div className="fg-dispatch-modal__left">
+                <h4 className="fg-dispatch-modal__section-title">Batch &amp; ML Scoring Overview</h4>
+                <div className="fg-dispatch-manifest-grid fg-dispatch-manifest-grid--col1">
                   <div className="fg-dispatch-manifest-item">
                     <span className="fg-dispatch-manifest-item__label">Product / SKU</span>
                     <span className="fg-dispatch-manifest-item__value">{selectedBatchForRoute.product}</span>
@@ -1197,21 +1253,13 @@ export default function DispatchPage({
                     <span className="fg-dispatch-manifest-item__value">{selectedBatchForRoute.qty}</span>
                   </div>
                   <div className="fg-dispatch-manifest-item">
-                    <span className="fg-dispatch-manifest-item__label">Waste-Risk Probability</span>
-                    <span className="fg-dispatch-manifest-item__value" style={{ color: '#c82d32' }}>
-                      {selectedBatchForRoute.wasteScore}% (High Urgency)
-                    </span>
-                  </div>
-                  <div className="fg-dispatch-manifest-item">
-                    <span className="fg-dispatch-manifest-item__label">Time to Spoilage</span>
-                    <span className="fg-dispatch-manifest-item__value">{selectedBatchForRoute.timeToWaste}</span>
+                    <span className="fg-dispatch-manifest-item__label">Dispatch Window</span>
+                    <span className="fg-dispatch-manifest-item__value">{selectedBatchForRoute.dispatchWindow || selectedBatchForRoute.timeToWaste}</span>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="fg-dispatch-modal__section-title">OSRM Routing Coordinates</h4>
-                <div className="fg-dispatch-manifest-grid">
+                <h4 className="fg-dispatch-modal__section-title" style={{ marginTop: '1.1rem' }}>OSRM Routing Coordinates</h4>
+                <div className="fg-dispatch-manifest-grid fg-dispatch-manifest-grid--col1">
                   <div className="fg-dispatch-manifest-item">
                     <span className="fg-dispatch-manifest-item__label">Origin Supermarket</span>
                     <span className="fg-dispatch-manifest-item__value">Kota Damansara (3.1517° N, 101.5947° E)</span>
@@ -1224,63 +1272,38 @@ export default function DispatchPage({
                   </div>
                   <div className="fg-dispatch-manifest-item">
                     <span className="fg-dispatch-manifest-item__label">Driving Distance (OSRM)</span>
-                    <span className="fg-dispatch-manifest-item__value">{selectedBatchForRoute.distanceKm} km</span>
+                    <span className="fg-dispatch-manifest-item__value">
+                      {liveRouteInfo?.distance_km ?? selectedBatchForRoute.distanceKm} km
+                    </span>
                   </div>
                   <div className="fg-dispatch-manifest-item">
                     <span className="fg-dispatch-manifest-item__label">Estimated Transit Time (ETA)</span>
-                    <span className="fg-dispatch-manifest-item__value">{selectedBatchForRoute.etaMinutes} Minutes</span>
+                    <span className="fg-dispatch-manifest-item__value">
+                      {liveRouteInfo?.eta_minutes ?? selectedBatchForRoute.etaMinutes} Minutes
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* ── Person 5: Interactive Route Map Section ── */}
-              <div className="fg-dispatch-modal__map-section">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <h4 className="fg-dispatch-modal__section-title" style={{ margin: 0 }}>
-                    🗺️ Interactive Route Map (OSRM · OpenStreetMap)
-                  </h4>
-                  <button
-                    type="button"
-                    className="fg-dispatch-btn--map"
-                    onClick={() => setShowMapInModal(prev => !prev)}
-                  >
-                    {showMapInModal ? '🔼 Hide Map' : '🗺️ Show Route Map'}
-                  </button>
+              {/* RIGHT: full-height map, always visible */}
+              <div className="fg-dispatch-modal__right">
+                <div className="fg-dispatch-modal__map-label">
+                  Interactive Route Map (OSRM · OpenStreetMap)
                 </div>
-                {/* Pre-rendered map — always mounted but hidden when collapsed */}
-                <div style={{
-                  display: showMapInModal ? 'block' : 'none',
-                  transition: 'all 0.2s ease'
-                }}>
+                <div className="fg-dispatch-modal__map-canvas">
                   <DispatchRouteMap
                     batch={selectedBatchForRoute}
-                    isVisible={showMapInModal}
+                    isVisible={true}
+                    onRouteLoaded={setLiveRouteInfo}
                   />
                 </div>
-                {!showMapInModal && (
-                  <div style={{
-                    padding: '0.6rem 0.9rem',
-                    background: '#f7faf8',
-                    borderRadius: '8px',
-                    border: '1.5px dashed oklch(15% 0.02 148 / 0.15)',
-                    fontSize: '0.78rem',
-                    color: '#7a9986',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <span>🗺️</span>
-                    <span>Klik <strong>"Show Route Map"</strong> untuk melihat rute jalan raya OSRM, marker food bank, dan polyline distribusi interaktif.</span>
-                  </div>
-                )}
               </div>
             </div>
-
             <div className="fg-dispatch-modal__footer">
               <button
                 type="button"
                 className="fg-dispatch-btn fg-dispatch-btn--outline"
-                onClick={() => { setSelectedBatchForRoute(null); setShowMapInModal(false) }}
+                onClick={() => { setSelectedBatchForRoute(null); setLiveRouteInfo(null); setShowMapInModal(false) }}
               >
                 Close
               </button>
@@ -1325,7 +1348,7 @@ export default function DispatchPage({
             </span>
             {selectedBatches.some(b => b.wasteScore < 50) && (
               <span className="fg-dispatch-floating-bar__warning" title="Some selected lots are fresh stock (<50% risk)">
-                ⚠️ Protected Stock Included
+                Protected Stock Included
               </span>
             )}
           </div>
@@ -1366,7 +1389,7 @@ export default function DispatchPage({
           <div className="fg-dispatch-modal" onClick={e => e.stopPropagation()}>
             <div className="fg-dispatch-modal__header">
               <h3 className="fg-dispatch-modal__title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#d66224' }}>
-                <span>⚠️ Safety Check: Low-Risk Inventory Selected</span>
+                <span>Safety Check: Low-Risk Inventory Selected</span>
               </h3>
               <button
                 type="button"
@@ -1412,7 +1435,7 @@ export default function DispatchPage({
                         <strong>{b.product}</strong> <span style={{ color: '#496354' }}>({b.id})</span>
                       </div>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#147b43' }}>
-                        {b.wasteScore}% Risk · DTE {b.dte || `${b.dteNum}d`}
+                        {b.risk || 'Low Risk'} · DTE {b.dte || `${b.dteNum}d`}
                       </span>
                     </div>
                   ))}
