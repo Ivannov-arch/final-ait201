@@ -4,11 +4,38 @@ import path from 'path'
 import fs from 'fs'
 import { spawn } from 'child_process'
 
-const DATA_DIR       = path.resolve(__dirname, '../data/processed')
-const MASTER_JSON    = path.join(DATA_DIR, 'inventory_master.json')
-const TXNS_JSON      = path.join(DATA_DIR, 'transactions.json')
-const FORECAST_JSON  = path.join(DATA_DIR, 'three_day_forecast.json')
+const DATA_DIR        = path.resolve(__dirname, '../data/processed')
+const MASTER_JSON     = path.join(DATA_DIR, 'inventory_master.json')
+const TXNS_JSON       = path.join(DATA_DIR, 'transactions.json')
+const FORECAST_JSON   = path.join(DATA_DIR, 'three_day_forecast.json')
 const SHARED_MAP_JSON = path.resolve(__dirname, '../shared/category_map.json')
+// ── Person 5 — Dispatch CSV log (Task 5) ───────────────────────────────────────
+const DISPATCH_LOG_CSV = path.join(DATA_DIR, 'dispatch_log.csv')
+const DISPATCH_LOG_HEADER = 'dispatch_id,batch_id,batch_product,receiver_id,receiver_name,quantity_kg,dispatch_timestamp,distance_km,eta_minutes,vehicle_type,cold_chain\n'
+
+function appendDispatchLog(row) {
+  try {
+    if (!fs.existsSync(DISPATCH_LOG_CSV)) {
+      fs.writeFileSync(DISPATCH_LOG_CSV, DISPATCH_LOG_HEADER, 'utf8')
+    }
+    const csvRow = [
+      row.dispatch_id,
+      row.batch_id,
+      `"${(row.batch_product || '').replace(/"/g, '""')}"`,
+      row.receiver_id,
+      `"${(row.receiver_name || '').replace(/"/g, '""')}"`,
+      row.quantity_kg,
+      row.dispatch_timestamp,
+      row.distance_km,
+      row.eta_minutes,
+      `"${(row.vehicle_type || '').replace(/"/g, '""')}"`,
+      row.cold_chain ? 'true' : 'false'
+    ].join(',') + '\n'
+    fs.appendFileSync(DISPATCH_LOG_CSV, csvRow, 'utf8')
+  } catch (err) {
+    console.warn('[Dispatch Log] CSV append error:', err.message)
+  }
+}
 
 // ── JSON Helpers ──────────────────────────────────────────────────────────────
 function readJson(p) {
@@ -761,11 +788,77 @@ function createApiMiddleware() {
       return
     }
 
-    // ── POST /api/dispatch → log to Supabase dispatch_log & simulation_events ──
+    // ── GET /api/dispatch-route/:batchId → OSRM real road route ─────────────
+    // Person 5 Task 1: proxy ke OSRM public API, tidak perlu FastAPI running
+    // Pattern dari: Zero-HungerImpeccable/src/lib/utils/osrmApi.js
+    const routeMatch = url.match(/^\/api\/dispatch-route\/([^?/]+)/)
+    if (routeMatch && req.method === 'GET') {
+      const batchId = decodeURIComponent(routeMatch[1])
+
+      // ── Receiver lookup table (mirrors ALL_RECEIVERS in DispatchRouteMap.jsx)
+      const STORE_LAT = 3.1517, STORE_LNG = 101.5947
+      const RECEIVERS_MAP = {
+        'REC-01': { id:'REC-01', name:'Kechara Soup Kitchen',         lat:3.1448, lng:101.7139, cold_storage:false, location:'Jalan Imbi, Bukit Bintang, KL',          accepted:'Vegetables, Fruits, Bakery, Prepared' },
+        'REC-02': { id:'REC-02', name:'The Lost Food Project (TLFP)', lat:3.1517, lng:101.5947, cold_storage:true,  location:'Kota Damansara, Petaling Jaya',           accepted:'All Perishable & Dry Categories' },
+        'REC-03': { id:'REC-03', name:'Yayasan Food Bank Malaysia',   lat:3.0645, lng:101.5302, cold_storage:true,  location:'Seksyen 15, Shah Alam, Selangor',         accepted:'Produce, Dairy, Meat, Dry Goods' },
+        'REC-04': { id:'REC-04', name:'Dapur Jalanan Kuala Lumpur',   lat:3.1485, lng:101.6912, cold_storage:false, location:'Panggung Anniversary, KL',                accepted:'Bakery, Prepared Food, Fruits' },
+      }
+
+      // Pick receiver by cycling batch number (matches DispatchPage.jsx logic)
+      const digits = batchId.replace(/\D/g, '')
+      const idx = digits ? (parseInt(digits, 10) % 4) : 0
+      const receiverKeys = Object.keys(RECEIVERS_MAP)
+      const receiver = RECEIVERS_MAP[receiverKeys[idx]]
+
+      try {
+        // Call OSRM public demo server (same as Zero-HungerImpeccable osrmApi.js)
+        const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${STORE_LNG},${STORE_LAT};${receiver.lng},${receiver.lat}?overview=full&geometries=geojson&steps=false`
+        const osrmRes = await fetch(osrmUrl, { signal: AbortSignal.timeout(8000) })
+        if (osrmRes.ok) {
+          const osrmData = await osrmRes.json()
+          const route = osrmData.routes?.[0]
+          if (route) {
+            const distKm = (route.distance / 1000).toFixed(2)
+            const etaMin = Math.round(route.duration / 60)
+            sendJson(res, 200, {
+              batch_id:    batchId,
+              receiver,
+              distance_km: distKm,
+              eta_minutes: etaMin,
+              geometry:    route.geometry,          // GeoJSON {type:'LineString', coordinates:[[lng,lat],...]}
+              is_fallback: false,
+              source:      'osrm_public',
+            })
+            return
+          }
+        }
+      } catch (_) { /* OSRM timeout or offline — fall through to haversine */ }
+
+      // Haversine fallback when OSRM unreachable
+      const R = 6371
+      const dLat = ((receiver.lat - STORE_LAT) * Math.PI) / 180
+      const dLon = ((receiver.lng - STORE_LNG) * Math.PI) / 180
+      const a = Math.sin(dLat/2)**2 + Math.cos(STORE_LAT*Math.PI/180)*Math.cos(receiver.lat*Math.PI/180)*Math.sin(dLon/2)**2
+      const distKm = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(2)
+      sendJson(res, 200, {
+        batch_id:    batchId,
+        receiver,
+        distance_km: distKm,
+        eta_minutes: Math.round(parseFloat(distKm) * 2.3 + 4),
+        geometry:    null,
+        is_fallback: true,
+        source:      'haversine',
+      })
+      return
+    }
+
+    // ── POST /api/dispatch → log to dispatch_log.csv + Supabase ─────────────
+    // Person 5 Task 5: appends a row to data/processed/dispatch_log.csv
     if (url === '/api/dispatch' && req.method === 'POST') {
       try {
         const payload = await collectBody(req)
         const dispatchId = payload.dispatch_id || `DSP-${Date.now().toString(36).toUpperCase()}`
+        const now = new Date().toISOString()
         const record = {
           dispatch_id: dispatchId,
           batch_id: payload.batch_id,
@@ -774,8 +867,23 @@ function createApiMiddleware() {
           distance_km: parseFloat(payload.distance_km) || 5.0,
           eta_hours: parseFloat(((payload.eta_minutes || 15) / 60).toFixed(2)),
           status: 'dispatched',
-          created_at: new Date().toISOString()
+          created_at: now
         }
+
+        // ── Append to local CSV log (Person 5 Task 5) ────────────────────
+        appendDispatchLog({
+          dispatch_id:        dispatchId,
+          batch_id:           payload.batch_id || '',
+          batch_product:      payload.batch_product || payload.product || '',
+          receiver_id:        payload.receiver_id || 'REC-01',
+          receiver_name:      payload.receiver_name || '',
+          quantity_kg:        parseFloat(payload.quantity_kg || payload.quantity || 0).toFixed(2),
+          dispatch_timestamp: now,
+          distance_km:        parseFloat(payload.distance_km || 0).toFixed(2),
+          eta_minutes:        parseInt(payload.eta_minutes || 15, 10),
+          vehicle_type:       payload.vehicle_type || 'van',
+          cold_chain:         Boolean(payload.cold_chain),
+        })
 
         // Sync to Supabase Cloud dispatch_log
         if (SUPABASE_URL && SUPABASE_KEY) {

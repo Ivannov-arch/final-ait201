@@ -1452,3 +1452,304 @@
   gap: 0.5rem;
   margin-left: auto;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DISPATCH ROUTE MAP — DispatchRouteMap.jsx (Person 5 Leaflet Integration)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.fg-route-map-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* ── Status Bar ─────────────────────────────────────────────────────────── */
+.fg-route-map-statusbar {
+  min-height: 1.6rem;
+  display: flex;
+  align-items: center;
+}
+
+.fg-route-map-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.fg-route-map-status--ok {
+  background: #eaf7ee;
+  color: #147b43;
+  border: 1px solid #b6e8c8;
+}
+
+.fg-route-map-status--warn {
+  background: #fff9eb;
+  color: #92540a;
+  border: 1px solid #fcd97a;
+}
+
+.fg-route-map-status--idle {
+  background: #f0f4f9;
+  color: #496354;
+  border: 1px solid #d8e4dd;
+}
+
+.fg-route-map-status--loading {
+  background: #f0f4ff;
+  color: #2563eb;
+  border: 1px solid #bcd0fb;
+}
+
+.fg-route-map-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: fg-spin 0.75s linear infinite;
+  display: inline-block;
+}
+
+@keyframes fg-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Map Canvas ─────────────────────────────────────────────────────────── */
+.fg-route-map-canvas {
+  border: 1.5px solid oklch(15% 0.02 148 / 0.1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* Fix Leaflet z-index conflicts inside a modal */
+.fg-route-map-canvas .leaflet-pane { z-index: 1; }
+.fg-route-map-canvas .leaflet-top,
+.fg-route-map-canvas .leaflet-bottom { z-index: 2; }
+.fg-route-map-canvas .leaflet-popup { z-index: 3; }
+
+/* ── Route Info Strip ───────────────────────────────────────────────────── */
+.fg-route-map-infostrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  background: #f7faf8;
+  border: 1.5px solid oklch(15% 0.02 148 / 0.08);
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.fg-route-map-infoitem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.fg-route-map-infoitem__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a9986;
+}
+
+.fg-route-map-infoitem__value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1a2e1f;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.fg-route-map-infoitem__value--big {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #147b43;
+  font-feature-settings: "tnum";
+}
+
+.fg-route-map-infoitem--stat {
+  min-width: 70px;
+}
+
+.fg-route-map-infoarrow {
+  font-size: 1.1rem;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.fg-route-map-infodivider {
+  width: 1px;
+  height: 32px;
+  background: oklch(15% 0.02 148 / 0.12);
+  margin: 0 0.25rem;
+}
+
+.fg-route-map-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.fg-route-map-badge--cold {
+  background: #e0f0ff;
+  color: #1d4ed8;
+  border: 1px solid #bcd0fb;
+}
+
+/* ── Cargo ML Spec Panel ────────────────────────────────────────────────── */
+.fg-route-map-cargopanel {
+  padding: 0.65rem 0.9rem;
+  background: oklch(97% 0.01 148);
+  border: 1.5px solid oklch(15% 0.02 148 / 0.1);
+  border-radius: 10px;
+}
+
+.fg-route-map-cargopanel__title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #496354;
+  margin-bottom: 0.45rem;
+}
+
+.fg-route-map-cargopanel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.4rem 0.8rem;
+}
+
+.fg-route-map-cargopanel__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.fg-route-map-cargopanel__item span {
+  font-size: 0.68rem;
+  color: #7a9986;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fg-route-map-cargopanel__item strong {
+  font-size: 0.8rem;
+  color: #1a2e1f;
+  font-weight: 700;
+}
+
+/* ── Map Toggle Button (inside dispatch card) ───────────────────────────── */
+.fg-dispatch-btn--map {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.7rem;
+  border-radius: 7px;
+  border: 1.5px solid #1b9b55;
+  background: #eaf7ee;
+  color: #147b43;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fg-dispatch-btn--map:hover {
+  background: #d0f0de;
+  border-color: #147b43;
+}
+
+/* ── Route Modal Map Section ───────────────────────────────────────────── */
+.fg-dispatch-modal__map-section {
+  margin-top: 0.75rem;
+}
+
+.fg-dispatch-modal__map-section h4 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1a2e1f;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PERSON 5 — Vehicle & Cold-Chain Badges (Dispatch Card)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.fg-dispatch-card__vehicle-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.fg-dispatch-vehicle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  border: 1.2px solid transparent;
+  transition: opacity 0.15s ease;
+}
+
+/* 🛵 Motorcycle */
+.fg-dispatch-vehicle-badge--motorcycle {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+/* 🚐 Cargo Van */
+.fg-dispatch-vehicle-badge--van {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+/* 🚛 Food Bank Truck */
+.fg-dispatch-vehicle-badge--truck {
+  background: #faf5ff;
+  color: #7e22ce;
+  border-color: #e9d5ff;
+}
+
+/* ❄️ Refrigerated */
+.fg-dispatch-vehicle-badge--cold {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+/* 📦 Ambient */
+.fg-dispatch-vehicle-badge--ambient {
+  background: #f9fafb;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+/* ~XX kg cargo */
+.fg-dispatch-vehicle-badge--cargo {
+  background: #fefce8;
+  color: #854d0e;
+  border-color: #fef08a;
+  font-feature-settings: "tnum";
+}

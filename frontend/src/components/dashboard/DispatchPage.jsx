@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
 import DashboardHeader from './DashboardHeader'
 import AnimatedNumber from './AnimatedNumber'
+import DispatchRouteMap from './DispatchRouteMap'
 import './dispatchPage.css'
 
 const UNDO_WINDOW_MS = 10000 // 10-second undo window
@@ -88,6 +89,62 @@ const getCategoryColorClass = (cat) => {
   return 'default'
 }
 
+// ── Person 5: Client-side cargo estimator (mirrors dispatch_estimator.py logic) ──
+const COLD_CHAIN_CATEGORIES = ['Meat', 'Seafood', 'Dairy', 'Prepared Food']
+
+function normalizeQtyToKg(qty, uom, category) {
+  const u = (uom || 'kg').toLowerCase().trim()
+  const cat = (category || '').toLowerCase()
+  if (['kg', 'kilogram', 'kgs'].includes(u)) return Math.max(0.1, qty)
+  if (['g', 'gram', 'grams'].includes(u)) return Math.max(0.01, qty / 1000)
+  if (['bottle', 'bottles', 'btl'].includes(u)) return Math.max(0.5, qty * 1.0)
+  if (['pack', 'packs', 'pkt', 'packets'].includes(u)) {
+    const factor = cat.includes('grain') || cat.includes('flour') ? 1.0
+      : cat.includes('dairy') || cat.includes('cheese') ? 0.5
+      : cat.includes('bakery') ? 0.4 : 0.6
+    return Math.max(0.2, qty * factor)
+  }
+  if (['unit', 'units', 'pcs', 'piece', 'pieces'].includes(u)) {
+    const factor = cat.includes('meat') || cat.includes('poultry') ? 0.8
+      : cat.includes('bakery') ? 0.25
+      : cat.includes('produce') || cat.includes('fruit') || cat.includes('veg') ? 0.35 : 0.4
+    return Math.max(0.2, qty * factor)
+  }
+  return Math.max(0.1, qty)
+}
+
+function computeVehicleSpec(batch) {
+  const qty = parseInt(batch.qty, 10) || 12
+  const uom = batch.unit || 'kg'
+  const cat = batch.category || ''
+
+  const qtyKg = normalizeQtyToKg(qty, uom, cat)
+  // Surplus estimate: ~25% of stock flagged for dispatch (mirrors dispatch_estimator heuristic)
+  const cargoKg = Math.max(1.0, Math.round(qtyKg * 0.25 * 10) / 10)
+
+  let vehicleEmoji, vehicleLabel, vehicleType, vehicleCapacity
+  if (cargoKg <= 25) {
+    vehicleEmoji = '🛵'
+    vehicleLabel = 'Motorcycle'
+    vehicleType = 'motorcycle'
+    vehicleCapacity = uom === 'kg' ? '≤ 25 kg' : uom === 'pack' ? '≤ 25 kg (~40–50 packs)' : `≤ 25 kg`
+  } else if (cargoKg <= 200) {
+    vehicleEmoji = '🚐'
+    vehicleLabel = 'Cargo Van'
+    vehicleType = 'van'
+    vehicleCapacity = uom === 'kg' ? '25–200 kg' : uom === 'pack' ? '25–200 kg (~50–350 packs)' : `25–200 kg`
+  } else {
+    vehicleEmoji = '🚛'
+    vehicleLabel = 'Food Bank Truck'
+    vehicleType = 'truck'
+    vehicleCapacity = '> 200 kg heavy freight'
+  }
+
+  const isColdChain = COLD_CHAIN_CATEGORIES.some(c => cat.includes(c))
+
+  return { vehicleEmoji, vehicleLabel, vehicleType, vehicleCapacity, cargoKg, isColdChain }
+}
+
 
 export default function DispatchPage({
   batches: externalBatches = [],
@@ -121,6 +178,11 @@ export default function DispatchPage({
   // Remaining seconds for each pending dispatch (drives progress bar animation)
   const [undoCountdowns, setUndoCountdowns] = useState({})
   const countdownRefs = useRef({}) // { [batchId]: intervalId }
+
+  // Person 5 Map: toggle map visibility inside the Route & Manifest Modal
+  const [showMapInModal, setShowMapInModal] = useState(false)
+  // Pre-mount map as soon as we have any batch (pre-render / off-screen strategy)
+  const preRenderBatch = useMemo(() => externalBatches[0] || null, [externalBatches])
 
   // Enrich batches with Step 11 Waste-Risk Model output & Step 13 OSRM spatial assignment
   const enrichedBatches = useMemo(() => {
@@ -180,7 +242,8 @@ export default function DispatchPage({
         distanceKm,
         etaMinutes,
         isDispatched,
-        weightKg: qtyNum
+        weightKg: qtyNum,
+        vehicleSpec: computeVehicleSpec(b),
       }
     })
   }, [externalBatches, dispatchedBatchIds])
@@ -315,8 +378,7 @@ export default function DispatchPage({
     if (pendingDispatch[batch.id]) return
 
     setSelectedBatchForRoute(null)
-
-    // Start countdown display (10 -> 0 seconds)
+    setShowMapInModal(false)
     setUndoCountdowns(prev => ({ ...prev, [batch.id]: 10 }))
 
     const intervalId = setInterval(() => {
@@ -452,6 +514,7 @@ export default function DispatchPage({
           setSafetyConfirmBatches(null)
         } else if (selectedBatchForRoute) {
           setSelectedBatchForRoute(null)
+          setShowMapInModal(false)
         }
       }
     }
@@ -936,6 +999,39 @@ export default function DispatchPage({
                           Temp: <strong>{batch.tempDrift}</strong>
                         </span>
                       </div>
+
+                      {/* Person 5 — Vehicle & Cold-Chain Badges */}
+                      {batch.vehicleSpec && (
+                        <div className="fg-dispatch-card__vehicle-badges">
+                          <span
+                            className={`fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--${batch.vehicleSpec.vehicleType}`}
+                            title={`Recommended dispatch vehicle: ${batch.vehicleSpec.vehicleLabel} (${batch.vehicleSpec.vehicleCapacity})`}
+                          >
+                            {batch.vehicleSpec.vehicleEmoji} {batch.vehicleSpec.vehicleLabel}
+                          </span>
+                          {batch.vehicleSpec.isColdChain ? (
+                            <span
+                              className="fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--cold"
+                              title="Cold-chain required: Refrigerated transport (≤ 4°C)"
+                            >
+                              ❄️ Refrigerated
+                            </span>
+                          ) : (
+                            <span
+                              className="fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--ambient"
+                              title="Ambient transport — no refrigeration required"
+                            >
+                              📦 Ambient
+                            </span>
+                          )}
+                          <span
+                            className="fg-dispatch-vehicle-badge fg-dispatch-vehicle-badge--cargo"
+                            title={`Estimated surplus cargo: ${batch.vehicleSpec.cargoKg} kg`}
+                          >
+                            ~{batch.vehicleSpec.cargoKg} kg cargo
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Column 3: Logistics Destination & Dispatch Action */}
@@ -1062,7 +1158,7 @@ export default function DispatchPage({
       {selectedBatchForRoute && (
         <div
           className="fg-dispatch-modal-backdrop"
-          onClick={() => setSelectedBatchForRoute(null)}
+          onClick={() => { setSelectedBatchForRoute(null); setShowMapInModal(false) }}
           role="dialog"
           aria-modal="true"
         >
@@ -1077,7 +1173,7 @@ export default function DispatchPage({
               <button
                 type="button"
                 className="fg-dispatch-modal__close"
-                onClick={() => setSelectedBatchForRoute(null)}
+                onClick={() => { setSelectedBatchForRoute(null); setShowMapInModal(false) }}
                 aria-label="Close Modal"
               >
                 ✕
@@ -1136,13 +1232,55 @@ export default function DispatchPage({
                   </div>
                 </div>
               </div>
+
+              {/* ── Person 5: Interactive Route Map Section ── */}
+              <div className="fg-dispatch-modal__map-section">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <h4 className="fg-dispatch-modal__section-title" style={{ margin: 0 }}>
+                    🗺️ Interactive Route Map (OSRM · OpenStreetMap)
+                  </h4>
+                  <button
+                    type="button"
+                    className="fg-dispatch-btn--map"
+                    onClick={() => setShowMapInModal(prev => !prev)}
+                  >
+                    {showMapInModal ? '🔼 Hide Map' : '🗺️ Show Route Map'}
+                  </button>
+                </div>
+                {/* Pre-rendered map — always mounted but hidden when collapsed */}
+                <div style={{
+                  display: showMapInModal ? 'block' : 'none',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <DispatchRouteMap
+                    batch={selectedBatchForRoute}
+                    isVisible={showMapInModal}
+                  />
+                </div>
+                {!showMapInModal && (
+                  <div style={{
+                    padding: '0.6rem 0.9rem',
+                    background: '#f7faf8',
+                    borderRadius: '8px',
+                    border: '1.5px dashed oklch(15% 0.02 148 / 0.15)',
+                    fontSize: '0.78rem',
+                    color: '#7a9986',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <span>🗺️</span>
+                    <span>Klik <strong>"Show Route Map"</strong> untuk melihat rute jalan raya OSRM, marker food bank, dan polyline distribusi interaktif.</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="fg-dispatch-modal__footer">
               <button
                 type="button"
                 className="fg-dispatch-btn fg-dispatch-btn--outline"
-                onClick={() => setSelectedBatchForRoute(null)}
+                onClick={() => { setSelectedBatchForRoute(null); setShowMapInModal(false) }}
               >
                 Close
               </button>
@@ -1319,6 +1457,29 @@ export default function DispatchPage({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ----------------------------------------------------------------
+          Person 5 — Pre-render: DispatchRouteMap mounted OFF-SCREEN
+          Tiles are pre-fetched during idle time so the first "Show Route Map"
+          click is instant (0ms). The map re-uses this instance via isVisible.
+          ---------------------------------------------------------------- */}
+      {preRenderBatch && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            left: '-9999px',
+            top: '-9999px',
+            width: '600px',
+            height: '340px',
+            pointerEvents: 'none',
+            opacity: 0,
+            zIndex: -1,
+          }}
+        >
+          <DispatchRouteMap batch={preRenderBatch} isVisible={false} />
         </div>
       )}
     </div>

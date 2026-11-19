@@ -1,0 +1,22 @@
+id,name,address,lat,lng,capacity_kg,cold_storage,accepted_categories,contact
+REC-01,Kechara Soup Kitchen,"Jalan Imbi, Bukit Bintang, Kuala Lumpur",3.1448,101.7139,500,false,"Vegetables,Fruits,Bakery,Prepared Food",+60 3-2142 1668
+REC-02,The Lost Food Project (TLFP),"No. 10 Jalan PJU 5/9, Kota Damansara, Petaling Jaya",3.1517,101.5947,800,true,"All Perishable Categories,Dry Goods",+60 11-2362 2062
+REC-03,Yayasan Food Bank Malaysia,"Seksyen 15, Shah Alam, Selangor",3.0645,101.5302,1200,true,"Produce,Dairy,Meat,Dry Goods,Frozen",+60 3-5523 2500
+REC-04,Dapur Jalanan Kuala Lumpur,"Panggung Anniversary, Jalan Raja, KL",3.1485,101.6912,300,false,"Bakery,Prepared Food,Fruits,Beverages",+60 12-205 2027
+REC-05,Pertubuhan Kebajikan Islam Malaysia (PERKIM),"Jalan Ipoh, Kuala Lumpur",3.1803,101.6878,600,false,"Dry Goods,Grains,Canned Food,Beverages",+60 3-4042 2515
+REC-06,MERCY Malaysia Food Aid Unit,"Jalan Dutamas Raya, Kuala Lumpur",3.1724,101.6610,900,true,"All Perishable,Medical Nutrition,Infant Formula",+60 3-6207 2186
+REC-07,Pusat Zakat Selangor (ZIS Food Bank),"Jalan Haji Sirat, Shah Alam, Selangor",3.0738,101.5183,750,false,"Rice,Flour,Oil,Canned Goods,Dried Goods",+60 3-5524 3484
+REC-08,Chow Kit Community Kitchen,"Jalan Raja Laut, Chow Kit, Kuala Lumpur",3.1686,101.6977,400,false,"Cooked Food,Vegetables,Fruits,Bread",+60 3-2694 2550
+REC-09,Komuniti Kitchen Malaysia (KKM),"Jalan Duta, Kuala Lumpur",3.1731,101.6648,350,false,"Perishable Produce,Bakery,Dairy",+60 12-688 1133
+REC-10,MyCare Humanitarian Food Bank,"Kompleks Antarabangsa, Jalan Sultan Ismail, KL",3.1570,101.7015,500,true,"Nutritional Food,Frozen,Canned,Dry Goods",+60 3-4257 7303
+REC-11,IKRAM Food Relief (Lembah Klang),"Jalan Semarak, Kuala Lumpur",3.1738,101.7127,450,false,"Rice,Flour,Sugar,Canned Goods,Cooking Oil",+60 3-4257 0066
+REC-12,Pusat Pengurusan Zakat MAIWP,"Jalan Parlimen, Kuala Lumpur",3.1534,101.6919,700,false,"Dry Goods,Staples,Canned Food",+60 3-2274 1177
+REC-13,Yayasan Sulam (Subang Jaya),"Jalan SS15/4, Subang Jaya, Selangor",3.0744,101.5869,550,true,"Perishable Produce,Dairy,Meat,Frozen",+60 3-5634 1177
+REC-14,Food Aid Foundation (FAF) KL,"Jalan Klang Lama, Kuala Lumpur",3.1041,101.6688,650,true,"All Categories,Surplus Retail Food",+60 3-7784 2362
+REC-15,DBKL Community Food Programme,"Dataran Merdeka, Kuala Lumpur",3.1478,101.6929,200,false,"Cooked Food,Fruits,Vegetables,Bread",+60 3-2617 9000
+REC-16,Baitul Ehsan Food Bank (Ampang),"Jalan Ampang, Ampang, Selangor",3.1680,101.7549,480,false,"Dry Goods,Canned,Beverages,Fruits",+60 3-4292 3340
+REC-17,SuriaHamba Welfare Society,"Jalan Puchong, Puchong, Selangor",3.0334,101.6248,370,false,"Bakery,Vegetables,Fruits,Dairy",+60 3-8060 7799
+REC-18,Yayasan Sejahtera (Klang),"Jalan Meru, Klang, Selangor",3.0444,101.4457,900,true,"All Perishable,Dry Goods,Frozen",+60 3-3372 9988
+REC-19,Global Peace Mission (GPM) Food Aid,"Jalan Gombak, Kuala Lumpur",3.2085,101.7169,600,false,"Staples,Dry Goods,Canned,Beverages",+60 3-6185 1800
+REC-20,Hunger FREE Malaysia (HFM) Hub,"Jalan Dewan Bahasa, Kuala Lumpur",3.1332,101.7023,520,true,"All Perishable,Surplus Bakery,Dairy,Fruits",+60 11-2131 7898
+

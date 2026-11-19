@@ -1,0 +1,2 @@
+dispatch_id,batch_id,batch_product,receiver_id,receiver_name,quantity_kg,dispatch_timestamp,distance_km,eta_minutes,vehicle_type,cold_chain
+
