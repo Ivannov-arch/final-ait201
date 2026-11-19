@@ -1,22 +1,25 @@
 """
 Spoilage Classifier — Inference Functions & FEFO Sorter
 ======================================================
-Person 1: ML Spoilage Model & Two-Tier Risk Prediction
-- Tier 1: Machine Learning Classifier (Trained on Perishable Goods, waste_pct target)
-- Tier 2: Continuous Policy Engine (Category-aware exponential time-decay escalation)
-
-Predicts spoilage risk level (HIGH, MODERATE, LOW) with calibrated confidence score.
+Single-Tier Dual-Weighted XGBoost Spoilage Risk Prediction
+- Predicts spoilage risk level (HIGH, MODERATE, LOW) for perishable inventory lots.
+- Dry Goods / Shelf-Stable categories are handled by policy (no ML inference).
+- Best model confirmed by ablation: Macro F1 0.6013, MODERATE recall 59.55%.
 """
 
 import os
+import re
 import threading
+from datetime import datetime
+
 import pandas as pd
 import numpy as np
 import joblib
 
-# Default model paths
-DEFAULT_MODEL_PATH = os.path.join("models", "spoilage_classifier.pkl")
-DUAL_WEIGHTED_MODEL_PATH = os.path.join("models", "spoilage_classifier_dual_weighted.pkl")
+# ── Active model: Single-Tier Dual-Weighted XGBoost (final) ──────────────────
+# Ablation study confirmed this as best model: Macro F1 0.6013, MODERATE recall 59.55%
+DEFAULT_MODEL_PATH = os.path.join("models", "spoilage_classifier_final.pkl")
+DUAL_WEIGHTED_MODEL_PATH = os.path.join("models", "spoilage_classifier_final.pkl")
 
 # Store-compatible feature columns (Perishable Goods dataset v2 - 19 features, region-agnostic)
 TRAINED_FEATURE_COLS = [
@@ -114,6 +117,35 @@ def _load_model_package(model_path: str = DEFAULT_MODEL_PATH) -> dict | None:
                 return None
         return None
 
+def _calendar_features(lot: dict) -> tuple[int, int, int]:
+    """Derive (day_of_week, is_weekend, month) following the training convention.
+
+    Training data (7_perishable_goods_cleaned.csv) uses pandas .dt.dayofweek:
+    Monday=0 … Sunday=6, with is_weekend=1 only on Saturday/Sunday and month
+    in 1–12. Resolution order: explicit feature keys → lot date fields
+    (date_received / transaction_date / date_in) → today's date. This closes
+    the ISSUE-06 gap where these features were never supplied at inference.
+    """
+    for key in ("date_received", "transaction_date", "date_in"):
+        raw = lot.get(key)
+        if not raw:
+            continue
+        s = str(raw).strip()
+        m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", s)
+        try:
+            if m:
+                when = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            else:
+                when = datetime.strptime(s, "%b %d, %Y")
+        except ValueError:
+            continue
+        dow = when.weekday()
+        return dow, 1 if dow >= 5 else 0, when.month
+    now = datetime.now()
+    dow = now.weekday()
+    return dow, 1 if dow >= 5 else 0, now.month
+
+
 def preprocess_single_lot(lot: dict, feature_cols: list | None = None, scaler=None) -> np.ndarray:
     """Transforms a single lot dictionary into a model-compatible scaled numpy array.
 
@@ -147,10 +179,16 @@ def preprocess_single_lot(lot: dict, feature_cols: list | None = None, scaler=No
     demand = float(lot.get('daily_demand', lot.get('Sales_Volume', lot.get('demand', 10.0))))
     dte = float(lot.get('days_until_expiry', lot.get('days_to_expiry', lot.get('shelf_life_days', 14.0))))
     shelf_life = float(lot.get('shelf_life_days', lot.get('shelf_life', 30.0)))
-    day_of_week = int(lot.get('day_of_week', 0))
-    is_weekend = int(lot.get('is_weekend', 0))
-    month = int(lot.get('month', 6))
-    is_promoted = int(lot.get('is_promoted', 0))
+    auto_dow, auto_weekend, auto_month = _calendar_features(lot)
+
+    def _opt(key, auto):
+        v = lot.get(key)
+        return auto if v is None or v == "" else int(v)
+
+    day_of_week = _opt("day_of_week", auto_dow)
+    is_weekend = _opt("is_weekend", auto_weekend)
+    month = _opt("month", auto_month)
+    is_promoted = int(lot.get("is_promoted") or 0)
 
     if 'stock_pressure' in lot:
         stock_pressure = float(lot['stock_pressure'])
@@ -340,7 +378,7 @@ def _predict_shelf_stable_risk(lot: dict, category: str, days_until_expiry: floa
 def predict_spoilage_risk(
     lot: dict,
     model_path: str = DEFAULT_MODEL_PATH,
-    apply_tier2: bool = True,
+    apply_tier2: bool = False,
     alpha: float = 0.20,
     tier2_mode: str = "hierarchical"
 ) -> dict:
@@ -348,14 +386,10 @@ def predict_spoilage_risk(
 
     Architecture:
       - Department split: Dry Goods / Shelf-Stable categories (Grains & Pulses,
-        Oils & Fats) are scored by policy, not by the model — they are
-        non-perishable and cannot spoil microbiologically.
-      - Tier 1 (Perishable departments): XGBoost Classifier predicts base risk
-        profile from inventory features.
-      - Tier 2 (if apply_tier2=True): Risk policy escalation dynamically boosts
-        urgency as days_until_expiry draws near based on category sensitivity tau.
-        Mode 'hierarchical' (Option 1) elevates MOD to the 30%+ range while protecting HIGH.
-        Mode 'cascading' (Option 2) cascades risk upwards from LOW to MOD to HIGH.
+        Oils & Fats) are scored by policy, not by the model.
+      - Single-Tier Dual-Weighted XGBoost: predicts direct calibrated probabilities
+        for HIGH / MODERATE / LOW from a single inference pass. No Tier-2 applied.
+        apply_tier2 is kept as a parameter for backward compatibility but defaults False.
 
     Args:
         lot: Inventory lot dictionary.

@@ -47,7 +47,7 @@ def read_single_batch(batch_id: str):
 def create_batch(batch_data: Dict[str, Any] = Body(...)):
     """
     Persists a newly registered inventory batch directly into inventory_master.csv
-    and computes ML spoilage risk using Person 1's XGBoost champion model.
+    and computes ML spoilage risk using the Single-Tier Dual-Weighted XGBoost model.
     """
     return save_batch_to_csv(batch_data)
 
