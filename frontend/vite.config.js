@@ -487,7 +487,7 @@ function createApiMiddleware() {
       const records = readJson(MASTER_JSON)
       // Only return items with stock > 0
       const activeBatches = records
-        .filter(r => Number(r.quantity) > 0 && r.status !== 'Deleted')
+        .filter(r => Number(r.quantity) > 0 && r.status !== 'Deleted' && r.status !== 'Disposed')
       let preds = null
       try { preds = await predictSpoilageBatch(activeBatches.map(rowToSpoilageLot)) } catch (_) {}
       const batches = activeBatches.map((r, i) => rowToBatch(r, preds ? preds[i] : null))
