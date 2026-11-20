@@ -352,6 +352,114 @@ Both phases share the same cleaned inventory records as the main source of truth
     \item \textbf{Simulating store events (\texttt{src/etl/simulator\_engine.py}):} Runs a 14-day simulation of store activity, from receiving stock through to selling at a discount, donating it, or logging it as waste. It produces 2,644 events saved in date order in \texttt{simulation\_events.csv}, using Malaysia time (UTC+8).
 \end{enumerate}
 
+\subsection{Exploratory Data Analysis}
+\label{sec:eda}
+
+Before training any model, we studied the cleaned datasets to understand their structure, spot patterns, and confirm whether they contained enough information to solve our three prediction tasks.
+
+\subsubsection{Spoilage Risk Distribution}
+The spoilage training set contains 89,880 food receipts across three risk classes. The class balance matters because a heavily skewed dataset will cause a model to ignore rare but important cases.
+
+\begin{table}[H]
+\centering
+\caption{Spoilage risk class distribution in the cleaned training data (89,880 records).}
+\label{tab:risk_dist}
+\renewcommand{\arraystretch}{1.15}
+{\small
+\begin{tabular}{@{} l r r @{}}
+\toprule
+\rowcolor{NavyPrimary}
+\color{white}\textbf{Risk Class} & \color{white}\textbf{Records} & \color{white}\textbf{Share (\%)} \\
+\midrule
+LOW (safe, full-price sale)       & 59,221 & 65.9\% \\
+\rowcolor{LightBg}
+MODERATE (early-action needed)    & 17,976 & 20.0\% \\
+HIGH (urgent: discount or donate) & 12,683 & 14.1\% \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+The 65.9\% / 20.0\% / 14.1\% split shows a moderate class imbalance (Figure~\ref{fig:eda_risk_dist}). LOW dominates, while MODERATE and HIGH are underrepresented. Without correction, a classifier trained on these raw counts would mostly predict LOW and miss the cases stores care most about. We address this with SMOTE oversampling and class-weight tuning (§\ref{sec:spoilage_method}).
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.485\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/eda_fig1_risk_distribution.png}
+        \caption{Spoilage risk class distribution ($N=89{,}880$).}
+        \label{fig:eda_risk_dist}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.485\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/eda_fig2_dte_boxplot.png}
+        \caption{DTE distribution across risk tiers.}
+        \label{fig:eda_dte_box}
+    \end{subfigure}
+    \caption{Exploratory analysis of retail spoilage risk tiers and days-to-expiry (DTE) dynamics.}
+    \label{fig:eda_spoilage_overview}
+\end{figure}
+
+Key EDA observations for spoilage:
+\begin{itemize}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Days-to-expiry (DTE) is the strongest single signal:} As illustrated in Figure~\ref{fig:eda_dte_box}, median DTE for HIGH-risk records is 3.0 days vs.\ 6.0 days for LOW-risk records. However, using DTE alone incorrectly flags 60\% of safe items as HIGH risk (§\ref{sec:spoilage_results}), confirming that a multi-feature model is needed.
+    \item \textbf{Storage temperature separates classes:} Mean storage temperature for HIGH-risk items is 3.2°C higher than for LOW-risk items, reflecting the effect of cold-chain breaks.
+    \item \textbf{Category matters:} As shown in Figure~\ref{fig:eda_risk_heatmap}, Ready-to-Eat, Seafood, and Meat suffer the highest HIGH-risk exposure (19.4\%--27.3\%), whereas Frozen Meals and Beverages remain predominantly safe (LOW $\ge 78\%$).
+    \item \textbf{Holiday lag effect:} Records from the two days after a Malaysian public holiday show a 1.6× higher HIGH-risk rate, consistent with reduced customer turnover and stock rotation gaps.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{figures/eda_fig3_risk_heatmap.png}
+    \caption{Proportion of spoilage risk tiers across retail food categories (\%). Perishable goods exhibit severe vulnerability to spoilage compared to shelf-stable and frozen lines.}
+    \label{fig:eda_risk_heatmap}
+\end{figure}
+
+\subsubsection{Demand and Sales Patterns}
+The demand training set contains 1,273,104 daily sales records across 14 food families from 2013 to 2017.
+
+\begin{itemize}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Heavy right skew:} Most items sell 0--20 units per day, but a small number of high-volume days (promotions, holidays) reach 300+ units. We cap these extreme values during cleaning to prevent them from dominating model training.
+    \item \textbf{Promotion effect:} Promoted items sell on average 2.4× more units than non-promoted items on the same day. The model includes a binary promotion flag as a feature.
+    \item \textbf{Day-of-week seasonality:} Sales are highest on Saturdays (index 1.28) and lowest on Wednesdays (index 0.78), consistent with typical grocery shopping patterns.
+    \item \textbf{Group-level volume:} As quantified in Figure~\ref{fig:eda_sales_families}, GROCERY~I and BEVERAGES account for approximately 60\% of total sales volume, making them the most reliably forecastable groups. SEAFOOD and EGGS have the most irregular daily patterns (coefficient of variation \textgreater\ 1.8).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{figures/eda_fig4_sales_per_family.png}
+    \caption{Cumulative sales demand across 14 food families in the M5 grocery training dataset. High-volume staples dominate total transactions, while perishable lines exhibit volatile sales intervals.}
+    \label{fig:eda_sales_families}
+\end{figure}
+
+\subsubsection{Food Waste and Cargo Weight Distribution}
+The cargo regression dataset contains 8,000 records of food waste events.
+
+\begin{itemize}[leftmargin=18pt, itemsep=2pt]
+    \item \textbf{Weight distribution:} As shown in Figure~\ref{fig:eda_vehicle_donut}, 63\% of batches weigh under 25~kg (motorcycle-eligible), 29\% fall in the 25--200~kg van range, and 8\% exceed 200~kg (truck required). This confirms that most donations are small and motorcycle dispatch is the most common operational case.
+    \item \textbf{Top waste categories:} As detailed in Figure~\ref{fig:eda_waste_category}, Prepared Food, Fruits, and Vegetables generate the highest emergency waste volume, accounting for over 50\% of total discarded mass.
+    \item \textbf{Linear baseline inadequacy:} A simple linear regression using only quantity and category achieves $R^2 = 0.80$ (Table~\ref{tab:cargo_regression_benchmark}), leaving 20\% variance unexplained. The residual analysis shows systematic under-prediction for large batches, motivating the switch to XGBoost.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.485\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/eda_fig5_vehicle_tier_donut.png}
+        \caption{Donation cargo vehicle allocation tiers.}
+        \label{fig:eda_vehicle_donut}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.485\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/eda_fig6_waste_per_category.png}
+        \caption{Food waste weight by category (kg).}
+        \label{fig:eda_waste_category}
+    \end{subfigure}
+    \caption{Exploratory analysis of surplus food waste volume, dominant scrap categories, and logistical fleet tier allocation.}
+    \label{fig:eda_cargo_overview}
+\end{figure}
+
 % ============================================================================
 % SECTION 3: MACHINE LEARNING METHODOLOGY
 % ============================================================================
