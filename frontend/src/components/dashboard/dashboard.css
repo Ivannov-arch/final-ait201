@@ -5741,6 +5741,20 @@ button {
 .fg-inv-action-card--rescue:hover {
   box-shadow: 0 6px 20px rgba(22, 163, 74, 0.18);
 }
+.fg-inv-action-card-featured.fg-inv-action-card--donate {
+  border-color: #fca5a5;
+  background: linear-gradient(100deg, #fff1f2 0%, #fee2e2 100%);
+}
+.fg-inv-action-card-featured.fg-inv-action-card--donate:hover {
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.18);
+}
+.fg-inv-action-card-featured.fg-inv-action-card--normal {
+  border-color: #a7f3d0;
+  background: linear-gradient(100deg, #f0fdf4 0%, #dcfce7 100%);
+}
+.fg-inv-action-card-featured.fg-inv-action-card--normal:hover {
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.18);
+}
 .fg-inv-action-btn--emerald {
   background: #15803d;
   color: #ffffff;
@@ -5861,6 +5875,10 @@ button {
 .fg-inv-action-card--donate.fg-inv-action-card-compact {
   background: #fff1f2;
   border: 1px solid #fecdd3;
+}
+.fg-inv-action-card--markdown.fg-inv-action-card-compact {
+  background: #fffaf0;
+  border: 1px solid #fedcb2;
 }
 .fg-inv-compact-top {
   display: flex;

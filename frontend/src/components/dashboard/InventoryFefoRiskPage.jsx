@@ -385,6 +385,7 @@ export default function InventoryFefoRiskPage({
     const b = selectedBatchForAction
     const qty = b.stockQty !== undefined ? Number(b.stockQty) : (parseFloat(String(b.qty || '').replace(/[^\d.]/g, '')) || 10)
     const price = b.unitPrice !== undefined ? Number(b.unitPrice) : (parseFloat(String(b.sellPrice || b.costPrice || '').replace(/[^\d.]/g, '')) || 5)
+    const dteNumVal = b.dteNum !== undefined ? Number(b.dteNum) : (b.expiryDate ? parseDateToDays(b.expiryDate) : 5)
 
     setRuleEngineResult(null)
     setRuleEngineLoading(true)
@@ -402,7 +403,7 @@ export default function InventoryFefoRiskPage({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            days_to_expiry: b.dteNum || 5,
+            days_to_expiry: dteNumVal,
             quantity: qty,
             unit_price_myr: price,
             demand_forecast_3d: mlDemand3d,
@@ -419,7 +420,7 @@ export default function InventoryFefoRiskPage({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            days_to_expiry: b.dteNum || 5,
+            days_to_expiry: dteNumVal,
             quantity: qty,
             unit_price_myr: price,
             demand_forecast_3d: qty * 0.6,
@@ -497,10 +498,18 @@ export default function InventoryFefoRiskPage({
     if (batch.appliedAction === 'donate') return 'Food Bank Dispatch'
     if (batch.appliedAction === 'normal') return 'Normal Sale'
     if (batch.appliedAction === 'dispose') return 'Disposal / Bio-Waste'
-    if (batch.isExpired || batch.riskType === 'expired' || (batch.dteNum !== undefined && batch.dteNum < 0)) return 'Disposal / Waste'
-    if (batch.recommended) return batch.recommended
-    if (batch.riskType === 'high') return 'Donate to Food Bank'
-    if (batch.riskType === 'med') return 'Dynamic Markdown'
+
+    const dte = batch.dteNum !== undefined ? Number(batch.dteNum) : (batch.expiryDate ? parseDateToDays(batch.expiryDate) : 5)
+    if (batch.isExpired || batch.riskType === 'expired' || dte < 0) return 'Disposal / Waste'
+
+    // Priority FEFO Rule Engine routing:
+    if (dte <= 1 || batch.riskType === 'critical' || batch.risk === 'Critical Risk' || batch.riskType === 'high') {
+      return 'Donate to Food Bank'
+    }
+    if (dte <= 3 || batch.riskType === 'med') {
+      return 'Dynamic Markdown'
+    }
+    if (batch.recommended && batch.recommended !== 'Normal Sale') return batch.recommended
     return 'Normal Sale'
   }
 
@@ -509,9 +518,13 @@ export default function InventoryFefoRiskPage({
     if (batch.appliedAction === 'donate') return 'Donation route active'
     if (batch.appliedAction === 'normal') return 'Store retention selected'
     if (batch.appliedAction === 'dispose') return 'Expired stock logged for disposal'
-    if (batch.isExpired || batch.riskType === 'expired' || (batch.dteNum !== undefined && batch.dteNum < 0)) return 'Past expiry date — retail sale prohibited'
-    if (batch.riskType === 'high') return 'Prioritize markdown or donation before expiry'
-    if (batch.riskType === 'med') return 'Review markdown before expiry'
+
+    const dte = batch.dteNum !== undefined ? Number(batch.dteNum) : (batch.expiryDate ? parseDateToDays(batch.expiryDate) : 5)
+    if (batch.isExpired || batch.riskType === 'expired' || dte < 0) return 'Past expiry date — retail sale prohibited'
+    if (dte <= 1 || batch.riskType === 'critical' || batch.risk === 'Critical Risk' || batch.riskType === 'high') {
+      return 'Prioritize food bank donation before expiry'
+    }
+    if (dte <= 3 || batch.riskType === 'med') return 'Review markdown before expiry'
     return 'Standard retail cycle'
   }
 
@@ -1555,100 +1568,15 @@ export default function InventoryFefoRiskPage({
               })()}
             </div>
 
-            {/* ── Action Grid: asymmetric layout — Markdown is featured, others are compact ── */}
+            {/* ── Action Grid: asymmetric layout — For Expired items, Disposal is Featured ── */}
             {selectedBatchForAction.isExpired || selectedBatchForAction.riskType === 'expired' || (selectedBatchForAction.dteNum !== undefined && selectedBatchForAction.dteNum < 0) ? (
               (() => {
                 const cat = (selectedBatchForAction.category || '').toLowerCase()
                 const isPerishable = cat.includes('meat') || cat.includes('poultry') || cat.includes('seafood') || cat.includes('fish') || (cat.includes('dairy') && !cat.includes('dry'))
 
-                if (!isPerishable) {
-                  // SHELF-STABLE / SAFE EXPIRED (Bakery, Biscuits, Grains, Produce, Dry Goods):
-                  // FEATURED: Food Bank Surplus Rescue (Reverse Logistics)
-                  return (
-                    <div className="fg-inv-action-grid-v2">
-                      <div className="fg-inv-action-card-featured fg-inv-action-card--rescue">
-                        <div className="fg-inv-featured-left">
-                          <div className="fg-inv-featured-eyebrow">
-                            <div className="fg-inv-action-icon-sm" style={{ background: '#dcfce7', color: '#15803d' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                              </svg>
-                            </div>
-                            <span className="fg-inv-featured-label" style={{ color: '#15803d', fontWeight: 800 }}>Dispatch to Food Bank (Rescue Route)</span>
-                            <span className="fg-inv-compact-rec-tag" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', marginLeft: '4px' }}>
-                              Recommended Triage
-                            </span>
-                          </div>
-
-                          <div className="fg-inv-featured-engine">
-                            <span className="fg-inv-featured-price" style={{ color: '#15803d' }}>
-                              Anti-Moral-Hazard Protocol · Route to Verified NGO
-                            </span>
-                            <span className="fg-inv-featured-reason">
-                              Passed retail expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Shelf-stable dry goods &amp; bakery remain suitable for closed-loop food bank redistribution (e.g. The Lost Food Project). Prevents landfill waste and fulfills ESG diversion targets.
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          className="fg-inv-action-btn fg-inv-action-btn--emerald fg-inv-featured-cta"
-                          onClick={() => handleApplyAction('donate')}
-                        >
-                          Dispatch to Food Bank →
-                        </button>
-                      </div>
-
-                      <div className="fg-inv-action-row-secondary">
-                        <div className="fg-inv-action-card-compact fg-inv-action-card--disposal">
-                          <div className="fg-inv-compact-top">
-                            <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                            </div>
-                            <span className="fg-inv-compact-title">Log Bio-Waste Disposal</span>
-                            <span className="fg-inv-compact-rec-tag" style={{ background: '#f1f5f9', color: '#64748b' }}>Fallback</span>
-                          </div>
-                          <p className="fg-inv-compact-desc">Fallback route if food bank collection is unavailable or package seal is compromised.</p>
-                          <button
-                            type="button"
-                            className="fg-inv-action-btn-compact fg-inv-action-btn--red"
-                            onClick={() => handleApplyAction('dispose')}
-                          >
-                            Log Disposal →
-                          </button>
-                        </div>
-
-                        <div className="fg-inv-action-card-compact fg-inv-action-card--normal" style={{ opacity: 0.65, background: '#f8fafc' }}>
-                          <div className="fg-inv-compact-top">
-                            <div className="fg-inv-action-icon-sm" style={{ background: '#e2e8f0', color: '#64748b' }}>
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                              </svg>
-                            </div>
-                            <span className="fg-inv-compact-title" style={{ color: '#64748b' }}>Dynamic Markdown</span>
-                            <span className="fg-inv-compact-rec-tag" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>Prohibited</span>
-                          </div>
-                          <p className="fg-inv-compact-desc">Expired items cannot be sold at discounted price in consumer retail channels.</p>
-                          <button
-                            type="button"
-                            className="fg-inv-action-btn-compact"
-                            style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}
-                            disabled
-                          >
-                            Locked (Expired)
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-
-                // PERISHABLE EXPIRED (Meat, Poultry, Seafood, Fresh Dairy):
-                // FEATURED: Mandatory Bio-Waste Disposal for biological food safety
                 return (
                   <div className="fg-inv-action-grid-v2">
+                    {/* ── FEATURED: Mandatory Food Safety Bio-Waste Disposal for ALL Expired Stock ── */}
                     <div className="fg-inv-action-card-featured fg-inv-action-card--disposal">
                       <div className="fg-inv-featured-left">
                         <div className="fg-inv-featured-eyebrow">
@@ -1659,16 +1587,16 @@ export default function InventoryFefoRiskPage({
                           </div>
                           <span className="fg-inv-featured-label" style={{ color: '#991b1b', fontWeight: 800 }}>Disposal &amp; Bio-Waste Route</span>
                           <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red" style={{ marginLeft: '4px' }}>
-                            Mandatory Food Safety Action
+                            Recommended Triage
                           </span>
                         </div>
 
                         <div className="fg-inv-featured-engine">
                           <span className="fg-inv-featured-price" style={{ color: '#991b1b' }}>
-                            Perishable Stock Expired — Human Consumption Prohibited
+                            Passed Retail Expiry — Standard Retail &amp; Donation Prohibited
                           </span>
                           <span className="fg-inv-featured-reason">
-                            Product passed expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Food safety compliance strictly prohibits retail sale or normal donation of expired meat/dairy. Route immediately to licensed bio-waste or composting.
+                            Product passed retail expiry on <strong>{selectedBatchForAction.expiryDate}</strong> ({selectedBatchForAction.dte}). Food safety compliance strictly prohibits retail distribution. Route immediately to licensed bio-waste, anaerobic composting, or animal feed conversion to prevent moral hazard.
                           </span>
                         </div>
                       </div>
@@ -1678,29 +1606,53 @@ export default function InventoryFefoRiskPage({
                         className="fg-inv-action-btn fg-inv-action-btn--red fg-inv-featured-cta"
                         onClick={() => handleApplyAction('dispose')}
                       >
-                        Log Disposal →
+                        Log Bio-Waste Disposal →
                       </button>
                     </div>
 
+                    {/* ── Secondary Bottom Row: Secondary rescue routes or prohibited retail ── */}
                     <div className="fg-inv-action-row-secondary">
-                      <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
-                        <div className="fg-inv-compact-top">
-                          <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                            </svg>
+                      {!isPerishable ? (
+                        <div className="fg-inv-action-card-compact fg-inv-action-card--donate" style={{ background: '#f0fdf4', borderColor: '#bbf7d0' }}>
+                          <div className="fg-inv-compact-top">
+                            <div className="fg-inv-action-icon-sm" style={{ background: '#dcfce7', color: '#15803d' }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                              </svg>
+                            </div>
+                            <span className="fg-inv-compact-title" style={{ color: '#15803d' }}>NGO Rescue (Best-Before Waiver)</span>
+                            <span className="fg-inv-compact-rec-tag" style={{ background: '#f1f5f9', color: '#64748b' }}>Conditional</span>
                           </div>
-                          <span className="fg-inv-compact-title">Emergency Bio-Refinery</span>
+                          <p className="fg-inv-compact-desc">Secondary channel only if verified NGO (e.g. TLFP) approves shelf-stable Best-Before extension protocol.</p>
+                          <button
+                            type="button"
+                            className="fg-inv-action-btn-compact fg-inv-action-btn--emerald"
+                            onClick={() => handleApplyAction('donate')}
+                          >
+                            Arrange Transfer →
+                          </button>
                         </div>
-                        <p className="fg-inv-compact-desc">Closed-channel transfer only for authorized animal feed or biogas energy conversion.</p>
-                        <button
-                          type="button"
-                          className="fg-inv-action-btn-compact fg-inv-action-btn--red"
-                          onClick={() => handleApplyAction('donate')}
-                        >
-                          Arrange →
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
+                          <div className="fg-inv-compact-top">
+                            <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                              </svg>
+                            </div>
+                            <span className="fg-inv-compact-title">Emergency Bio-Refinery</span>
+                            <span className="fg-inv-compact-rec-tag" style={{ background: '#fee2e2', color: '#991b1b' }}>Non-Human</span>
+                          </div>
+                          <p className="fg-inv-compact-desc">Closed-channel transfer only for authorized animal feed or biogas energy conversion.</p>
+                          <button
+                            type="button"
+                            className="fg-inv-action-btn-compact fg-inv-action-btn--red"
+                            onClick={() => handleApplyAction('donate')}
+                          >
+                            Arrange →
+                          </button>
+                        </div>
+                      )}
 
                       <div className="fg-inv-action-card-compact fg-inv-action-card--normal" style={{ opacity: 0.65, background: '#f8fafc' }}>
                         <div className="fg-inv-compact-top">
@@ -1727,90 +1679,163 @@ export default function InventoryFefoRiskPage({
                 )
               })()
             ) : (
-              <div className="fg-inv-action-grid-v2">
+              (() => {
+                const b = selectedBatchForAction
+                const qtyNum = b.stockQty !== undefined ? Number(b.stockQty) : (parseFloat(String(b.qty || '').replace(/[^\d.]/g, '')) || 10)
+                const priceNum = b.unitPrice !== undefined ? Number(b.unitPrice) : (parseFloat(String(b.sellPrice || b.costPrice || '').replace(/[^\d.]/g, '')) || 5)
+                const dteVal = b.dteNum !== undefined ? Number(b.dteNum) : (b.expiryDate ? parseDateToDays(b.expiryDate) : 5)
 
-                {/* ── FEATURED: Dynamic Markdown (full-width top, most likely action) ── */}
-                <div className="fg-inv-action-card-featured fg-inv-action-card--markdown">
-                  <div className="fg-inv-featured-left">
-                    <div className="fg-inv-featured-eyebrow">
-                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--amber">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" />
-                        </svg>
-                      </div>
-                      <span className="fg-inv-featured-label">Dynamic Markdown</span>
-                      {!ruleEngineLoading && ruleEngineResult && ruleEngineResult.discount_percent > 0 && (
-                        <span className="fg-inv-featured-discount-pill">
-                          {ruleEngineResult.discount_percent}% off
+                // Determine effective recommended route:
+                const activeRoute = ruleEngineResult?.recommended_route || (
+                  dteVal <= 1 ? 'Donation' :
+                  dteVal <= 3 ? 'Dynamic Markdown' :
+                  'Normal Sale'
+                )
+
+                const isDonateRecommended = activeRoute === 'Donation' && !ruleEngineResult?.moral_hazard_flag
+                const isNormalRecommended = activeRoute === 'Normal Sale'
+                const isMarkdownRecommended = !isDonateRecommended && !isNormalRecommended
+
+                // ── 1. Featured Card Renderers (Full Width Top) ───────────────────
+                const renderFeaturedDonate = () => (
+                  <div className="fg-inv-action-card-featured fg-inv-action-card--donate">
+                    <div className="fg-inv-featured-left">
+                      <div className="fg-inv-featured-eyebrow">
+                        <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                          </svg>
+                        </div>
+                        <span className="fg-inv-featured-label" style={{ color: '#991b1b' }}>Dispatch to Food Bank (Donation)</span>
+                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red" style={{ marginLeft: '4px' }}>
+                          Recommended
                         </span>
-                      )}
-                      {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Dynamic Markdown' && (
+                        {ruleEngineLoading && (
+                          <span style={{ fontSize: '0.72rem', color: '#991b1b', opacity: 0.7 }}>calculating...</span>
+                        )}
+                      </div>
+
+                      <div className="fg-inv-featured-engine">
+                        <span className="fg-inv-featured-price" style={{ color: '#991b1b' }}>
+                          Closed NGO Channel · 100% Spoilage Diversion
+                        </span>
+                        <span className="fg-inv-featured-value" style={{ color: '#b91c1c' }}>
+                          Anti-Moral-Hazard Protocol · Zero retail exposure
+                        </span>
+                        <span className="fg-inv-featured-reason" style={{ color: '#991b1b' }}>
+                          {ruleEngineResult?.reason || `DTE=${dteVal}d (critical expiry). Immediate transfer to verified NGO before complete spoilage.`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn fg-inv-action-btn--red fg-inv-featured-cta"
+                      onClick={() => handleApplyAction('donate')}
+                    >
+                      Dispatch to Food Bank →
+                    </button>
+                  </div>
+                )
+
+                const renderFeaturedMarkdown = () => (
+                  <div className="fg-inv-action-card-featured fg-inv-action-card--markdown">
+                    <div className="fg-inv-featured-left">
+                      <div className="fg-inv-featured-eyebrow">
+                        <div className="fg-inv-action-icon-sm fg-inv-action-icon--amber">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" />
+                          </svg>
+                        </div>
+                        <span className="fg-inv-featured-label">Dynamic Markdown</span>
+                        {!ruleEngineLoading && ruleEngineResult && ruleEngineResult.discount_percent > 0 && (
+                          <span className="fg-inv-featured-discount-pill">
+                            {ruleEngineResult.discount_percent}% off
+                          </span>
+                        )}
                         <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn" style={{ marginLeft: '4px' }}>
                           Recommended
                         </span>
-                      )}
-                      {ruleEngineLoading && (
-                        <span style={{ fontSize: '0.72rem', color: '#92400e', opacity: 0.7 }}>calculating...</span>
-                      )}
-                    </div>
-
-                    {!ruleEngineLoading && ruleEngineResult ? (
-                      <div className="fg-inv-featured-engine">
-                        <span className="fg-inv-featured-price">
-                          RM {ruleEngineResult.discounted_price_myr}
-                          <span className="fg-inv-featured-price-label">/ unit after discount</span>
-                        </span>
-                        <span className="fg-inv-featured-value">
-                          Est. recovery: RM {ruleEngineResult.expected_value_myr}
-                        </span>
-                        <span className="fg-inv-featured-reason">{ruleEngineResult.reason}</span>
-                        {ruleEngineResult.moral_hazard_flag && (
-                          <span className="fg-inv-moral-hazard-tag">⚠ Donation cap reached — redirected to 50% markdown</span>
+                        {ruleEngineLoading && (
+                          <span style={{ fontSize: '0.72rem', color: '#92400e', opacity: 0.7 }}>calculating...</span>
                         )}
                       </div>
-                    ) : (
-                      <p style={{ fontSize: '0.83rem', color: '#78350f', margin: '4px 0 0' }}>
-                        Accelerate sell-through with a time-based discount.
-                      </p>
-                    )}
-                  </div>
 
-                  <button
-                    type="button"
-                    className="fg-inv-action-btn fg-inv-action-btn--amber fg-inv-featured-cta"
-                    onClick={() => handleApplyAction('markdown')}
-                  >
-                    Apply Markdown →
-                  </button>
-                </div>
-
-                {/* ── Bottom row: Normal Sale + Donate (compact, secondary weight) ── */}
-                <div className="fg-inv-action-row-secondary">
-
-                  {/* Normal Sale */}
-                  <div className="fg-inv-action-card-compact fg-inv-action-card--normal">
-                    <div className="fg-inv-compact-top">
-                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--green">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
-                        </svg>
-                      </div>
-                      <span className="fg-inv-compact-title">Normal Sale</span>
-                      {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Normal Sale' && (
-                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--green">Recommended</span>
+                      {!ruleEngineLoading && ruleEngineResult ? (
+                        <div className="fg-inv-featured-engine">
+                          <span className="fg-inv-featured-price">
+                            RM {ruleEngineResult.discounted_price_myr}
+                            <span className="fg-inv-featured-price-label">/ unit after discount</span>
+                          </span>
+                          <span className="fg-inv-featured-value">
+                            Est. recovery: RM {ruleEngineResult.expected_value_myr}
+                          </span>
+                          <span className="fg-inv-featured-reason">{ruleEngineResult.reason}</span>
+                          {ruleEngineResult.moral_hazard_flag && (
+                            <span className="fg-inv-moral-hazard-tag">⚠ Donation cap reached — redirected to 50% markdown</span>
+                          )}
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: '0.83rem', color: '#78350f', margin: '4px 0 0' }}>
+                          Accelerate sell-through with a time-based discount.
+                        </p>
                       )}
                     </div>
-                    <p className="fg-inv-compact-desc">Full price, standard retail channel.</p>
+
                     <button
                       type="button"
-                      className="fg-inv-action-btn-compact fg-inv-action-btn--green"
-                      onClick={() => handleApplyAction('normal')}
+                      className="fg-inv-action-btn fg-inv-action-btn--amber fg-inv-featured-cta"
+                      onClick={() => handleApplyAction('markdown')}
                     >
-                      Apply →
+                      Apply Markdown →
                     </button>
                   </div>
+                )
 
-                  {/* Donate */}
+                const renderFeaturedNormal = () => (
+                  <div className="fg-inv-action-card-featured fg-inv-action-card--normal">
+                    <div className="fg-inv-featured-left">
+                      <div className="fg-inv-featured-eyebrow">
+                        <div className="fg-inv-action-icon-sm fg-inv-action-icon--green">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
+                          </svg>
+                        </div>
+                        <span className="fg-inv-featured-label" style={{ color: '#166534' }}>Normal Retail Sale</span>
+                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--green" style={{ marginLeft: '4px' }}>
+                          Recommended
+                        </span>
+                        {ruleEngineLoading && (
+                          <span style={{ fontSize: '0.72rem', color: '#166534', opacity: 0.7 }}>calculating...</span>
+                        )}
+                      </div>
+
+                      <div className="fg-inv-featured-engine">
+                        <span className="fg-inv-featured-price" style={{ color: '#166534' }}>
+                          RM {priceNum.toFixed(2)}
+                          <span className="fg-inv-featured-price-label" style={{ color: '#15803d' }}>/ unit (Full Price)</span>
+                        </span>
+                        <span className="fg-inv-featured-value" style={{ color: '#15803d' }}>
+                          Est. recovery: RM {(priceNum * qtyNum).toFixed(2)} (Standard retail margin)
+                        </span>
+                        <span className="fg-inv-featured-reason" style={{ color: '#166534' }}>
+                          {ruleEngineResult?.reason || `DTE=${dteVal}d, demand healthy. Retain on standard retail shelf.`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn fg-inv-action-btn--green fg-inv-featured-cta"
+                      onClick={() => handleApplyAction('normal')}
+                    >
+                      Retain for Normal Sale →
+                    </button>
+                  </div>
+                )
+
+                // ── 2. Compact Alternative Renderers (Bottom 2 Slots) ─────────────
+                const renderCompactDonate = () => (
                   <div className="fg-inv-action-card-compact fg-inv-action-card--donate">
                     <div className="fg-inv-compact-top">
                       <div className="fg-inv-action-icon-sm fg-inv-action-icon--red">
@@ -1819,16 +1844,13 @@ export default function InventoryFefoRiskPage({
                         </svg>
                       </div>
                       <span className="fg-inv-compact-title">Donate</span>
-                      {!ruleEngineLoading && ruleEngineResult?.recommended_route === 'Donation' && !ruleEngineResult.moral_hazard_flag && (
-                        <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--red">Recommended</span>
-                      )}
-                      {!ruleEngineLoading && ruleEngineResult?.moral_hazard_flag && (
+                      {ruleEngineResult?.moral_hazard_flag && (
                         <span className="fg-inv-compact-rec-tag fg-inv-compact-rec-tag--warn">Cap full</span>
                       )}
                     </div>
                     <p className="fg-inv-compact-desc">
                       {ruleEngineResult?.moral_hazard_flag
-                        ? '30% donation quota reached. Redirects to markdown.'
+                        ? '30% donation quota reached. Redirected to markdown.'
                         : 'Closed NGO channel — zero retail exposure.'}
                     </p>
                     <button
@@ -1839,9 +1861,90 @@ export default function InventoryFefoRiskPage({
                       Arrange →
                     </button>
                   </div>
+                )
 
-                </div>
-              </div>
+                const renderCompactMarkdown = () => (
+                  <div className="fg-inv-action-card-compact fg-inv-action-card--markdown">
+                    <div className="fg-inv-compact-top">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--amber">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-compact-title">Dynamic Markdown</span>
+                      {ruleEngineResult?.discount_percent > 0 && (
+                        <span className="fg-inv-featured-discount-pill" style={{ fontSize: '0.68rem', padding: '1px 7px' }}>
+                          {ruleEngineResult.discount_percent}% off
+                        </span>
+                      )}
+                    </div>
+                    <p className="fg-inv-compact-desc">
+                      {ruleEngineResult?.discounted_price_myr
+                        ? `Discounted to RM ${ruleEngineResult.discounted_price_myr}/unit to accelerate sales.`
+                        : 'Accelerate sell-through with a tiered discount.'}
+                    </p>
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn-compact fg-inv-action-btn--amber"
+                      onClick={() => handleApplyAction('markdown')}
+                    >
+                      Apply Markdown →
+                    </button>
+                  </div>
+                )
+
+                const renderCompactNormal = () => (
+                  <div className="fg-inv-action-card-compact fg-inv-action-card--normal">
+                    <div className="fg-inv-compact-top">
+                      <div className="fg-inv-action-icon-sm fg-inv-action-icon--green">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                      </div>
+                      <span className="fg-inv-compact-title">Normal Sale</span>
+                    </div>
+                    <p className="fg-inv-compact-desc">Full price, standard retail channel.</p>
+                    <button
+                      type="button"
+                      className="fg-inv-action-btn-compact fg-inv-action-btn--green"
+                      onClick={() => handleApplyAction('normal')}
+                    >
+                      Apply →
+                    </button>
+                  </div>
+                )
+
+                return (
+                  <div className="fg-inv-action-grid-v2">
+                    {/* ── TOP FEATURED SLOT: Dynamically swapped according to RECOMMENDED action ── */}
+                    {isDonateRecommended && renderFeaturedDonate()}
+                    {isMarkdownRecommended && renderFeaturedMarkdown()}
+                    {isNormalRecommended && renderFeaturedNormal()}
+
+                    {/* ── BOTTOM SECONDARY ROW: The other two alternative actions ── */}
+                    <div className="fg-inv-action-row-secondary">
+                      {isDonateRecommended && (
+                        <>
+                          {renderCompactMarkdown()}
+                          {renderCompactNormal()}
+                        </>
+                      )}
+                      {isMarkdownRecommended && (
+                        <>
+                          {renderCompactNormal()}
+                          {renderCompactDonate()}
+                        </>
+                      )}
+                      {isNormalRecommended && (
+                        <>
+                          {renderCompactMarkdown()}
+                          {renderCompactDonate()}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()
             )}
           </div>
         </div>

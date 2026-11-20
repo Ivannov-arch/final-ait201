@@ -72,7 +72,7 @@ export function normalizeBatchDte(batch) {
     risk: isExp ? 'Expired' : (batch.riskSource === 'ml_xgboost' ? batch.risk : computed.risk),
     riskType: isExp ? 'expired' : (batch.riskSource === 'ml_xgboost' ? batch.riskType : computed.riskType),
     isExpired: isExp,
-    recommended: isExp ? 'Disposal / Waste' : (batch.recommended || computed.recommended)
+    recommended: isExp ? 'Disposal / Waste' : computed.recommended
   }
 }
 

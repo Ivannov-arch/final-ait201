@@ -145,7 +145,7 @@ export default function DashboardPage({ onNavigateHome }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          days_to_expiry:           batch.dteNum || 5,
+          days_to_expiry:           batch.dteNum !== undefined ? Number(batch.dteNum) : 5,
           quantity:                 qtyNum,
           unit_price_myr:           pricePerUnit,
           demand_forecast_3d:       qtyNum * 0.6,   // conservative: 60% of stock as expected demand

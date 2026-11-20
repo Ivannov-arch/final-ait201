@@ -93,27 +93,11 @@ const getCategoryColorClass = (cat) => {
 export function isEligibleForFoodBank(batch) {
   const dte = Number(batch.dteNum ?? 0)
   const isExp = batch.isExpired || batch.riskType === 'expired' || dte < 0
-  const cat = (batch.category || '').toLowerCase()
-  const prod = (batch.product || '').toLowerCase()
 
-  // Biological hazard categories when expired: Eggs, Raw Dairy, Meat, Poultry, Seafood
-  const isPerishableHazard =
-    cat.includes('dairy') ||
-    cat.includes('meat') ||
-    cat.includes('poultry') ||
-    cat.includes('seafood') ||
-    cat.includes('fish') ||
-    prod.includes('egg') ||
-    prod.includes('duck') ||
-    prod.includes('milk') ||
-    prod.includes('cheese') ||
-    prod.includes('chicken') ||
-    prod.includes('beef') ||
-    prod.includes('sour cream') ||
-    prod.includes('yogurt')
-
-  // If already expired and high-risk perishable, strictly REJECT from food bank donation!
-  if (isExp && isPerishableHazard) {
+  // Strict Food Safety & Anti-Moral-Hazard Rule:
+  // ANY batch that has already passed its retail expiry date (DTE < 0) is strictly
+  // prohibited from human Food Bank donation. Must be diverted to Bio-Waste Disposal.
+  if (isExp) {
     return false
   }
 
@@ -882,7 +866,7 @@ export default function DispatchPage({
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               <span>
-                <strong>Food Safety Compliance Gate:</strong> {bioWasteRestrictedLots.length} expired perishable lot(s) ({bioWasteRestrictedLots.map(b => b.product).slice(0, 2).join(', ')}{bioWasteRestrictedLots.length > 2 ? '...' : ''}) are strictly restricted from Food Bank donation and diverted to Bio-Waste Disposal in Inventory.
+                <strong>Food Safety Compliance Gate:</strong> {bioWasteRestrictedLots.length} expired lot(s) ({bioWasteRestrictedLots.map(b => b.product).slice(0, 3).join(', ')}{bioWasteRestrictedLots.length > 3 ? '...' : ''}) are strictly restricted from Food Bank donation and diverted to Bio-Waste Disposal in Inventory.
               </span>
             </div>
           )}
