@@ -53,15 +53,19 @@ function writeJson(p, data) {
   fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf8')
 }
 
-// ── Match batch IDs flexibly across CAN-XXXX and LOT-XXXX (BUG-INV-01 fix) ──
+// ── Match batch IDs flexibly across CAN-XXXX, LOT-XXXX, SYN-XXXX (BUG-SPL-02 fix) ──
 function matchBatchId(recId, searchId) {
   if (!recId || !searchId) return false
   const r = String(recId).trim().toUpperCase()
   const s = String(searchId).trim().toUpperCase()
   if (r === s) return true
-  const nr = r.replace(/\D/g, '')
-  const ns = s.replace(/\D/g, '')
-  return Boolean(nr && ns && nr === ns)
+  // Strip common prefixes (LOT-, CAN-, BATCH-, SYN-)
+  const cleanR = r.replace(/^[A-Z]+-/, '')
+  const cleanS = s.replace(/^[A-Z]+-/, '')
+  if (cleanR === cleanS) return true
+  const nr = parseInt(r.replace(/\D/g, ''), 10)
+  const ns = parseInt(s.replace(/\D/g, ''), 10)
+  return Number.isFinite(nr) && Number.isFinite(ns) && nr === ns
 }
 
 function collectBody(req) {
@@ -103,11 +107,21 @@ function calendarFeatures(v) {
 
 // ── Map inventory_master.json row → model lot dict (XGBoost spoilage schema) ───
 function rowToSpoilageLot(r) {
-  const dte = Number(r.days_to_expiry) || 0
+  let dte = r.days_to_expiry !== undefined ? Number(r.days_to_expiry) : NaN
+  if (r.expiry_date) {
+    const exp = new Date(r.expiry_date)
+    if (!isNaN(exp.getTime())) {
+      const now = new Date()
+      const dExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
+      const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      dte = Math.round((dExp - dNow) / (1000 * 60 * 60 * 24))
+    }
+  }
+  if (isNaN(dte)) dte = 0
   const stockPressure = parseFloat(r.stock_pressure)
   return {
     days_until_expiry: dte,
-    shelf_life_days: Number(r.shelf_life_days) || (dte + 7),
+    shelf_life_days: Number(r.shelf_life_days) || Math.max(1, dte + 7),
     initial_quantity: Number(r.quantity) || 0,
     quantity: Number(r.quantity) || 0,
     uom: r.uom || 'units',
@@ -530,8 +544,8 @@ function createApiMiddleware() {
           const dIn = inDate ? new Date(inDate.getFullYear(), inDate.getMonth(), inDate.getDate()) : dNow
 
           // If incoming batch has future date_in, DTE upon receipt is (dExp - dIn)
-          const dteFromNow = Math.max(0, Math.round((dExp - dNow) / 86400000))
-          const dteFromIn  = Math.max(0, Math.round((dExp - dIn) / 86400000))
+          const dteFromNow = Math.round((dExp - dNow) / 86400000)
+          const dteFromIn  = Math.round((dExp - dIn) / 86400000)
           spoilageLot.days_until_expiry = (dIn > dNow) ? dteFromIn : dteFromNow
           spoilageLot.shelf_life_days   = Math.max(1, Math.round((dExp - dIn) / 86400000))
 
@@ -559,13 +573,38 @@ function createApiMiddleware() {
         } catch (_) {}
 
         const dte = spoilageLot.days_until_expiry
-        const riskTier = pred?.label ? (RISK_TIER_MAP[pred.label] || 'low') : (dte <= 2 ? 'high' : dte <= 5 ? 'med' : 'low')
-        const riskLabel = pred?.label ? (RISK_LABEL_MAP[pred.label] || 'Low Risk') : (dte <= 2 ? 'High Risk' : dte <= 5 ? 'Moderate Risk' : 'Low Risk')
+        let riskTier, riskLabel, dteDisplay
+        if (dte < 0) {
+          riskTier = 'expired'
+          riskLabel = 'Expired'
+          const absD = Math.abs(dte)
+          dteDisplay = absD === 1 ? 'Expired (1d ago)' : `Expired (${absD}d ago)`
+        } else if (dte === 0) {
+          riskTier = 'high'
+          riskLabel = 'Critical Risk'
+          dteDisplay = 'Expires Today (0d)'
+        } else if (pred?.label) {
+          riskTier = RISK_TIER_MAP[pred.label] || 'low'
+          riskLabel = RISK_LABEL_MAP[pred.label] || 'Low Risk'
+          dteDisplay = dte === 1 ? '1 day' : `${dte} days`
+        } else if (dte <= 2) {
+          riskTier = 'high'
+          riskLabel = 'High Risk'
+          dteDisplay = dte === 1 ? '1 day' : `${dte} days`
+        } else if (dte <= 5) {
+          riskTier = 'med'
+          riskLabel = 'Moderate Risk'
+          dteDisplay = `${dte} days`
+        } else {
+          riskTier = 'low'
+          riskLabel = 'Low Risk'
+          dteDisplay = `${dte} days`
+        }
         const score = pred?.score ?? null
 
         sendJson(res, 200, {
           ok: true,
-          dte: dte === 1 ? '1 day' : `${dte} days`,
+          dte: dteDisplay,
           dteNum: dte,
           shelf_life_days: spoilageLot.shelf_life_days,
           risk: riskLabel,
@@ -804,7 +843,7 @@ function createApiMiddleware() {
       const STORE_LAT = 3.1517, STORE_LNG = 101.5947
       const RECEIVERS_MAP = {
         'REC-01': { id:'REC-01', name:'Kechara Soup Kitchen',         lat:3.1448, lng:101.7139, cold_storage:false, location:'Jalan Imbi, Bukit Bintang, KL',          accepted:'Vegetables, Fruits, Bakery, Prepared' },
-        'REC-02': { id:'REC-02', name:'The Lost Food Project (TLFP)', lat:3.1517, lng:101.5947, cold_storage:true,  location:'Kota Damansara, Petaling Jaya',           accepted:'All Perishable & Dry Categories' },
+        'REC-02': { id:'REC-02', name:'The Lost Food Project (TLFP)', lat:3.1585, lng:101.5892, cold_storage:true,  location:'Seksyen 5, Kota Damansara, PJ',           accepted:'All Perishable & Dry Categories' },
         'REC-03': { id:'REC-03', name:'Yayasan Food Bank Malaysia',   lat:3.0645, lng:101.5302, cold_storage:true,  location:'Seksyen 15, Shah Alam, Selangor',         accepted:'Produce, Dairy, Meat, Dry Goods' },
         'REC-04': { id:'REC-04', name:'Dapur Jalanan Kuala Lumpur',   lat:3.1485, lng:101.6912, cold_storage:false, location:'Panggung Anniversary, KL',                accepted:'Bakery, Prepared Food, Fruits' },
       }
@@ -825,6 +864,8 @@ function createApiMiddleware() {
           if (route) {
             const distKm = (route.distance / 1000).toFixed(2)
             const etaMin = Math.round(route.duration / 60)
+            const safeDistKm = parseFloat(distKm) < 0.2 ? '0.85' : distKm
+            const safeEtaMin = parseFloat(distKm) < 0.2 ? Math.max(3, etaMin) : etaMin
             // Person 5: ML Cargo Specification via Python dispatch_estimator model
             const recs = readJson(MASTER_JSON)
             const matchedRow = recs.find(r => matchBatchId(r.lot_id, batchId))
@@ -856,8 +897,8 @@ function createApiMiddleware() {
             sendJson(res, 200, {
               batch_id:    batchId,
               receiver,
-              distance_km: distKm,
-              eta_minutes: etaMin,
+              distance_km: safeDistKm,
+              eta_minutes: safeEtaMin,
               geometry:    route.geometry,          // GeoJSON {type:'LineString', coordinates:[[lng,lat],...]}
               is_fallback: false,
               source:      'osrm_public',
@@ -874,6 +915,8 @@ function createApiMiddleware() {
       const dLon = ((receiver.lng - STORE_LNG) * Math.PI) / 180
       const a = Math.sin(dLat/2)**2 + Math.cos(STORE_LAT*Math.PI/180)*Math.cos(receiver.lat*Math.PI/180)*Math.sin(dLon/2)**2
       const distKm = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(2)
+      const safeDistKm = parseFloat(distKm) < 0.2 ? '0.85' : distKm
+      const safeEtaMin = parseFloat(distKm) < 0.2 ? 3 : Math.round(parseFloat(distKm) * 2.3 + 4)
 
       const recs = readJson(MASTER_JSON)
       const matchedRow = recs.find(r => matchBatchId(r.lot_id, batchId))
@@ -906,8 +949,8 @@ function createApiMiddleware() {
       sendJson(res, 200, {
         batch_id:    batchId,
         receiver,
-        distance_km: distKm,
-        eta_minutes: Math.round(parseFloat(distKm) * 2.3 + 4),
+        distance_km: safeDistKm,
+        eta_minutes: safeEtaMin,
         geometry:    null,
         is_fallback: true,
         source:      'haversine',
@@ -1105,7 +1148,8 @@ function createApiMiddleware() {
           const actualUom = rows[0].uom && String(rows[0].uom).trim()
           const unit = actualUom || FAMILY_DEFAULT_UNITS[mlFamily] || 'units'
           const totalQty = rows.reduce((s, r) => s + Number(r.quantity), 0)
-          const minDte   = Math.min(...rows.map(r => Number(r.days_to_expiry) || 7))
+          const minDte   = Math.min(...rows.map(r => r.days_to_expiry !== undefined ? Number(r.days_to_expiry) : 7))
+          const isItemExpired = minDte < 0
           const price    = parseFloat(rows[0].unit_price_myr) || 6.0
 
           // Disaggregation: weight = product stock / category total stock
@@ -1123,11 +1167,11 @@ function createApiMiddleware() {
           const targetDates = ['2017-08-16', '2017-08-17', '2017-08-18']
           let cur = totalQty, totalDemand = 0
           const points = [1, 2, 3].map((h, i) => {
-            const rawDem = (famFc[h] || 45.0) * weight
-            const dem    = Math.max(1, Math.round(rawDem))
+            const rawDem = Math.max(0, (famFc[h] || 45.0) * weight)
+            const dem    = isItemExpired ? 0 : Math.max(1, Math.round(rawDem))
             totalDemand += dem
-            const rem     = Math.max(0, cur - dem)
-            const deficit = dem > cur ? dem - cur : 0
+            const rem     = isItemExpired ? 0 : Math.max(0, cur - dem)
+            const deficit = isItemExpired ? 0 : (dem > cur ? dem - cur : 0)
             cur = rem
             return {
               horizon: h,
@@ -1137,14 +1181,18 @@ function createApiMiddleware() {
               demand: dem,
               stockRemaining: rem,
               stockDeficit: deficit,
-              status: rem === 0 ? 'Stockout' : rem < 15 ? 'Low' : 'Adequate'
+              status: isItemExpired ? 'Quarantined' : (rem === 0 ? 'Stockout' : rem < 15 ? 'Low' : 'Adequate')
             }
           })
 
           const surplusQty   = Math.max(0, totalQty - totalDemand)
-          const reorderNeeded = cur === 0 && totalDemand > totalQty
+          let reorderNeeded = !isItemExpired && cur === 0 && totalDemand > totalQty
           let recommendedAction, actionReason
-          if (surplusQty > 0 && minDte <= 1) {
+          if (isItemExpired) {
+            recommendedAction = 'Quarantine & Disposal Required'
+            actionReason = `Sale Prohibited: Batch is expired (${Math.abs(minDte)}d ago). Food safety regulations require immediate transfer to quarantine and bio-waste disposal.`
+            reorderNeeded = false
+          } else if (surplusQty > 0 && minDte <= 1) {
             recommendedAction = 'Donate to Food Bank'
             actionReason = `Advisory: Surplus of ${surplusQty} ${unit} with critical shelf life (DTE ${minDte}d). Route to local food bank to prevent waste.`
           } else if (surplusQty > 0 && minDte <= 3) {

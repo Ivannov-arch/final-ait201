@@ -74,15 +74,30 @@ function mergeMlWithBatches(mlProducts, batches) {
 function computeDecision(stock, demand, dte, unit) {
   const s = Math.max(0, Number(stock) || 0)
   const d = Math.max(0, Number(demand) || 0)
-  const days = Math.max(0, Number(dte) || 0)
+  const dteNum = Number(dte)
+  const days = isNaN(dteNum) ? 4 : dteNum
   const balance = s - d
+
+  // 0. Already Expired (DTE < 0) — Strictly prohibit retail sale/markdown, route to disposal
+  if (days < 0) {
+    return {
+      title: 'Quarantine & Disposal Required',
+      action: `Sale Prohibited — Route ${s} ${unit} to Bio-Waste`,
+      reason: `Batch expired ${Math.abs(days)} day(s) ago. Food safety regulations strictly prohibit retail sale or markdown. Transfer physical stock to quarantine area and log for bio-waste disposal.`,
+      mascot: '/image/decision/donate.png',
+      badgeClass: 'is-critical',
+      bannerBg: '#fef2f2',
+      bannerBorder: '#fecaca',
+      textColor: '#dc2626'
+    }
+  }
 
   // 1. Stockout
   if (s === 0 || balance < 0) {
     const deficit = s === 0 ? d : Math.abs(balance)
     return {
       title: 'Restock Required (Advisory)',
-      action: `Perlu Order +${deficit} ${unit} (Manual PO Only)`,
+      action: `Reorder +${deficit} ${unit} (Manual PO Only)`,
       reason: `Customer demand exceeds on-hand stock. Order ${deficit} ${unit} to prevent empty shelves. (Auto-PO Locked — verify physical stock before ordering).`,
       mascot: '/image/decision/donate.png',
       badgeClass: 'is-critical',
@@ -274,7 +289,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
   const stock = Number(current.currentStock) || 0
   const points = current.points || []
   const demand = Number(current.totalDemand) || points.reduce((sum, p) => sum + (p.demand || 0), 0)
-  const dte = Number(current.daysToExpiry) || 4
+  const dte = current.daysToExpiry !== undefined ? Number(current.daysToExpiry) : 4
   const unit = current.unit || 'units'
   const balance = stock - demand
 
@@ -285,11 +300,12 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
   const day3Info = getForecastDayInfo(3)
 
   // ── 3-Day Visual Trajectory Graph Coordinates with Real Calendar Dates ──
+  const isItemExpired = dte < 0
   const timelinePoints = [
-    { label: 'Today', sub: 'Start', stockVal: stock, demandVal: null },
-    { label: day1Info.dateStr, sub: day1Info.label, stockVal: points[0]?.stockRemaining ?? stock, demandVal: points[0]?.demand ?? 0 },
-    { label: day2Info.dateStr, sub: day2Info.label, stockVal: points[1]?.stockRemaining ?? 0, demandVal: points[1]?.demand ?? 0 },
-    { label: day3Info.dateStr, sub: day3Info.label, stockVal: points[2]?.stockRemaining ?? 0, demandVal: points[2]?.demand ?? 0 }
+    { label: 'Today', sub: 'Start', stockVal: isItemExpired ? 0 : stock, demandVal: null },
+    { label: day1Info.dateStr, sub: day1Info.label, stockVal: isItemExpired ? 0 : (points[0]?.stockRemaining ?? stock), demandVal: isItemExpired ? 0 : (points[0]?.demand ?? 0) },
+    { label: day2Info.dateStr, sub: day2Info.label, stockVal: isItemExpired ? 0 : (points[1]?.stockRemaining ?? 0), demandVal: isItemExpired ? 0 : (points[1]?.demand ?? 0) },
+    { label: day3Info.dateStr, sub: day3Info.label, stockVal: isItemExpired ? 0 : (points[2]?.stockRemaining ?? 0), demandVal: isItemExpired ? 0 : (points[2]?.demand ?? 0) }
   ]
 
   const maxGraphVal = Math.max(stock, ...timelinePoints.map(p => Math.max(p.stockVal, p.demandVal || 0)), 10) * 1.25
@@ -344,7 +360,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
-          Metodologi & Validasi Data
+          Methodology & Data Validation
         </button>
       </div>
 
@@ -421,15 +437,14 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
       {/* ─── ERROR STATE ─── */}
       {!isLoading && apiError && !useDemoBackup && (
         <div className="fg-fc-state-card">
-          <span style={{ fontSize: '2.4rem', marginBottom: '0.6rem' }}>⚠️</span>
           <h3 className="fg-fc-state-title">Failed to Load Forecast Data</h3>
           <p className="fg-fc-state-desc">{apiError}</p>
           <div className="fg-fc-state-actions">
             <button type="button" className="fg-fc-btn-retry" onClick={fetchForecastData}>
-              🔄 Try Again (Retry)
+              Try Again (Retry)
             </button>
             <button type="button" className="fg-fc-btn-secondary" onClick={handleEnableDemoBackup}>
-              📦 Open Backup Demo Data
+              Open Backup Demo Data
             </button>
           </div>
         </div>
@@ -438,11 +453,10 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
       {/* ─── EMPTY STATE ─── */}
       {!isLoading && !apiError && productKeys.length === 0 && (
         <div className="fg-fc-state-card">
-          <span style={{ fontSize: '2.4rem', marginBottom: '0.6rem' }}>📭</span>
           <h3 className="fg-fc-state-title">No Forecast Data Available</h3>
           <p className="fg-fc-state-desc">No inventory data or demand projections match this store yet.</p>
           <button type="button" className="fg-fc-btn-retry" onClick={fetchForecastData}>
-            🔄 Refresh Data
+            Refresh Data
           </button>
         </div>
       )}
@@ -543,7 +557,7 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
           </div>
 
           <span className={`fg-fc-dte-badge ${decision.badgeClass}`}>
-            ⏰ {dte} Days to Expiry
+            {dte < 0 ? `Expired (${Math.abs(dte)}d ago)` : dte === 0 ? `Expires Today` : `${dte} Days to Expiry`}
           </span>
         </div>
 
@@ -552,33 +566,35 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
           {/* Current Stock */}
           <div className="fg-fc-number-tile">
             <span className="fg-fc-tile-label">Current Stock</span>
-            <div className="fg-fc-tile-value" style={{ color: stock === 0 ? '#dc2626' : '#0c1f15' }}>
+            <div className="fg-fc-tile-value" style={{ color: dte < 0 || stock === 0 ? '#dc2626' : '#0c1f15' }}>
               <AnimatedNumber value={stock} decimals={0} />
               <span className="fg-fc-tile-unit">{unit}</span>
             </div>
-            <span className="fg-fc-tile-hint">On floor right now</span>
+            <span className="fg-fc-tile-hint" style={{ color: dte < 0 ? '#dc2626' : undefined, fontWeight: dte < 0 ? 600 : undefined }}>
+              {dte < 0 ? 'Expired — Quarantined' : 'On floor right now'}
+            </span>
           </div>
 
           {/* 3-Day Sales Forecast */}
           <div className="fg-fc-number-tile">
             <span className="fg-fc-tile-label">Expected 3-Day Sales</span>
-            <div className="fg-fc-tile-value" style={{ color: '#2563eb' }}>
-              <AnimatedNumber value={demand} decimals={0} />
+            <div className="fg-fc-tile-value" style={{ color: dte < 0 ? '#9ca3af' : '#2563eb' }}>
+              <AnimatedNumber value={dte < 0 ? 0 : demand} decimals={0} />
               <span className="fg-fc-tile-unit">{unit}</span>
             </div>
             <span className="fg-fc-tile-hint" title="Family-level estimate, divided by stock share. Not validated at SKU level.">
-              Family estimate · Stock disaggregation
+              {dte < 0 ? 'Prohibited (0 sales allowed)' : 'Family estimate · Stock disaggregation'}
             </span>
           </div>
 
           {/* Ending Balance */}
           <div className="fg-fc-number-tile">
             <span className="fg-fc-tile-label">Projected Ending Stock</span>
-            <div className="fg-fc-tile-value" style={{ color: balance < 0 ? '#dc2626' : '#147b43' }}>
-              {balance < 0 ? '-' : '+'}<AnimatedNumber value={Math.abs(balance)} decimals={0} />
+            <div className="fg-fc-tile-value" style={{ color: dte < 0 || balance < 0 ? '#dc2626' : '#147b43' }}>
+              {dte < 0 ? '0' : (balance < 0 ? '-' : '+')}{dte < 0 ? '' : <AnimatedNumber value={Math.abs(balance)} decimals={0} />}
               <span className="fg-fc-tile-unit">{unit}</span>
             </div>
-            <span className="fg-fc-tile-hint">{balance < 0 ? 'Deficit (Stockout)' : 'Safe Surplus'}</span>
+            <span className="fg-fc-tile-hint">{dte < 0 ? `All ${stock} ${unit} to be disposed` : balance < 0 ? 'Deficit (Stockout)' : 'Safe Surplus'}</span>
           </div>
         </div>
 
@@ -615,24 +631,27 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
 
         <div className="fg-fc-days-linear">
           {points.map((pt, idx) => {
-            const isZero = pt.stockRemaining === 0
+            const isExpired = dte < 0
+            const isZero = pt.stockRemaining === 0 || isExpired
             const isLow = !isZero && pt.stockRemaining < 15
             const prevStock = idx === 0 ? stock : points[idx - 1].stockRemaining
-            const depPct = Math.min(100, Math.round((pt.demand / Math.max(1, prevStock)) * 100))
+            const depPct = isExpired ? 0 : Math.min(100, Math.round((pt.demand / Math.max(1, prevStock)) * 100))
 
             return (
               <div key={pt.label || idx} className="fg-fc-day-step">
                 <div className="fg-fc-step-head">
                   <span className="fg-fc-step-day">{getForecastDayInfo(idx + 1).full}</span>
-                  <span className={`fg-fc-step-status ${isZero ? 'is-out' : isLow ? 'is-low' : 'is-ok'}`}>
-                    {isZero ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                  <span className={`fg-fc-step-status ${isExpired ? 'is-out' : isZero ? 'is-out' : isLow ? 'is-low' : 'is-ok'}`}>
+                    {isExpired ? 'Quarantined' : isZero ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
                   </span>
                 </div>
 
                 <div className="fg-fc-step-stats">
-                  <span className="fg-fc-stat-sales">Sales: -{pt.demand} {unit}</span>
+                  <span className="fg-fc-stat-sales">
+                    {isExpired ? `Sales: 0 ${unit} (Prohibited)` : `Sales: -${pt.demand} ${unit}`}
+                  </span>
                   <span className="fg-fc-stat-stock" style={{ color: isZero ? '#dc2626' : '#147b43' }}>
-                    Closing: {pt.stockRemaining} {unit}
+                    Closing: {isExpired ? 0 : pt.stockRemaining} {unit}
                   </span>
                 </div>
 
@@ -641,14 +660,14 @@ export default function DemandForecastingPage({ onToggleSidebar, batches = [] })
                   <div
                     className="fg-fc-step-bar-fill"
                     style={{
-                      width: `${Math.min(100, Math.max(10, depPct))}%`,
+                      width: `${isExpired ? 0 : Math.min(100, Math.max(10, depPct))}%`,
                       background: isZero ? '#dc2626' : '#2563eb'
                     }}
                   />
                 </div>
 
                 <div className="fg-fc-step-footer">
-                  {depPct}% of daily inventory sold
+                  {isExpired ? 'Batch quarantined for bio-waste disposal' : `${depPct}% of daily inventory sold`}
                 </div>
               </div>
             )

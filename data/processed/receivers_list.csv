@@ -1,6 +1,6 @@
 id,name,address,lat,lng,capacity_kg,cold_storage,accepted_categories,contact
 REC-01,Kechara Soup Kitchen,"Jalan Imbi, Bukit Bintang, Kuala Lumpur",3.1448,101.7139,500,false,"Vegetables,Fruits,Bakery,Prepared Food",+60 3-2142 1668
-REC-02,The Lost Food Project (TLFP),"No. 10 Jalan PJU 5/9, Kota Damansara, Petaling Jaya",3.1517,101.5947,800,true,"All Perishable Categories,Dry Goods",+60 11-2362 2062
+REC-02,The Lost Food Project (TLFP),"No. 10 Jalan PJU 5/9, Kota Damansara, Petaling Jaya",3.1585,101.5892,800,true,"All Perishable Categories,Dry Goods",+60 11-2362 2062
 REC-03,Yayasan Food Bank Malaysia,"Seksyen 15, Shah Alam, Selangor",3.0645,101.5302,1200,true,"Produce,Dairy,Meat,Dry Goods,Frozen",+60 3-5523 2500
 REC-04,Dapur Jalanan Kuala Lumpur,"Panggung Anniversary, Jalan Raja, KL",3.1485,101.6912,300,false,"Bakery,Prepared Food,Fruits,Beverages",+60 12-205 2027
 REC-05,Pertubuhan Kebajikan Islam Malaysia (PERKIM),"Jalan Ipoh, Kuala Lumpur",3.1803,101.6878,600,false,"Dry Goods,Grains,Canned Food,Beverages",+60 3-4042 2515

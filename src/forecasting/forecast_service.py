@@ -267,16 +267,20 @@ def get_product_forecast(
     current_rem = total_product_stock
     total_demand = 0
 
+    is_expired = min_dte < 0
+
     for idx, h in enumerate([1, 2, 3]):
-        raw_dem = family_forecasts.get(h, 45.0) * weight
-        dem = max(1, round(raw_dem))
+        raw_dem = max(0.0, float(family_forecasts.get(h, 45.0))) * weight
+        dem = 0 if is_expired else max(1, round(raw_dem))
         total_demand += dem
 
-        rem = max(0, current_rem - dem)
-        deficit = dem - current_rem if current_rem < dem else 0
+        rem = 0 if is_expired else max(0, current_rem - dem)
+        deficit = 0 if is_expired else (dem - current_rem if current_rem < dem else 0)
         current_rem = rem
 
-        if rem > 20:
+        if is_expired:
+            status = "Quarantined — Disposal Required"
+        elif rem > 20:
             status = "Sufficient Stock"
         elif rem > 0:
             status = "Stock Running Low"
@@ -295,19 +299,26 @@ def get_product_forecast(
         })
 
     # Recommended action (advisory only)
-    reorder_needed = current_rem == 0 and total_demand > total_product_stock
-    reorder_qty = (total_demand - total_product_stock) if reorder_needed else 0
-    surplus_qty = max(0, total_product_stock - total_demand)
-
-    if surplus_qty > 0 and min_dte <= 1:
-        recommended_action = "Donate to Food Bank"
-        action_reason = f"Advisory: Surplus of {surplus_qty} {unit} with critical shelf life (DTE {min_dte}d). Route to local food bank to prevent waste."
-    elif surplus_qty > 0 and min_dte <= 3:
-        recommended_action = "Dynamic Markdown"
-        action_reason = f"Advisory: Surplus of {surplus_qty} {unit} with approaching expiry (DTE {min_dte}d). Apply markdown to accelerate retail velocity."
+    if is_expired:
+        reorder_needed = False
+        reorder_qty = 0
+        surplus_qty = 0
+        recommended_action = "Quarantine & Disposal Required"
+        action_reason = f"Sale Prohibited: Batch is expired ({abs(min_dte)}d ago). Food safety regulations require immediate transfer to quarantine and bio-waste disposal."
     else:
-        recommended_action = "Normal Sale"
-        action_reason = f"Advisory: Stock velocity balanced. Shelf life (DTE {min_dte}d) is safe for standard retail pricing."
+        reorder_needed = current_rem == 0 and total_demand > total_product_stock
+        reorder_qty = (total_demand - total_product_stock) if reorder_needed else 0
+        surplus_qty = max(0, total_product_stock - total_demand)
+
+        if surplus_qty > 0 and min_dte <= 1:
+            recommended_action = "Donate to Food Bank"
+            action_reason = f"Advisory: Surplus of {surplus_qty} {unit} with critical shelf life (DTE {min_dte}d). Route to local food bank to prevent waste."
+        elif surplus_qty > 0 and min_dte <= 3:
+            recommended_action = "Dynamic Markdown"
+            action_reason = f"Advisory: Surplus of {surplus_qty} {unit} with approaching expiry (DTE {min_dte}d). Apply markdown to accelerate retail velocity."
+        else:
+            recommended_action = "Normal Sale"
+            action_reason = f"Advisory: Stock velocity balanced. Shelf life (DTE {min_dte}d) is safe for standard retail pricing."
 
     return {
         "status": "success",

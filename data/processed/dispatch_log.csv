@@ -1,2 +1,3 @@
 dispatch_id,batch_id,batch_product,receiver_id,receiver_name,quantity_kg,dispatch_timestamp,distance_km,eta_minutes,vehicle_type,cold_chain
 
+DSP-MWNSQRRZ,LOT-1041,"",REC-02,"The Lost Food Project (TLFP)",100.00,2026-11-19T17:00:45.215Z,13.90,34,"van",false
