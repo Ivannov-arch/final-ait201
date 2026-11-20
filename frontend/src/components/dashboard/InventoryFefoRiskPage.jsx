@@ -270,7 +270,10 @@ export default function InventoryFefoRiskPage({
   // Filter & sort batches (declared before useEffect that depends on it)
   const filteredBatches = useMemo(() => {
     let list = batches.filter(b => {
-      // 0. Hide fully depleted batches (stock = 0, sold out)
+      // 0. Hide disposed batches (already logged to Bio-Waste — no longer active inventory)
+      if (b.appliedAction === 'dispose') return false
+
+      // 0b. Hide fully depleted batches (stock = 0, sold out)
       const _qty = b.stockQty !== undefined
         ? Number(b.stockQty)
         : parseFloat(String(b.qty || '').replace(/[^\d.]/g, '')) || 0

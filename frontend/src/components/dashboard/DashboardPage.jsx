@@ -238,10 +238,11 @@ export default function DashboardPage({ onNavigateHome }) {
         appliedAction: 'dispose',
         status: 'Disposed (Bio-waste)'
       } : b))
+      // Set quantity=0 so the backend auto-removes it from inventory_master.json permanently
       fetch(`/api/batches/${encodeURIComponent(batch.id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Disposed' })
+        body: JSON.stringify({ status: 'Disposed', quantity: 0 })
       }).catch(() => {})
 
     } else {
@@ -447,40 +448,7 @@ export default function DashboardPage({ onNavigateHome }) {
             onApplyAction={handleApplyActionDecision}
             onToggleSidebar={() => setSidebarOpen(prev => !prev)}
           />
-        ) : (
-          <div className="fg-card fg-module-view">
-            <div className="fg-module-view__badge">Module Active</div>
-            <h2 className="fg-card__title" style={{ fontSize: 'clamp(1.4rem,2vw,1.75rem)', marginBottom: '0.6rem', textWrap: 'balance' }}>
-              {activeNav.charAt(0).toUpperCase() + activeNav.slice(1).replace(/-/g, ' ')}
-            </h2>
-            <p className="fg-module-view__desc">
-              Real-time telemetry and POS clearance synchronization are operating in the background. Automated alerts are routed to store department floor supervisors.
-            </p>
-
-            <div className="fg-module-view__meta">
-              <div className="fg-module-view__metric">
-                <span className="fg-module-view__val">100%</span>
-                <span className="fg-module-view__lbl">Feed Uptime</span>
-              </div>
-              <div className="fg-module-view__metric">
-                <span className="fg-module-view__val">&lt; 1.2s</span>
-                <span className="fg-module-view__lbl">Sync Latency</span>
-              </div>
-              <div className="fg-module-view__metric">
-                <span className="fg-module-view__val">0</span>
-                <span className="fg-module-view__lbl">Critical Drift</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="fg-module-view__btn"
-              onClick={() => setActiveNav('operations')}
-            >
-              Return to Operations Dashboard
-            </button>
-          </div>
-        )}
+        ) : null}
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
