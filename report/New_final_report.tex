@@ -69,7 +69,6 @@
 % ============================================================================
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[C]{\normalsize XIAMEN UNIVERSITY MALAYSIA}
 \fancyfoot[C]{\small\thepage}
 \renewcommand{\headrulewidth}{0pt}
 
@@ -115,7 +114,7 @@
 % TITLE PAGE
 % ----------------------------------------------------------------------------
 \begin{titlepage}
-    \pagenumbering{Alph}
+    \pagenumbering{gobble}
     \thispagestyle{empty}
     \vspace*{1mm}
     {\color{RoyalAccent}\rule{\textwidth}{2.2pt}}
@@ -144,34 +143,13 @@
         \begin{tabularx}{\textwidth}{@{} >{\bfseries\color{NavyPrimary}}l >{\raggedright\arraybackslash}X @{}}
             Course:          & AIT-201 Applied Machine Learning (Year 2, Semester 4) \\
             System Name:     & FreshGuard --- Dynamic Food Clearing House (Malaysia Retail Scope) \\
-            Architecture:    & Built first for one store, then expanded to several stores \\
             Software:        & Python, prediction libraries, web app, database, and route planner \\
             Malaysian data:  & Ringgit prices, local price data (PriceCatcher), and Klang Valley food banks \\
             Report Date:     & November 18, 2026 \\
         \end{tabularx}}
     \end{tcolorbox}
 
-    \vspace{4.5mm}
-    {\small\bfseries\color{NavyPrimary}Team Tasks and Outputs}\\[3pt]
-    \renewcommand{\arraystretch}{1.12}
-    {\scriptsize
-    \begin{tabularx}{\textwidth}{@{} >{\bfseries}l l >{\raggedright\arraybackslash}X @{}}
-        \toprule
-        \rowcolor{NavyPrimary}
-        \color{white}\textbf{Task} & \color{white}\textbf{Area} & \color{white}\textbf{Main output} \\
-        \midrule
-        Data preparation & Data cleaning & 11 cleaned datasets, 496 corrected expiry dates, Malaysian price reference files \\
-        \rowcolor{LightBg}
-        Spoilage model & Risk prediction & Dual-weighted XGBoost model and FEFO inventory rotation \\
-        Demand forecast & Sales prediction & Three LightGBM models with food-family disaggregation \\
-        \rowcolor{LightBg}
-        Store data and simulation & Data preparation & Standard store records, seven data checks, 2,644 simulated events \\
-        Store decisions and database & Discounts and records & 4-tier rule engine, Food Safety Compliance Gate, cloud database, 45 tests \\
-        \rowcolor{LightBg}
-        Donation delivery & Weight and route planning & Cargo regressor ($R^2=95.5\%$), cold-chain fleet selection, Klang Valley OSRM routes \\
-        Store web app & Screens and charts & FEFO stock, adaptive action modal, route map, and KPI dashboard \\
-        \bottomrule
-    \end{tabularx}}
+
 
     \vfill
     \begin{center}
@@ -182,15 +160,13 @@
 % ----------------------------------------------------------------------------
 % ABSTRACT
 % ----------------------------------------------------------------------------
-\pagenumbering{roman}
+\pagenumbering{gobble}
 \begin{abstract}
 \noindent Conventional supermarket operations manage perishable inventory reactively: stock is displayed chronologically, markdowns are triggered at the point of expiry, and surplus food is discarded to municipal landfills. \textbf{FreshGuard} introduces an integrated machine-learning clearinghouse platform designed to enable early retail intervention across five pillars: (1) an automated data pipeline processing 11 cleaned datasets into 990 verified batches and 2,644 simulated lifecycle events; (2) a dual-weighted XGBoost classifier evaluated across 89,880 transaction receipts (71,904 for training, 17,976 for testing) that improves detection of minority boundary cases, achieving a macro-F1 of \textbf{0.6021} and boosting MODERATE-risk recall from 4.38\% to \textbf{60.06\%}; (3) multi-horizon LightGBM demand forecasters yielding test WAPE of \textbf{12.48\%--13.22\%} (a 17.4\%--22.0\% improvement over seasonal baselines); (4) a four-tier decision engine enforcing dynamic 15\%--25\% markdowns (with a 50\% clearance fallback when the 30\% donation quota is filled) and zero-tolerance bio-waste routing for expired goods under the Food Act 1983; and (5) a logistical dispatch module powered by an XGBoost cargo weight regressor ($R^2 = \mathbf{95.45\%}$) and OSRM routing across Klang Valley food banks. Evaluated across held-out test sets, FreshGuard illustrates how multi-feature machine learning and dynamic policy gates can help grocery retailers transition from crisis disposal to proactive surplus management.
 \end{abstract}
 
 \vspace{4mm}
 \tableofcontents
-\listoffigures
-\listoftables
 \newpage
 \pagenumbering{arabic}
 
@@ -203,7 +179,7 @@
 According to the United Nations Environment Programme (UNEP) Food Waste Index Report, over one billion tonnes of food are wasted globally each year, with retail and downstream operations generating tens of millions of tonnes of avoidable surplus~\cite{unep2024}. A big reason is that grocery stores often only act \emph{after} food has already lost its quality or value. Here are four common issues that make things worse:
 \begin{enumerate}[leftmargin=18pt, itemsep=2pt]
     \item \textbf{Rotating stock the wrong way:} Many stores use FIFO (First In, First Out), which always sells the oldest batch first. A better method is FEFO (First Expiry, First Out), which sells whatever expires \emph{soonest} first. Without FEFO, newer items can be sold before older ones, leaving old batches to spoil.
-    \item \textbf{One rule does not fit every product:} A simple heuristic like ``discount anything with 3 days left'' ignores sales velocity, inventory pressure, and commodity vulnerability. In our empirical analysis (§\ref{sec:eda_correlations}), days-to-expiry exhibits only a weak linear relationship with spoilage ($r = -0.15$), demonstrating that calendar-only rules fail to account for whether an item faces excessive stock pressure or belongs to a fragile perishable category.
+    \item \textbf{One rule does not fit every product:} A simple heuristic like ``discount anything with 3 days left'' ignores sales velocity, inventory pressure, and commodity vulnerability. The analysis in Section~\ref{sec:eda_correlations} shows why expiry dates alone do not capture all the factors linked to spoilage.
     \item \textbf{Donations can backfire:} If shoppers learn that food gets donated or heavily discounted every evening, some might wait instead of buying it at full price. This reduces store revenue.
     \item \textbf{Data is split across different systems:} Stock, sales, prices, and food-bank capacity are often tracked in separate places. This makes it hard to pick the right delivery vehicle, track how much food was saved, or report environmental impact.
 \end{enumerate}
@@ -211,7 +187,7 @@ According to the United Nations Environment Programme (UNEP) Food Waste Index Re
 \subsection{Our Approach: Act Earlier, Not Later}
 The primary design objective of FreshGuard is to determine: \emph{When is the right time to keep food at full price, apply a discount, or send it to a food bank to protect store revenue while systematically reducing surplus waste?}
 
-This project covers everything that happens after food arrives at the store: rotating stock, estimating how much will sell, predicting spoilage risk, choosing discounts or donations, planning deliveries, and tracking results. It does not cover farming. Machine learning handles three things: predicting spoilage risk, forecasting sales, and estimating cargo weight. Simple, fixed rules are used for pricing and delivery decisions so store staff can easily understand and check them.
+This project covers everything that happens after food arrives at the store: rotating stock, estimating how much will sell, choosing discounts or donations, planning deliveries, and tracking results. It does not cover farming. Machine learning supports the prediction tasks, while simple, fixed rules guide pricing and delivery decisions so store staff can understand and check them.
 
 \subsection{How We Built It: Two Phases}
 We built the system in two stages:
@@ -304,12 +280,7 @@ The project cleaned 11 datasets using the same ten steps in \texttt{clean\_datas
 \texttt{7\_perishable\_goods\_cleaned.csv} & 100,000 & 89,880 & Spoilage model & Removed 10,120 non-food rows, capped extreme values, no missing fields \\
 \texttt{8\_m5\_train\_food\_cleaned.csv}$^*$ & 3,000,888 & 1,273,104 & Demand forecast & Kept 14 food groups, removed non-food records, capped extreme sales values \\
 \rowcolor{LightBg}
-\texttt{8\_m5\_test\_food\_cleaned.csv}$^*$ & 28,512 & 12,096 & Unlabeled Kaggle test & Unlabeled Kaggle test split; evaluation uses held-out window from training data \\
-\texttt{8\_oil\_cleaned.csv} / \texttt{transactions} & 84,706 & 84,706 & Macro \& store traffic & Macro-economic indicators evaluated during feature ablation; not used in final models \\
-\rowcolor{LightBg}
-\texttt{8\_retail\_sales\_food\_cleaned.csv} & 25,000 & 6,844 & Cross-store validation & Category-level benchmark used to validate canonical schema mappings \\
 \texttt{11\_food\_waste\_archive\_cleaned.csv} & 8,000 & 8,000 & Donation weight model & Filled 1,067 missing values across five columns; trains cargo regressor \\
-\rowcolor{LightBg}
 \texttt{11\_pricecatcher\_cleaned.parquet} & 1,279,987 & 1,279,987 & Malaysian price guide~\cite{dosm2026} & Calibrates store price bounds (RM 0.50--500); slated for dynamic price indexing \\
 \bottomrule
 \end{tabularx}}
@@ -363,7 +334,7 @@ HIGH (waste\_pct $> 25\%$, urgent: discount or donate)  & 37,040 & 41.21\% \\
 \end{tabular}}
 \end{table}
 
-The 42.42\% / 16.37\% / 41.21\% distribution reveals that MODERATE is the genuine minority class --- the critical boundary between safe and high-risk food --- while HIGH (41.21\%) is naturally large but hard to separate from LOW without multi-feature context (Figure~\ref{fig:eda_risk_dist}). Without correction, a classifier trained on these counts ignores MODERATE cases precisely because they sit between the two larger groups. We address this with class-weight tuning (§\ref{sec:spoilage_method}).
+Table~\ref{tab:risk_dist} and Figure~\ref{fig:eda_risk_dist} show that MODERATE is the smallest risk group (16.37\%), motivating the class-weight tuning described in Section~\ref{sec:spoilage_method}.
 
 \begin{figure}[H]
     \centering
@@ -384,12 +355,7 @@ The 42.42\% / 16.37\% / 41.21\% distribution reveals that MODERATE is the genuin
     \label{fig:eda_spoilage_overview}
 \end{figure}
 
-Key EDA observations for spoilage:
-\begin{itemize}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{DTE is intuitive but weak as a standalone signal:} As illustrated in Figure~\ref{fig:eda_dte_box}, median DTE for HIGH-risk records is 3.0 days vs.\ 6.0 days for LOW-risk records. However, the Pearson correlation between DTE and spoilage risk is among the weakest ($r = -0.15$), confirming that a multi-feature model is needed beyond any single expiry threshold.
-    \item \textbf{Thermal deviation and handling quality as underlying mechanisms:} In historical records, temperature deviation ($r = +0.32$) and handling hygiene score ($r = -0.39$) emerge as the strongest physical correlates of spoilage. However, because these in-transit variables cannot be captured upon receiving at typical retail docks, the operational classifier must rely on observable receiving proxies (nominal shelf life, category vulnerability, current stock pressure, sales velocity, and DTE).
-    \item \textbf{Category vulnerability varies across departments:} Perishable categories such as Meat, Seafood, and Frozen Meals experience elevated spoilage risk (HIGH risk $> 40\%$), whereas ambient and prepared items such as Bakery, Dairy, and Ready-to-Eat demonstrate greater baseline stability (LOW risk reaching up to $50\%$).
-\end{itemize}
+As illustrated in the departmental risk heatmap (Figure~\ref{fig:eda_risk_heatmap}), perishable categories such as Meat, Seafood, and Frozen Meals experience elevated spoilage risk (HIGH risk $> 40\%$), whereas ambient and prepared lines such as Bakery, Dairy, and Ready-to-Eat demonstrate greater baseline stability (LOW risk reaching up to $50\%$).
 
 \begin{figure}[H]
     \centering
@@ -405,7 +371,7 @@ To understand the underlying drivers of food deterioration and evaluate feature 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.78\textwidth]{figures/eda_fig7_correlation_heatmap.png}
-    \caption{Empirical Pearson correlation matrix across 89,880 retail records. Highlights thermal abuse ($r = +0.32$), handling quality ($r = -0.39$), and product sensitivity ($r = +0.26$) as primary determinants of spoilage.}
+    \caption{Empirical Pearson correlation matrix across 89,880 retail records, showing relationships among spoilage risk and candidate store-level features.}
     \label{fig:eda_correlation_matrix}
 \end{figure}
 
@@ -414,12 +380,12 @@ The empirical correlation structure confirms key domain hypotheses:
     \item \textbf{Thermal abuse accelerates spoilage:} Temperature deviation from cold-chain specifications shows a strong positive correlation with spoilage risk ($r = +0.32$), consistent with domain evidence that even short refrigeration failures significantly shorten product shelf life.
     \item \textbf{Handling and storage hygiene mitigate risk:} Handling quality exhibits a strong negative correlation ($r = -0.39$), indicating that store-level hygiene protocols effectively prevent physical rot.
     \item \textbf{Inherent product sensitivity:} Commodity sensitivity correlates positively ($r = +0.26$), explaining why meat and seafood experience elevated spoilage even under moderate shelf-life buffers.
-    \item \textbf{Non-linear interaction between DTE and inventory pressure:} Days-to-expiry alone ($r = -0.15$) and stock pressure ($r = -0.12$) exhibit weak linear correlation with spoilage risk, yet interact non-linearly with product shelf life and category vulnerability. This non-linearity empirically justifies deploying gradient-boosted decision trees (XGBoost) over simple linear classifiers.
-    \item \textbf{Ex-ante verification of operational features:} The promotion flag (\texttt{is\_promoted}) reflects scheduled circular/catalog promotions predetermined prior to store opening, while \texttt{daily\_demand} represents the historical baseline moving-average sales velocity rather than ex-post realizations. Post-sale variables (\texttt{units\_sold}, \texttt{revenue}, \texttt{profit}) are strictly excluded, eliminating data leakage.
+    \item \textbf{Non-linear interaction between DTE and inventory pressure:} Days-to-expiry alone exhibits weak linear correlation with spoilage risk ($r = -0.15$), with median DTE shifting from 6.0 days for LOW to 3.0 days for HIGH risk (Figure~\ref{fig:eda_dte_box}). However, DTE interacts non-linearly with stock pressure ($r = -0.12$) and category vulnerability, empirically justifying gradient-boosted decision trees (XGBoost) over simple linear classifiers.
 \end{itemize}
+These variables (temperature deviation and handling scores) are not recorded at store receiving docks, so the model relies on observable intake proxies instead (Section~\ref{sec:spoilage_method}).
 
 \subsubsection{Demand and Sales Patterns}
-The demand training set contains 1,273,104 daily sales records across 14 food families from 2013 to 2017. The source is the Corporación Favorita retail dataset (Store Sales benchmark), which covers 54 stores across Ecuador. Weekly and monthly calendar patterns provide baseline seasonality; no holiday features are used in the LightGBM models, so holiday effects are not modelled. Consequently, demand forecasts remain strictly advisory until local Malaysian retail scan data is collected.
+The demand training data contains 1,273,104 daily records from 54 stores and 14 food families, spanning 2013-01-01 to 2017-08-15 from the Corporación Favorita retail dataset in Ecuador. Weekly and monthly patterns provide baseline seasonality; no holiday features are included in the LightGBM models.
 
 \begin{itemize}[leftmargin=18pt, itemsep=2pt]
     \item \textbf{Heavy right skew across daily aggregate sales:} Prior to outlier capping, the raw distribution across store-family daily aggregate sales shows a median of 158.2 units, 95th percentile of 3,686.1 units, and extreme peaks reaching 124,717.0 units (mean: 728.1 units). Extreme outlier volumes are capped during preprocessing to prevent gradient distortion during tree boosting.
@@ -436,13 +402,7 @@ The demand training set contains 1,273,104 daily sales records across 14 food fa
 \end{figure}
 
 \subsubsection{Food Waste and Cargo Weight Distribution}
-The cargo regression dataset contains 8,000 records of food waste events.
-
-\begin{itemize}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{Weight distribution:} As illustrated in Figure~\ref{fig:eda_vehicle_donut}, donation parcels span three logistical tiers: small parcels eligible for motorcycle couriers ($\le 25$~kg), mid-range batches requiring cargo vans ($25$--$200$~kg), and bulk freight requiring heavy trucks ($> 200$~kg).
-    \item \textbf{Top waste categories:} As detailed in Figure~\ref{fig:eda_waste_category}, Prepared Food, Fruits, and Vegetables generate the highest emergency waste volume, accounting for over 50\% of total discarded mass.
-    \item \textbf{Linear baseline inadequacy:} A standard linear regression baseline using the same 20 features achieves $R^2 = 0.8005$ (Table~\ref{tab:cargo_regression_benchmark}), leaving 20\% of mass variance unexplained, which motivates non-linear gradient-boosted regression.
-\end{itemize}
+The cargo regression dataset contains 8,000 records of food waste events. As detailed in Figure~\ref{fig:eda_waste_category}, Prepared Food, Fruits, and Vegetables generate the highest emergency waste volume, accounting for over 50\% of total discarded mass.
 
 \begin{figure}[H]
     \centering
@@ -463,14 +423,7 @@ The cargo regression dataset contains 8,000 records of food waste events.
     \label{fig:eda_cargo_overview}
 \end{figure}
 
-\begin{keyfinding}[Key EDA Takeaways and Direct Modeling Decisions]
-\begin{enumerate}[leftmargin=14pt, itemsep=2pt]
-    \item \textbf{Target Class Imbalance (42.42\% LOW vs.\ 16.37\% MODERATE vs.\ 41.21\% HIGH):} Standard unweighted training ignores the critical MODERATE boundary class (achieving only 4.38\% recall). Rather than synthesizing artificial samples which corrupts feature covariance, we address this via the dual-weighted loss function ($w_{\text{MOD}} = 2.6, w_{\text{HIGH}} = 1.5$) in Section~\ref{sec:spoilage_method}.
-    \item \textbf{Physical Degradation Drivers vs.\ Observable Receiving Proxies:} While temperature abuse ($r = +0.32$) and handling quality ($r = -0.39$) are primary physical causes of spoilage, they are unrecorded at retail intake docks. This motivates training non-linear tree models on observable receiving proxies (stock pressure, shelf-life buffer, velocity, and category) to infer degradation risks that calendar-only DTE rules overlook.
-    \item \textbf{High Right-Skew and Promotion Spikes in Demand:} Grocery sales exhibit heavy positive skew with promotional surges. This directly motivates capping extreme sales outliers during preprocessing to prevent gradient distortion in the LightGBM forecasters.
-    \item \textbf{Logistical Dispatch Tiers:} Donation batches are divided into motorcycle, van, and truck tiers. This confirms the necessity of training an XGBoost cargo weight regressor (§\ref{sec:cargo_regression_results}) to automate vehicle tier allocation before dispatching to Klang Valley food banks.
-\end{enumerate}
-\end{keyfinding}
+
 
 % ============================================================================
 % SECTION 3: MACHINE LEARNING METHODOLOGY
@@ -486,9 +439,9 @@ FreshGuard uses three machine-learning models: one predicts spoilage risk, one f
 If we trained a model using days-to-expiry to define risk, and then also gave it days-to-expiry as an input, it would just be repeating the rule rather than learning anything useful. Instead, FreshGuard learns from what actually happened: the share of each receipt that was eventually wasted (\texttt{waste\_pct}). The training data has 89,880 receipts from 50 stores and nine food categories, covering 2023--2024. We group them into three risk levels:
 \begin{equation}
     y = \begin{cases}
-        \text{LOW}      & \text{if } \texttt{waste\_pct} = 0\% \quad (38{,}130\text{ receipts, } 42.42\%), \\
-        \text{MODERATE} & \text{if } 0\% < \texttt{waste\_pct} \le 25\% \quad (14{,}710\text{ receipts, } 16.37\%), \\
-        \text{HIGH}     & \text{if } \texttt{waste\_pct} > 25\% \quad (37{,}040\text{ receipts, } 41.21\%).
+        \text{LOW}      & \text{if } \texttt{waste\_pct} = 0\%, \\
+        \text{MODERATE} & \text{if } 0\% < \texttt{waste\_pct} \le 25\%, \\
+        \text{HIGH}     & \text{if } \texttt{waste\_pct} > 25\%.
     \end{cases}
 \end{equation}
 
@@ -507,7 +460,7 @@ This yields 19 store-compatible features strictly observable upon batch arrival:
 \subsubsection{One Model That Covers All Three Risk Levels}
 FreshGuard uses a single multi-class model that estimates the posterior probability of a receipt belonging to LOW, MODERATE, or HIGH risk. The raw model probabilities are used directly, with one exception: the \texttt{policy\_shelf\_stable} override below. The metrics in Section~5 are computed on raw model output, before this override.
 
-MODERATE cases make up only 16.37\% of the data, so a standard model often ignores them. We train an XGBoost model~\cite{chen2016xgboost} that penalizes mistakes on MODERATE and HIGH cases more heavily. This pushes the model to pay more attention to these groups without needing to create artificial examples. The key settings are \texttt{n\_estimators=150}, \texttt{max\_depth=6}, and \texttt{learning\_rate=0.08}. The loss function below shows how the model is penalized:
+Because MODERATE cases are less common, a standard model can overlook them. We train an XGBoost model~\cite{chen2016xgboost} that penalizes mistakes on MODERATE and HIGH cases more heavily. This pushes the model to pay more attention to these groups without needing to create artificial examples. The key settings are \texttt{n\_estimators=150}, \texttt{max\_depth=6}, and \texttt{learning\_rate=0.08}. The loss function below shows how the model is penalized:
 \begin{equation}
     \mathcal{L}_{\text{dual}}(\theta) = -\sum_{i=1}^{N} \sum_{k \in \{\text{LOW}, \text{MOD}, \text{HIGH}\}} w_k \cdot y_{i,k} \ln \hat{P}(y_{i,k} = 1 \mid \mathbf{x}_i; \theta),
 \end{equation}
@@ -515,7 +468,7 @@ The three risk groups get different penalty weights:
 \begin{equation}
     w_{\text{HIGH}} = 1.5, \qquad w_{\text{MODERATE}} = 2.6, \qquad w_{\text{LOW}} = 1.0.
 \end{equation}
-In practice, a MODERATE example costs the model more to get wrong than a LOW example. This raises MODERATE recall --- the share of actual MODERATE cases the model correctly catches --- from 4.38\% to 60.06\%.
+In practice, a MODERATE example costs the model more to get wrong than a LOW example, giving this less common class greater influence during training.
 
 \subsubsection{Built-In Safety Rules for the Store}
 Two fixed checks help keep predictions sensible in real use:
@@ -528,8 +481,6 @@ Two fixed checks help keep predictions sensible in real use:
 \label{sec:forecast_method}
 
 \subsubsection{Preparing Sales History}
-The demand models use a public retail dataset with 1,273,104 daily records from 54 stores and 14 food groups, covering 2013-01-01 to 2017-08-15 (a total of 927 million units sold). Sales varied a lot between stores, and average weekend sales were 38.7\% higher than weekday sales. These patterns are why the model uses past sales and calendar information as inputs.
-
 The feature-building script fills in days when stores were closed by adding 3,024 records with zero sales. It then uses only \emph{earlier} sales --- never the day being predicted --- to calculate recent averages and weekly trends. We train three separate LightGBM models~\cite{ke2017lightgbm}: one for tomorrow, one for two days ahead, and one for three days ahead. Planned promotions are not included because stores do not have that information when this forecast is made.
 
 \subsubsection{Testing and Product-Level Disaggregation}
@@ -542,24 +493,23 @@ The system pre-calculates 2,268 forecasts for every store, food group, and forec
 where $Q_i$ is the current stock of product $i$. If a product is not in the forecast data, a simpler stock-based estimate is used as a fallback.
 
 \subsection{Module 3: Estimating Donation Loads and Planning Delivery Routes}
-When surplus food is flagged for donation, Module~3 figures out how heavy the shipment will be, picks the right vehicle, matches it to a food bank partner, and plans the route:
+When surplus food is flagged for donation, Module~3 estimates shipment weight, selects a suitable vehicle and food-bank partner, and plans the route:
 \begin{enumerate}[leftmargin=18pt, itemsep=2.5pt]
     \item \textbf{Estimating shipment weight:} Different products come in different packaging (packs, bunches, bottles, kilograms). The system converts all of these into total weight in kilograms using an XGBoost regression model trained on 8,000 food waste records (§\ref{sec:cargo_regression_results}). Inputs include batch size, storage temperature, product category, shelf life, and climate indicators.
-    \item \textbf{Choosing the right vehicle and cold-chain routing:} Vehicle assignment couples predicted cargo weight with thermal storage requirements (\texttt{cold\_chain\_required}):
+    \item \textbf{Choosing the right vehicle and cold-chain routing:} Vehicle assignment couples predicted cargo weight with thermal storage requirements (\texttt{cold\_chain\_required}), distributing parcels across three logistical tiers (Figure~\ref{fig:eda_vehicle_donut}):
     \begin{itemize}[leftmargin=14pt, itemsep=1.5pt]
         \item \emph{Motorcycle Courier ($\le 25$~kg):} Rapid dispatch for small ambient parcels (bakery, dry pantry, ambient produce). If a small parcel ($\le 25$~kg) requires refrigeration (e.g., 10~kg of chilled poultry or frozen fish), the system assigns insulated active-cool carrier packs or escalates the dispatch to a chilled van to avoid temperature abuse.
         \item \emph{Chilled Van ($25$--$200$~kg):} Dedicated refrigerated van operating at $0^\circ\text{C}$ to $4^\circ\text{C}$ for fresh produce, dairy, and medium-volume perishables.
         \item \emph{Heavy Food Bank Truck ($> 200$~kg):} Multi-temperature freight truck equipped for bulk palletized clearance and deep-frozen inventory ($< -18^\circ\text{C}$).
     \end{itemize}
-    \item \textbf{Matching to a food bank partner:} Shipments are matched to verified Klang Valley food banks based on accepted food categories and real-time cold-storage availability (including Yayasan Food Bank Malaysia with 1,200~kg capacity, The Lost Food Project with 800~kg, and Kechara Soup Kitchen with 500~kg; combined registered partner capacity exceeds 2,500~kg):
+    \item \textbf{Matching to a food bank partner:} Shipments are matched to verified Klang Valley partners based on accepted food categories and available cold storage. The three partners with stated capacities provide 2,500~kg in total:
     \begin{itemize}[leftmargin=14pt, itemsep=1.5pt]
-        \item \emph{The Lost Food Project (TLFP):} Seksyen 5 Kota Damansara --- dry goods, grains, and produce.
-        \item \emph{Yayasan Food Bank Malaysia:} Bukit Jelutong, Shah Alam --- ambient and cold-chain consolidation.
-        \item \emph{Kechara Soup Kitchen:} Jalan Imbi, Kuala Lumpur --- cooked food and fast-moving groceries.
-        \item \emph{Pit Stop Community Cafe:} Chinatown KL --- ambient pantry and bakery items.
+        \item \emph{The Lost Food Project (TLFP):} Seksyen 5 Kota Damansara; 800~kg capacity; accepts dry goods, grains, and produce.
+        \item \emph{Yayasan Food Bank Malaysia:} Bukit Jelutong, Shah Alam; 1,200~kg capacity; accepts ambient and cold-chain goods.
+        \item \emph{Kechara Soup Kitchen:} Jalan Imbi, Kuala Lumpur; 500~kg capacity; accepts cooked food and fast-moving groceries.
+        \item \emph{Pit Stop Community Cafe:} Chinatown KL; accepts ambient pantry and bakery items.
     \end{itemize}
     \item \textbf{Planning the route:} FreshGuard uses OSRM (Open Source Routing Machine)~\cite{osrm} to calculate the actual road distance and estimated travel time to the food bank. If the request takes more than 1.5 seconds, the system falls back to a straight-line distance calculation with an assumed urban speed of 35~km/h.
-    \item \textbf{Food safety check before dispatch:} Before any batch enters the delivery queue, the system checks that it has not expired (days-to-expiry $\ge 0$). Any expired stock is blocked from donation and sent to bio-waste composting instead.
 \end{enumerate}
 
 % ============================================================================
@@ -568,9 +518,7 @@ When surplus food is flagged for donation, Module~3 figures out how heavy the sh
 \section{Store Rules, Database, and Web Application}
 
 \subsection{How the Discount and Donation Rules Work}
-FreshGuard uses the same decision logic in both the Python backend (\texttt{src/engine/rule\_engine.py}) and the web server. The rules solve a real problem: if a store always discounts food right before it expires, some shoppers will start waiting for those discounts instead of buying at full price. And if a store donates everything it cannot sell without any limits, food banks can get overwhelmed --- or even receive food that is already spoiled.
-
-FreshGuard resolves this dilemma by unifying heuristic shelf-life thresholds, machine-learning risk intelligence, and demand forecasts into a four-tier decision framework:
+FreshGuard uses the same decision logic in the Python backend (\texttt{src/engine/rule\_engine.py}) and the web server. Its four-tier framework combines expiry dates, machine-learning risk scores, and demand forecasts to guide markdowns and donations while protecting store revenue and ensuring food safety:
 
 \begin{enumerate}[leftmargin=18pt, itemsep=3pt]
     \item \textbf{Tier 0 --- Already Expired ($\text{DTE} < 0$):}\\
@@ -617,7 +565,7 @@ The front-end is a single-page web app built with React and Vite. It has five ma
     Handles surplus food deliveries to food banks. It automatically hides expired items (they cannot be donated). An interactive map (built with Leaflet and OpenStreetMap) shows the driving route to the chosen food bank. Staff can see the food bank's current storage capacity, the vehicle being assigned, and have 10 seconds to cancel before the dispatch is confirmed.
 
     \item \textbf{Demand Forecast Screen (\texttt{DemandForecastingPage.jsx}):}\\
-    Shows predicted sales for the next three days, broken down by food group and individual product. All forecasts are clearly labelled as ``advisory only'' since the training data is not from Malaysian stores.
+    Shows predicted sales for the next three days, broken down by food group and individual product.
 
     \item \textbf{Sales Log (\texttt{SalesLogPage.jsx}):}\\
     Keeps a record of completed sales transactions, updates stock levels in the cloud, and separates full-price sales from discounted sales.
@@ -634,11 +582,9 @@ The front-end is a single-page web app built with React and Vite. It has five ma
 \subsection{Spoilage-Risk Model Results}
 \label{sec:spoilage_results}
 
-We compared five models using 17,976 receipts that were kept out of training: XGBoost, Random Forest, Decision Tree, Logistic Regression, and a linear Support Vector Machine (SVM). For each model, we tested regular training and training that gives more importance to MODERATE and HIGH cases. The table reports accuracy (the share of all predictions that were correct), F1 scores (a measure of how well the model balances correct alerts with missed cases), and recall (the share of cases in each group that it found). Risk groups are defined strictly in accordance with equation~(1): LOW is zero waste (\texttt{waste\_pct} $= 0\%$), MODERATE is $0\% < \texttt{waste\_pct} \le 25\%$, and HIGH is $\texttt{waste\_pct} > 25\%$.
+We compared five models using 17,976 receipts kept out of training: XGBoost, Random Forest, Decision Tree, Logistic Regression, and a linear Support Vector Machine (SVM). For each model, we tested regular training and training that gives more importance to MODERATE and HIGH cases. We report accuracy, F1 scores, and recall; risk groups follow the definitions in Section~\ref{sec:spoilage_method}.
 
 \subsubsection{Comparing the Models}
-Table~\ref{tab:spoilage_ablation_summary} shows the results for all five models, both with and without extra weight given to the less common risk groups.
-
 \begin{table}[H]
 \centering
 \caption{Spoilage-risk model results on 17,976 test receipts compared to the operational rule engine DTE-only baseline.}
@@ -671,18 +617,17 @@ Rule Baseline & DTE-only (Rule Engine) & 40.98\% & 0.3504 & 0.3821 & 19.84\% & 2
 \end{tabular}}
 \end{table}
 
-The results show four main points:
+Table~\ref{tab:spoilage_ablation_summary} summarises all models. Three points stand out:
 \begin{enumerate}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{ML models substantially outperform single-feature calendar rules:} Evaluating a standard heuristic calendar rule using the store rule engine's expiry thresholds ($\text{DTE} \le 1$ as HIGH, 2--3 as MODERATE, $> 3$ as LOW) yields only 40.98\% accuracy and a Macro F1 of 0.3504, missing over 80\% of actual HIGH spoilage receipts (HIGH recall 19.84\%). Notably, this heuristic accuracy (40.98\%) is even lower than a trivial majority-class baseline of predicting all receipts as LOW (42.42\%), underscoring that calendar days alone without inventory pressure, category sensitivity, and sales velocity provide negative predictive utility. In contrast, XGBoost achieves 0.6021 Macro F1 by integrating stock pressure, sales velocity, and category vulnerability alongside shelf life.
-    \item \textbf{Weighted XGBoost is the most balanced model:} It has the highest Macro F1 (0.6021) and Weighted F1 (0.6493) in the comparison, and it trains in under three seconds. Macro F1 gives each risk group equal importance, rather than letting the largest group dominate the score.
-    \item \textbf{Accuracy alone can be misleading:} The regular XGBoost model has higher accuracy (67.33\% versus 63.35\%), but it often misses MODERATE cases. LOW is the largest group in the test data, so a model can score well by predicting LOW more often.
+    \item \textbf{ML models outperform the expiry-only rule:} The store rule engine's heuristic ($\text{DTE} \le 1$ as HIGH, 2--3 as MODERATE, and $> 3$ as LOW) achieves 40.98\% accuracy, a Macro F1 of 0.3504, and 19.84\% HIGH recall. Calendar days alone miss important signals such as stock pressure, category sensitivity, and sales velocity. In contrast, XGBoost achieves a Macro F1 of 0.6021 by combining these features with shelf life.
+    \item \textbf{Dual weighting trades accuracy for MODERATE detection:} Unweighted XGBoost has the highest accuracy (67.33\%) but finds only 4.38\% of MODERATE receipts (129 of 2,942). Dual weighting raises MODERATE recall to 60.06\% and Macro F1 from 0.5127 to 0.6021, at a cost of about 4 points of accuracy. Because LOW is the largest class, accuracy alone rewards models that ignore MODERATE.
     \item \textbf{Tree-based models do better overall here:} XGBoost and Random Forest perform better than Logistic Regression and SVM on the combined measures in this test, capturing non-linear interactions between stock levels and expiry dates.
 \end{enumerate}
 
 \subsubsection{Class-Specific Precision, Recall, and Policy Implications}
 \label{sec:per_class_metrics}
 
-Because spoilage risk directly triggers commercial pricing and charity routing actions, Table~\ref{tab:xgboost_per_class} reports the detailed per-class performance for the production Dual-Weighted XGBoost model. Dual class weighting applied penalty factors of 2.6 for MODERATE and 1.5 for HIGH (relative to 1.0 for LOW) on the training set, selected to counterbalance the minority status of MODERATE (16.37\% of samples) while prioritizing safe food handling.
+Table~\ref{tab:xgboost_per_class} reports per-class results for the production Dual-Weighted XGBoost model, trained with class weights of 2.6 for MODERATE and 1.5 for HIGH (relative to 1.0 for LOW).
 
 \begin{table}[H]
 \centering
@@ -691,56 +636,26 @@ Because spoilage risk directly triggers commercial pricing and charity routing a
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{6pt}
 {\footnotesize
-\begin{tabular}{@{} l c c c r l @{}}
+\begin{tabular}{@{} l c c c r @{}}
 \toprule
 \rowcolor{NavyPrimary}
-\color{white}\textbf{Risk Tier} & \color{white}\textbf{Precision} & \color{white}\textbf{Recall} & \color{white}\textbf{F1-Score} & \color{white}\textbf{Support} & \color{white}\textbf{Operational Action Triggered} \\
+\color{white}\textbf{Risk Tier} & \color{white}\textbf{Precision} & \color{white}\textbf{Recall} & \color{white}\textbf{F1-Score} & \color{white}\textbf{Support} \\
 \midrule
-HIGH & \textbf{81.66\%} & 53.08\% & 0.6434 & 7,408 & Urgent 25\%--40\% markdown / closed donation transfer \\
+HIGH & \textbf{81.66\%} & 53.08\% & 0.6434 & 7,408 \\
 \rowcolor{LightBg}
-LOW & 74.23\% & \textbf{74.59\%} & \textbf{0.7441} & 7,626 & Full-price retail sale (Normal Sale, 0\% discount) \\
-MODERATE & 32.14\% & 60.06\% & 0.4187 & 2,942 & Preventive early markdown (15\% at DTE=3, 25\% at DTE=2) \\
+LOW & 74.23\% & \textbf{74.59\%} & \textbf{0.7441} & 7,626 \\
+MODERATE & 32.14\% & 60.06\% & 0.4187 & 2,942 \\
 \midrule
-Macro Average & 62.68\% & 62.58\% & 0.6021 & 17,976 & Unweighted arithmetic mean across 3 tiers \\
+Macro Average & 62.68\% & 62.58\% & 0.6021 & 17,976 \\
 \rowcolor{LightBg}
-Weighted Average & 70.39\% & 63.35\% & 0.6493 & 17,976 & Support-weighted operational performance \\
+Weighted Average & 70.39\% & 63.35\% & 0.6493 & 17,976 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-\textbf{Operational Alignment with Rule Engine Clearance Tiers:}
 \begin{itemize}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{Actionable Early Warning via MODERATE Recall (60.06\%):} In the store clearance hierarchy, a MODERATE prediction triggers a preventive 15\% markdown (when $\text{DTE}=3$) or 25\% markdown (when $\text{DTE}=2$). Catching 60.06\% of MODERATE batches (up from 4.38\% in standard training) allows store managers to accelerate inventory turnover while products remain fresh.
-    \item \textbf{Understanding MODERATE Precision (32.14\%):} The moderate tier lies on the boundary between fresh inventory and spoilage. In retail clearance, a false-positive MODERATE classification is low-risk: it merely applies an early 15\%--25\% discount that stimulates customer purchase before expiration. Conversely, a false-negative (leaving a degrading item at 0\% discount) leads to total spoilage and zero revenue recovery.
-    \item \textbf{High Precision on Urgent Intervention (81.66\%):} HIGH alerts trigger aggressive 25\%--40\% discounts or charity transfers. An 81.66\% precision ensures that four out of five batches flagged as HIGH genuinely require urgent evacuation, preventing unwarranted revenue loss from excessive discounting.
+    \item \textbf{Understanding MODERATE Precision (32.14\%):} The moderate tier lies on the boundary between fresh inventory and spoilage. A false-positive MODERATE classification may trigger an unnecessary early discount, so staff should consider the score alongside expiry date and demand context.
 \end{itemize}
-
-\subsubsection{Why MODERATE Risk Is Hard to Detect}
-\label{sec:moderate_jump}
-
-The model has the most difficulty with the MODERATE group. It is smaller than the LOW group and lies between food that is selling safely and food with high waste. The results show why this group matters:
-\begin{itemize}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{There are fewer examples in the boundary class:} Under the 80:20 stratified split, MODERATE makes up 16.37\% of the test set (2,942 receipts), compared with 42.42\% LOW (7,626 receipts) and 41.21\% HIGH (7,408 receipts). Being sandwiched between the two larger classes makes it exceptionally challenging to delineate without weighted loss.
-    \item \textbf{Regular training often misses it:} Figure~\ref{fig:moderate_recall_jump} shows that the unweighted models rarely identify MODERATE cases:
-    \begin{itemize}
-        \item Logistic Regression and SVM find none of the MODERATE receipts (0.00\% recall).
-        \item Regular XGBoost finds 129 of 2,942 MODERATE receipts (4.38\% recall).
-        \item Regular Random Forest finds 10.06\% of MODERATE receipts.
-    \end{itemize}
-    \item \textbf{Finding it early gives the store more options:} A MODERATE warning can lead to an early 15\%--25\% discount while the food may still sell. If the warning is missed, the food may later become HIGH risk and require a larger discount, donation, or disposal.
-\end{itemize}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\textwidth]{figures/02_recall_moderate_jump_comparison.png}
-    \caption{Share of MODERATE-risk receipts found by each model. Giving MODERATE cases extra importance raises recall to 60.06\% for XGBoost and 33.96\% for Random Forest.}
-    \label{fig:moderate_recall_jump}
-\end{figure}
-
-Across all evaluated architectures, applying dual class weights forces the loss surface to penalize boundary-class omissions, transforming near-zero baseline detection into actionable retail alerts (Figure~\ref{fig:moderate_recall_jump} and Table~\ref{tab:spoilage_ablation_summary}). Logistic and linear SVM models, while showing gains, lack the non-linear interaction capacity of tree ensembles to isolate complex interactions between stock pressure, shelf-life buffer, and demand velocity.
-
-\subsubsection{Which Risk Groups Were Confused?}
-\label{sec:confusion_matrices}
 
 Figure~\ref{fig:confusion_matrices_shift} compares how often each model predicted the correct or incorrect risk group. Each matrix compares regular training with extra weighting for MODERATE and HIGH cases.
 
@@ -751,9 +666,8 @@ Figure~\ref{fig:confusion_matrices_shift} compares how often each model predicte
     \label{fig:confusion_matrices_shift}
 \end{figure}
 
-The transition across the confusion matrices (Figure~\ref{fig:confusion_matrices_shift}) reveals two critical operational dynamics:
+The confusion matrices (Figure~\ref{fig:confusion_matrices_shift}) show the trade-off made by dual weighting:
 \begin{itemize}[leftmargin=18pt, itemsep=2pt]
-    \item \textbf{Fewer missed MODERATE cases:} Dual weighting raises correctly identified MODERATE receipts from 129 to 1,767 (+1,638 of 2,942 receipts caught).
     \item \textbf{Operational Trade-off:} HIGH recall shifts from 68.75\% (5,093 caught of 7,408) to 53.08\% (3,932 caught), while HIGH precision rises from 69.29\% to 81.66\%. Fewer HIGH items are flagged as HIGH, but approximately 82\% of HIGH alerts are correct. Crucially, of the 3,476 actual HIGH items not flagged as HIGH, the majority (1,966 receipts, or 56.6\%) are shifted into MODERATE warnings rather than being misclassified as safe LOW stock; meanwhile, severe false-safe errors (actual HIGH misclassified as LOW) dropped substantially from 2,186 to 1,510 receipts.
 \end{itemize}
 
@@ -794,13 +708,13 @@ Day +3 & 12.36\% & \textbf{126.02} & \textbf{305.57} & \textbf{13.22\%} & 152.57
 \end{itemize}
 
 \begin{auditnote}[Why the demand forecast is advice only]
-The demand data ends on 2017-08-15 and comes from a different retail setting than Malaysian stores in 2026. The system also divides group-level demand among products based on how much of each product is in stock. That may overestimate sales for slow-selling products. For these reasons, the app labels forecasts as not validated and does not create purchase orders automatically. This can change after at least two years of local product-level sales data have been collected and checked.
+The historical demand data is not Malaysian and is divided among products using current stock share, which may overestimate slow-selling items. Forecasts therefore remain unvalidated advice, and automatic purchase orders stay disabled until at least two years of local product-level sales data are collected and checked.
 \end{auditnote}
 
 \subsection{Surplus Cargo Regression Model Evaluation}
 \label{sec:cargo_regression_results}
 
-When inventory batches are designated for donation or clearance rescue, Module~3 utilizes a machine learning regression model to accurately forecast the physical surplus mass (\texttt{Waste\_Quantity} in kilograms). Predicting cargo volume is critical for logistics dispatch: it dictates whether a batch requires a motorcycle courier ($\le 25$~kg), a cargo van ($25$--$200$~kg), or a heavy food bank truck ($> 200$~kg), as well as determining cold-chain refrigeration routing.
+When inventory batches are designated for donation or clearance rescue, Module~3 uses a machine-learning regression model to estimate surplus mass (\texttt{Waste\_Quantity} in kilograms), supporting vehicle selection and cold-chain routing.
 
 \subsubsection{Benchmark Setup and Model Hyperparameters}
 We benchmarked four regression algorithms on the cleaned food waste repository (8,000 total records), evaluated under an identical 80:20 train/test split (6,400 training samples and 1,600 held-out test samples, random seed 42) with standard feature scaling (\texttt{StandardScaler}) across all 20 engineered features (four numerical and 16 one-hot encoded categories):
@@ -840,7 +754,6 @@ Random Forest Regressor & 0.9269 & \textbf{1.326} & 4.726 & 22.335 & 0.3011 \\
 \begin{itemize}[leftmargin=18pt, itemsep=2pt]
     \item \textbf{Cargo Mass Variance Explained ($R^2 = 95.45\%$):} The tuned XGBoost model captures 95.45\% of the variance in surplus cargo weight, significantly outperforming the linear baseline ($R^2 = 80.05\%$) and single decision tree ($R^2 = 90.14\%$).
     \item \textbf{Robustness Against Large-Volume Tail Outliers:} While Random Forest records a marginal advantage in mean absolute deviation (MAE of 1.326~kg vs. 1.371~kg), XGBoost delivers a substantially lower RMSE (3.729~kg vs. 4.726~kg) and reduces MSE by 37.8\% (13.903 vs. 22.335). In logistical operations, large prediction errors carry severe penalties (e.g., dispatching an undersized vehicle that cannot accommodate an evacuation batch). XGBoost's gradient boosting specifically penalizes large residuals, reducing the risk of large errors that could cause an undersized vehicle assignment for bulk donations.
-    \item \textbf{Rapid Computational Training:} XGBoost trains in approximately 0.37 seconds on the full training set, enabling efficient retraining cycles as new waste audit records are registered.
 \end{itemize}
 
 % ============================================================================
@@ -886,7 +799,7 @@ FreshGuard is a complete working system that connects cleaned inventory data, ma
 
 Food safety is enforced at every step: expired stock is blocked from sale and donation and routed to bio-waste composting. Food that expires today or tomorrow is prioritized for food bank delivery, subject to a 30\% donation cap that prevents stores from over-relying on charity. The web app's adaptive action panel structures clearance workflows by clearly highlighting urgent actions at the top of the decision modal.
 
-The demand forecasts are still advisory-only until local Malaysian sales data is collected and the model is retrained. Despite this, FreshGuard demonstrates a practical, end-to-end framework for surplus food management in urban retail environments.
+FreshGuard demonstrates a practical, end-to-end framework for surplus food management in urban retail environments, although demand forecasts remain advisory until retrained on local Malaysian retail sales data.
 
 % ============================================================================
 % REFERENCES
@@ -895,9 +808,6 @@ The demand forecasts are still advisory-only until local Malaysian sales data is
 
 \bibitem{unep2024}
 United Nations Environment Programme (UNEP), \emph{Food Waste Index Report 2024: Think Eat Save --- Tracking Global Food Waste to Halve It by 2030}, Nairobi, Kenya, 2024. Available: \url{https://www.unep.org/resources/publication/food-waste-index-report-2024}
-
-\bibitem{fao2019}
-Food and Agriculture Organization of the United Nations (FAO), \emph{The State of Food and Agriculture 2019: Moving Forward on Food Loss and Waste Reduction}, Rome, Italy, 2019.
 
 \bibitem{refed2026}
 ReFED, \emph{ReFED Food Waste Measurement Framework and Surplus Destination Taxonomy}, Technical Report, 2026. Available: \url{https://refed.org/downloads/2026-refed-measurement-report.pdf}
